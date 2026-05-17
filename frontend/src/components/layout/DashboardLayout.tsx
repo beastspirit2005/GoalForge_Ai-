@@ -7,6 +7,7 @@ import Navbar from "./Navbar"
 import { useAuth } from "@/hooks/useAuth"
 import { isRoleAllowed, roleHome } from "@/lib/mock-auth"
 import { X } from "lucide-react"
+import { AiBuddyChat } from "../copilot/AiBuddyChat"
 
 export default function DashboardLayout({
   children,
@@ -102,6 +103,7 @@ export default function DashboardLayout({
         />
 
         <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+        <AiBuddyChat />
       </div>
     </div>
   )

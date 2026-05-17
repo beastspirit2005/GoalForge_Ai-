@@ -1,41 +1,92 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Bot, X, Send, User, Sparkles } from "lucide-react"
+import { Bot, X, Send, User, Sparkles, Settings, Sliders, Cpu, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { apiFetch } from "@/lib/api"
 import { getStoredToken } from "@/services/auth.service"
+import { useAuth } from "@/hooks/useAuth"
 
 type Message = {
-  role: "user" | "assistant"
+  role: "user" | "assistant" | "system"
   content: string
+  source?: string
+}
+
+const getGreeting = (role: string) => {
+  if (role === "admin") {
+    return "Hi Admin! I'm your Executive AI Buddy. I can help you monitor goal progress, active performance cycles, system-wide escalations, and leaderboard stats. Ask me anything to assist you with your administrative work today!"
+  }
+  if (role === "manager") {
+    return "Hi Manager! I'm your Team Performance Copilot. I can help you monitor team goals, track progress, review pending approvals, and resolve high-risk items. How can I help you support your team today?"
+  }
+  return "Hi! I'm Ai Buddy, your enterprise performance coach. How can I help you with your goals today?"
 }
 
 export function AiBuddyChat() {
+  const { user } = useAuth()
+  const role = user ? ("role" in user ? user.role : "") : ""
+
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  
+  // Multi-provider State
+  const [activeProvider, setActiveProvider] = useState<"gemini" | "ollama" | "fallback">("gemini")
+  const [ollamaModels, setOllamaModels] = useState<string[]>([])
+  const [selectedOllamaModel, setSelectedOllamaModel] = useState<string>("")
+  
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
+  // Load preferences and models on mount
   useEffect(() => {
-    const saved = localStorage.getItem("aiBuddyChat")
-    if (saved) {
-      setMessages(JSON.parse(saved))
-    } else {
-      setMessages([
-        { role: "assistant", content: "Hi! I'm Ai Buddy, your enterprise performance coach. How can I help you with your goals today?" }
-      ])
+    // 1. Load active provider preference
+    const savedProvider = localStorage.getItem("aiBuddyProvider") as "gemini" | "ollama" | "fallback"
+    if (savedProvider) {
+      setActiveProvider(savedProvider)
     }
-    
+
+    // 2. Load selected local model preference
+    const savedOllama = localStorage.getItem("aiBuddyOllamaModel")
+    if (savedOllama) {
+      setSelectedOllamaModel(savedOllama)
+    }
+
+    // 3. Load chat logs
+    const savedChat = localStorage.getItem("aiBuddyChat")
+    if (savedChat) {
+      setMessages(JSON.parse(savedChat))
+    }
+
+    // 4. Fetch pulled local Ollama models from backend
+    const fetchModels = async () => {
+      try {
+        const token = getStoredToken()
+        const res = await apiFetch<{ models: string[] }>("/ai/models", { token })
+        if (res.models && res.models.length > 0) {
+          setOllamaModels(res.models)
+          // If no model saved previously, set the first one active
+          if (!savedOllama) {
+            setSelectedOllamaModel(res.models[0])
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load local Ollama models from backend:", err)
+      }
+    }
+    fetchModels()
+
+    // Listen to clear chat triggers
     const handleClear = () => {
       setMessages([
-        { role: "assistant", content: "Chat cleared! How can I help you today?" }
+        { role: "assistant", content: `Chat cleared! How can I help you today?`, source: "system" }
       ])
       localStorage.removeItem("aiBuddyChat")
     }
@@ -43,12 +94,33 @@ export function AiBuddyChat() {
     return () => window.removeEventListener("clear-ai-chat", handleClear)
   }, [])
 
+  // Set greeting once the user role becomes available if there's no chat history
+  useEffect(() => {
+    const savedChat = localStorage.getItem("aiBuddyChat")
+    if (!savedChat && role) {
+      setMessages([
+        { role: "assistant", content: getGreeting(role), source: "system" }
+      ])
+    }
+  }, [role])
+
+  // Save chat and provider preferences on change
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem("aiBuddyChat", JSON.stringify(messages))
     }
     scrollToBottom()
   }, [messages])
+
+  useEffect(() => {
+    localStorage.setItem("aiBuddyProvider", activeProvider)
+  }, [activeProvider])
+
+  useEffect(() => {
+    if (selectedOllamaModel) {
+      localStorage.setItem("aiBuddyOllamaModel", selectedOllamaModel)
+    }
+  }, [selectedOllamaModel])
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return
@@ -63,78 +135,302 @@ export function AiBuddyChat() {
       const res = await apiFetch<{ response: string; source: string }>("/ai/copilot", {
         method: "POST",
         token,
-        body: { query: userMessage, context: "" },
+        body: { 
+          query: userMessage, 
+          context: "", 
+          provider: activeProvider, 
+          model: activeProvider === "ollama" ? selectedOllamaModel : undefined
+        },
       })
       
-      setMessages((prev) => [...prev, { role: "assistant", content: res.response }])
+      setMessages((prev) => [...prev, { role: "assistant", content: res.response, source: res.source }])
     } catch (err: any) {
-      setMessages((prev) => [...prev, { role: "assistant", content: `Oops! I encountered an error: ${err?.message || "Unknown error"}` }])
+      setMessages((prev) => [...prev, { 
+        role: "assistant", 
+        content: `Oops! I encountered an error with ${activeProvider}: ${err?.message || "Unknown error"}. Would you like to try switching to another provider?`,
+        source: `error-${activeProvider}`
+      }])
     } finally {
       setIsLoading(false)
     }
   }
 
+  const handleSwitchProvider = async (newProvider: "gemini" | "ollama" | "fallback") => {
+    setActiveProvider(newProvider)
+    
+    // Find the last query entered by the user
+    const userMessages = messages.filter((m) => m.role === "user")
+    if (userMessages.length === 0) return
+
+    const lastQuery = userMessages[userMessages.length - 1].content
+    setIsLoading(true)
+
+    // Notify user of the redirect
+    setMessages((prev) => [...prev, { 
+      role: "assistant", 
+      content: `Rerouting your request to **${newProvider.toUpperCase()}**...`, 
+      source: "system" 
+    }])
+
+    try {
+      const token = getStoredToken()
+      // Determine what model to use
+      let localModel = selectedOllamaModel
+      if (newProvider === "ollama" && !localModel && ollamaModels.length > 0) {
+        localModel = ollamaModels[0]
+        setSelectedOllamaModel(localModel)
+      }
+
+      const res = await apiFetch<{ response: string; source: string }>("/ai/copilot", {
+        method: "POST",
+        token,
+        body: { 
+          query: lastQuery, 
+          context: "", 
+          provider: newProvider, 
+          model: newProvider === "ollama" ? localModel : undefined
+        },
+      })
+      
+      setMessages((prev) => [...prev, { role: "assistant", content: res.response, source: res.source }])
+    } catch (err: any) {
+      setMessages((prev) => [...prev, { 
+        role: "assistant", 
+        content: `Failed to connect to ${newProvider}: ${err?.message || "Unknown error"}.`,
+        source: `error-${newProvider}`
+      }])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Premium Markdown renderer workaround
+  const renderMessageContent = (content: string) => {
+    const lines = content.split("\n")
+    return (
+      <div className="space-y-2">
+        {lines.map((line, i) => {
+          // Detect headers starting with ### or ##
+          if (line.startsWith("### ") || line.startsWith("## ")) {
+            const cleanText = line.replace(/^(###|##)\s+/, "")
+            return (
+              <h4 key={i} className="mt-3 mb-1 text-sm font-bold text-indigo-300">
+                {parseBoldText(cleanText)}
+              </h4>
+            )
+          }
+          
+          // Detect lists starting with - or *
+          if (line.trim().startsWith("- ") || line.trim().startsWith("* ")) {
+            const cleanText = line.replace(/^\s*([-*])\s+/, "")
+            return (
+              <div key={i} className="ml-2 flex items-start gap-2 text-xs leading-relaxed text-slate-100">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
+                <span>{parseBoldText(cleanText)}</span>
+              </div>
+            )
+          }
+          
+          // Normal paragraph
+          if (!line.trim()) return <div key={i} className="h-1" />
+          return (
+            <p key={i} className="text-xs leading-relaxed text-slate-100">
+              {parseBoldText(line)}
+            </p>
+          )
+        })}
+      </div>
+    )
+  }
+
+  const parseBoldText = (text: string) => {
+    const parts = text.split(/\*\*([^*]+)\*\*/)
+    return parts.map((part, i) => {
+      if (i % 2 === 1) {
+        return (
+          <strong key={i} className="font-semibold text-indigo-200">
+            {part}
+          </strong>
+        )
+      }
+      return part
+    })
+  }
+
   return (
     <div className="fixed-dark fixed bottom-6 right-6 z-50 flex flex-col items-end">
       {isOpen && (
-        <div className="mb-4 flex h-[500px] w-[350px] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-[#020617] shadow-2xl transition-all duration-300 ease-in-out sm:w-[400px]">
+        <div className="glass-panel mb-4 flex h-[520px] w-[350px] flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-[#020617]/95 shadow-2xl transition-all duration-300 ease-in-out sm:w-[420px] animate-scale-in">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-700 bg-[#0f172a] p-4">
-            <div className="flex items-center space-x-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-400">
-                <Sparkles className="h-5 w-5" />
+          <div className="flex items-center justify-between border-b border-slate-800 bg-gradient-to-r from-[var(--gf-indigo)]/90 to-[var(--gf-violet)]/90 p-4">
+            <div className="flex items-center space-x-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white shadow-[0_0_8px_rgba(255,255,255,0.2)] animate-pulse-glow">
+                <Sparkles className="h-4.5 w-4.5 text-indigo-200" />
               </div>
               <div>
-                <h3 className="font-semibold text-white">Ai Buddy</h3>
-                <p className="text-xs text-slate-300">Performance Copilot</p>
+                <h3 className="font-bold text-sm tracking-tight text-white flex items-center gap-1.5">
+                  Ai Buddy
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/15 text-indigo-100 font-medium capitalize">
+                    {activeProvider}
+                  </span>
+                </h3>
+                <p className="text-[10px] text-white/70">GoalForge Performance Copilot</p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-slate-300 hover:text-white hover:bg-slate-800/50"
-              onClick={() => setIsOpen(false)}
-            >
-              <X className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center space-x-1.5">
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-8 w-8 rounded-lg transition-colors text-white/80 hover:text-white ${showSettings ? "bg-white/15 text-white" : "hover:bg-white/10"}`}
+                onClick={() => setShowSettings(!showSettings)}
+                title="Settings"
+              >
+                <Settings className="h-4.5 w-4.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-lg text-white/80 hover:text-white hover:bg-white/10"
+                onClick={() => setIsOpen(false)}
+              >
+                <X className="h-4.5 w-4.5" />
+              </Button>
+            </div>
           </div>
 
+          {/* Settings Panel */}
+          {showSettings && (
+            <div className="border-b border-slate-800 bg-[#0c1122] p-4 space-y-3 animate-in slide-in-from-top duration-200 shadow-inner">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <Cpu className="h-3.5 w-3.5 text-indigo-400" />
+                  AI Engine Provider
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(["gemini", "ollama", "fallback"] as const).map((prov) => (
+                    <button
+                      key={prov}
+                      onClick={() => setActiveProvider(prov)}
+                      className={`rounded-lg py-1.5 text-xs font-semibold border capitalize transition-all duration-200 ${
+                        activeProvider === prov
+                          ? "bg-indigo-600/30 border-indigo-500 text-indigo-200 shadow-lg shadow-indigo-600/10"
+                          : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80"
+                      }`}
+                    >
+                      {prov === "gemini" ? "Gemini" : prov === "ollama" ? "Ollama" : "Fallback"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {activeProvider === "ollama" && (
+                <div className="space-y-1.5 animate-in fade-in duration-200">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <Sliders className="h-3.5 w-3.5 text-indigo-400" />
+                    Select Local Model
+                  </label>
+                  {ollamaModels.length > 0 ? (
+                    <select
+                      value={selectedOllamaModel}
+                      onChange={(e) => setSelectedOllamaModel(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-slate-800 bg-slate-900 px-3 py-1 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    >
+                      {ollamaModels.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="text-[11px] text-amber-300 border border-amber-500/20 bg-amber-500/5 p-3 rounded-lg flex items-start gap-2 leading-relaxed">
+                      <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-400" />
+                      <span>
+                        No pulled local models detected! Make sure Ollama is running (`ollama serve`) and you have pulled a model (e.g. `ollama pull gemma2:2b` or `ollama pull phi3`).
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#020617]/50 scrollbar-thin">
             {messages.map((msg, idx) => (
               <div
                 key={idx}
                 className={`flex items-start space-x-3 ${msg.role === "user" ? "flex-row-reverse space-x-reverse" : ""}`}
               >
                 <div
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                    msg.role === "user" ? "bg-[#1e293b] text-white" : "bg-indigo-500/20 text-indigo-400"
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-md ${
+                    msg.role === "user" ? "bg-slate-800 text-white" : "bg-indigo-600/25 border border-indigo-500/20 text-indigo-300"
                   }`}
                 >
                   {msg.role === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                 </div>
-                <div
-                  className={`rounded-2xl px-4 py-2 text-sm ${
-                    msg.role === "user"
-                      ? "bg-[#1e293b] text-white rounded-tr-sm"
-                      : "bg-indigo-500/20 text-white rounded-tl-sm border border-indigo-500/30"
-                  }`}
-                >
-                  {/* Basic markdown rendering workaround for now */}
-                  {msg.content.split("\\n").map((line, i) => (
-                    <p key={i} className="mb-1 last:mb-0">
-                      {line.replace(/\\*\\*(.*?)\\*\\*/g, "$1")} 
-                    </p>
-                  ))}
+                <div className="flex flex-col max-w-[80%]">
+                  <div
+                    className={`rounded-2xl px-4 py-3 text-xs shadow-lg transition-all ${
+                      msg.role === "user"
+                        ? "bg-slate-800 text-white rounded-tr-sm"
+                        : "bg-indigo-950/40 text-slate-100 rounded-tl-sm border border-indigo-500/15"
+                    }`}
+                  >
+                    {renderMessageContent(msg.content)}
+
+                    {/* Interactive Failover Buttons */}
+                    {msg.source === "error-gemini" && (
+                      <div className="mt-3 pt-2.5 border-t border-indigo-500/10 flex flex-col gap-1.5">
+                        <p className="text-[10px] text-slate-400 font-medium">Quick switch options:</p>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleSwitchProvider("ollama")}
+                            className="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/30 text-[10px] px-2.5 py-1.5 h-auto rounded-lg font-semibold"
+                          >
+                            Switch to local Ollama
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleSwitchProvider("fallback")}
+                            className="bg-slate-700/30 hover:bg-slate-700/50 text-slate-200 border border-slate-600/30 text-[10px] px-2.5 py-1.5 h-auto rounded-lg font-semibold"
+                          >
+                            Use offline Fallback
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {msg.source === "error-ollama" && (
+                      <div className="mt-3 pt-2.5 border-t border-indigo-500/10 flex flex-col gap-1.5">
+                        <p className="text-[10px] text-slate-400 font-medium">Quick switch options:</p>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleSwitchProvider("fallback")}
+                            className="bg-slate-700/30 hover:bg-slate-700/50 text-slate-200 border border-slate-600/30 text-[10px] px-2.5 py-1.5 h-auto rounded-lg font-semibold"
+                          >
+                            Use offline Fallback
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {msg.source && !msg.source.startsWith("error-") && msg.source !== "system" && (
+                    <span className="text-[9px] text-slate-500 mt-1 self-start ml-1.5 font-medium">
+                      Powered by {msg.source}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
+            
             {isLoading && (
               <div className="flex items-start space-x-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-400">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600/25 border border-indigo-500/20 text-indigo-300">
                   <Sparkles className="h-4 w-4 animate-pulse" />
                 </div>
-                <div className="rounded-2xl rounded-tl-sm border border-indigo-500/30 bg-indigo-500/20 px-4 py-3">
+                <div className="rounded-2xl rounded-tl-sm border border-indigo-500/15 bg-indigo-950/20 px-4 py-3 shadow-md">
                   <div className="flex space-x-1.5">
                     <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-indigo-400" style={{ animationDelay: "0ms" }} />
                     <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-indigo-400" style={{ animationDelay: "150ms" }} />
@@ -147,7 +443,7 @@ export function AiBuddyChat() {
           </div>
 
           {/* Input Area */}
-          <div className="border-t border-slate-700 bg-[#0f172a] p-4">
+          <div className="border-t border-slate-800 bg-[#020617]/80 p-4">
             <form
               onSubmit={(e) => {
                 e.preventDefault()
@@ -158,15 +454,15 @@ export function AiBuddyChat() {
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask Ai Buddy..."
-                className="h-10 flex-1 border-slate-600 bg-[#020617] text-white placeholder:text-slate-400 focus-visible:ring-indigo-500"
+                placeholder={activeProvider === "ollama" ? `Ask Ai Buddy via ${selectedOllamaModel || 'Ollama'}...` : "Ask Ai Buddy..."}
+                className="h-10 flex-1 border-slate-800 bg-[#090d16] text-white placeholder:text-slate-500 focus-visible:ring-indigo-500 focus-visible:border-indigo-500 rounded-xl"
                 disabled={isLoading}
               />
               <Button
                 type="submit"
                 size="icon"
                 disabled={!input.trim() || isLoading}
-                className="h-10 w-10 shrink-0 bg-indigo-600 hover:bg-indigo-500 text-white"
+                className="h-10 w-10 shrink-0 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-600/20 transition-all duration-200 hover:scale-105"
               >
                 <Send className="h-4 w-4" />
               </Button>
@@ -175,11 +471,13 @@ export function AiBuddyChat() {
         </div>
       )}
 
-      {/* Floating Action Button */}
+      {/* Floating Action Button (FAB) */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className={`h-14 w-14 rounded-full shadow-lg transition-transform hover:scale-105 ${
-          isOpen ? "bg-slate-800 hover:bg-slate-700 text-white" : "bg-indigo-600 hover:bg-indigo-500 text-white"
+        className={`h-14 w-14 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 animate-float text-white animate-pulse-glow ${
+          isOpen 
+            ? "bg-slate-800 hover:bg-slate-700 shadow-slate-900/30" 
+            : "bg-gradient-to-br from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-indigo-600/30"
         }`}
       >
         {isOpen ? <X className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}

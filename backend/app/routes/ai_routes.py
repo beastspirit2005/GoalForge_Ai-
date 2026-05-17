@@ -27,6 +27,14 @@ async def refine(data: AIRefineGoalRequest):
     return refine_goal(data.raw_goal)
 
 
+@router.get("/models")
+async def get_models():
+    """Get list of active pulled local models in Ollama."""
+    from app.ai.gemini_client import get_ollama_models
+    models = await get_ollama_models()
+    return {"models": models}
+
+
 @router.post("/copilot", response_model=CopilotResponse)
 async def copilot(data: CopilotRequest, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Chat with Ai Buddy."""
@@ -34,7 +42,7 @@ async def copilot(data: CopilotRequest, db: AsyncSession = Depends(get_db), curr
     if not context:
         context = await get_copilot_context(db, current_user)
         
-    result = ai_buddy_chat(data.query, context)
+    result = await ai_buddy_chat(data.query, context, provider=data.provider, model=data.model)
     return CopilotResponse(**result)
 
 
@@ -103,7 +111,7 @@ Performance Scores:
 {score_summary if score_summary else 'No scores calculated yet.'}
 """
     query = f"Write a brief professional performance narrative for {user.name} based on their scores. Highlight strengths and areas for improvement."
-    result = ai_buddy_chat(query, context)
+    result = await ai_buddy_chat(query, context)
     return {
         "user_id": user_id,
         "name": user.name,
@@ -139,7 +147,7 @@ async def team_summary(
 
     context = "\n".join(context_parts)
     query = "Summarize the team's performance. Identify top performers, areas of concern, and recommended actions."
-    result = ai_buddy_chat(query, context)
+    result = await ai_buddy_chat(query, context)
     return {
         "summary": result["response"],
         "team_size": len(team),

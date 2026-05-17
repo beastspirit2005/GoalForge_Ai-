@@ -29,7 +29,9 @@ class AIRefineGoalResponse(BaseModel):
 
 class CopilotRequest(BaseModel):
     query: str
-    context: str = "" # Provide stringified context of goals/checkins
+    context: str = ""
+    provider: str = "gemini"  # "gemini" | "ollama" | "fallback"
+    model: str | None = None  # Specific Ollama model name, if selected
 
 
 class CopilotResponse(BaseModel):

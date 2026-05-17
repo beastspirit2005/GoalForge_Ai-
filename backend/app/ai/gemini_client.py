@@ -1,4 +1,6 @@
 import json
+import asyncio
+import httpx
 from typing import Any
 
 from app.core.config import settings
@@ -112,47 +114,132 @@ def refine_goal(raw_goal: str) -> dict:
         }
 
 
-def ai_buddy_chat(query: str, context: str) -> dict:
-    """Chat with Ai Buddy."""
-    if not settings.GEMINI_API_KEY:
+async def get_ollama_models() -> list[str]:
+    """Fetch the list of pulled models from the local Ollama API."""
+    url = "http://localhost:11434/api/tags"
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            res = await client.get(url)
+            if res.status_code == 200:
+                models = res.json().get("models", [])
+                return [m.get("name", "") for m in models if m.get("name")]
+    except Exception:
+        pass
+    return []
+
+
+async def get_ollama_model() -> str:
+    """Select the first active Ollama model or return fallback 'llama3'."""
+    models = await get_ollama_models()
+    if models:
+        return models[0]
+    return "llama3"
+
+
+async def call_ollama(prompt: str, model: str) -> str:
+    """Call the local Ollama generate API."""
+    url = "http://localhost:11434/api/generate"
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            res = await client.post(url, json={
+                "model": model,
+                "prompt": prompt,
+                "stream": False
+            })
+            if res.status_code == 200:
+                return res.json().get("response", "").strip()
+            else:
+                raise Exception(f"Ollama returned status code {res.status_code}")
+    except Exception as exc:
+        raise Exception(f"Failed to connect to local Ollama at {url}: {str(exc)}")
+
+
+async def ai_buddy_chat(query: str, context: str, provider: str = "gemini", model: str | None = None) -> dict:
+    """Chat with Ai Buddy using the specified provider ('gemini' | 'ollama' | 'fallback')."""
+    if provider == "ollama":
+        try:
+            # If no model is explicitly passed, find the first available model
+            selected_model = model
+            if not selected_model:
+                selected_model = await get_ollama_model()
+            
+            prompt = ai_buddy_prompt(query, context)
+            response = await call_ollama(prompt, selected_model)
+            return {
+                "response": response,
+                "source": f"ollama ({selected_model})"
+            }
+        except Exception as exc:
+            return {
+                "response": (
+                    f"Error connecting to local Ollama: {str(exc)}.\n\n"
+                    "Please verify that:\n"
+                    "1. Ollama is installed and running (`ollama serve`)\n"
+                    "2. You have pulled a lightweight model (e.g. `ollama pull gemma2:2b` or `ollama pull phi3:mini`)\n\n"
+                    "Would you like to try the **Offline Fallback** instead?"
+                ),
+                "source": "error-ollama"
+            }
+            
+    elif provider == "fallback":
         lowered = query.lower()
         if "risk" in lowered or "block" in lowered:
             response = (
-                "Local AI fallback: review the highest-risk goal first, identify the blocker owner, "
-                "and create one next action that can be completed this week. If progress is below 50%, "
-                "schedule a manager check-in before the next deadline."
+                "**Offline Fallback Advice (Risk & Blockers)**:\n\n"
+                "- **Review High-Risk Work**: Identify goals with progress significantly behind schedule.\n"
+                "- **Isolate Blockers**: Determine if the issue is resource constraints, technical hurdles, or third-party dependencies.\n"
+                "- **Define a Next Action**: Outline one single, measurable task to execute by the end of this week to reduce risk.\n"
+                "- **Update Manager & Log Check-ins**: Clear communications in check-ins prevent deadline surprises."
             )
         elif "summary" in lowered or "team" in lowered:
             response = (
-                "Local AI fallback: the team summary should focus on goal progress, overdue milestones, "
-                "and high-risk work. Celebrate goals with steady updates, then call out the one area that "
-                "needs manager support."
+                "**Offline Fallback Advice (Team Performance)**:\n\n"
+                "- **Compare Team Progress**: Benchmark active goal completion rates across team members.\n"
+                "- **Track Check-in Streaks**: Celebrate team members with high check-in consistency.\n"
+                "- **Address Critical Areas**: Focus immediate support on high-risk milestones.\n"
+                "- **Routine Review**: Host quick Friday check-ins to unlock stuck milestones."
             )
         else:
             response = (
-                "Local AI fallback: break the goal into weekly milestones, define one measurable success "
-                "metric, and review progress every Friday. No external API key is required for this guidance."
+                "**Offline Fallback Advice (Goal Execution)**:\n\n"
+                "- **Milestone Strategy**: Always divide a target goal into 3 to 5 smaller, measurable milestones.\n"
+                "- **UOM Metrics**: Focus on highly quantifiable targets (e.g. '$10K revenue' or '5 code reviews') rather than vague statements.\n"
+                "- **Bi-weekly Check-ins**: Check-in twice a week with concise actual accomplishments to maintain strong momentum."
             )
         return {
             "response": response,
             "source": "fallback"
         }
-
-    prompt = ai_buddy_prompt(query, context)
-
-    try:
-        import google.generativeai as genai
-
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-2.0-flash")
-        response = model.generate_content(prompt)
         
-        return {
-            "response": response.text.strip(),
-            "source": "gemini"
-        }
-    except Exception as exc:
-        return {
-            "response": f"Ai Buddy encountered an error: {str(exc)}",
-            "source": "fallback"
-        }
+    else:  # Default: gemini
+        if not settings.GEMINI_API_KEY:
+            return {
+                "response": (
+                    "**Gemini API Key Missing**: No API key was found in the configuration.\n\n"
+                    "Would you like to switch to **Local Ollama** or use the free **Offline Fallback**?"
+                ),
+                "source": "error-gemini"
+            }
+            
+        prompt = ai_buddy_prompt(query, context)
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            
+            # Use thread pool executor to prevent blocking FastAPI's event loop
+            import asyncio
+            gemini_model = genai.GenerativeModel("gemini-2.0-flash")
+            response = await asyncio.to_thread(gemini_model.generate_content, prompt)
+            
+            return {
+                "response": response.text.strip(),
+                "source": "gemini"
+            }
+        except Exception as exc:
+            return {
+                "response": (
+                    f"**Gemini API Request Failed**: {str(exc)}.\n\n"
+                    "Would you like to switch to **Local Ollama** or use the free **Offline Fallback**?"
+                ),
+                "source": "error-gemini"
+            }
