@@ -7,16 +7,16 @@ export default function ApprovalsPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-semibold tracking-normal text-slate-950">
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
             Approvals
           </h1>
-          <p className="mt-2 text-sm text-slate-500">
-            Simulated manager decisions for the hackathon demo.
+          <p className="mt-2 text-sm text-slate-500 dark:text-white/40">
+            Review and manage goal modifications from your team.
           </p>
         </div>
-        <Card className="rounded-lg border-0 bg-white shadow-sm ring-1 ring-slate-200">
+        <Card className="glass-card rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-slate-950">
+            <CardTitle className="text-lg font-semibold text-slate-900 dark:text-white">
               Pending requests
             </CardTitle>
           </CardHeader>
