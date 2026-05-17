@@ -109,13 +109,13 @@ export default function Navbar({ user }: NavbarProps) {
 
           {/* Search Dropdown Panel */}
           {isFocused && searchQuery.trim() !== "" && (
-            <div className="absolute right-0 top-11 z-30 w-80 overflow-hidden rounded-xl border border-white/[0.08] bg-[oklch(0.14_0.015_270)]/95 p-2 shadow-2xl backdrop-blur-xl animate-in fade-in-0 slide-in-from-top-2 duration-150">
+            <div className="absolute right-0 top-11 z-30 w-80 overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/95 dark:bg-[oklch(0.14_0.015_270)]/95 p-2 shadow-2xl backdrop-blur-xl animate-in fade-in-0 slide-in-from-top-2 duration-150">
               {hasResults ? (
                 <div className="space-y-4 max-h-[320px] overflow-y-auto p-1">
                   {/* People Section */}
                   {matchingUsers.length > 0 && (
                     <div>
-                      <p className="px-2 pb-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-white/25 border-b border-white/[0.04]">
+                      <p className="px-2 pb-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-white/25 border-b border-slate-100 dark:border-white/[0.04]">
                         People
                       </p>
                       <div className="mt-1.5 space-y-1">
@@ -127,14 +127,14 @@ export default function Navbar({ user }: NavbarProps) {
                               setIsFocused(false)
                               setSearchQuery("")
                             }}
-                            className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/[0.04]"
+                            className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.04]"
                           >
-                            <div className={`grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br ${userItem.avatarColor} text-[10px] font-bold text-white`}>
+                            <div className={`grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br ${userItem.avatarColor} text-[10px] font-bold text-white shadow-sm`}>
                               {userItem.name.split(" ").map(n => n[0]).join("")}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-[13px] font-medium text-white/90 truncate">{userItem.name}</p>
-                              <p className="text-[10px] text-white/35 truncate">{userItem.department} • {roleLabel[userItem.role]}</p>
+                              <p className="text-[13px] font-medium text-slate-800 dark:text-white/90 truncate">{userItem.name}</p>
+                              <p className="text-[10px] text-slate-500 dark:text-white/35 truncate">{userItem.department} • {roleLabel[userItem.role]}</p>
                             </div>
                           </button>
                         ))}
@@ -145,7 +145,7 @@ export default function Navbar({ user }: NavbarProps) {
                   {/* Goals Section */}
                   {matchingGoals.length > 0 && (
                     <div>
-                      <p className="px-2 pb-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-white/25 border-b border-white/[0.04]">
+                      <p className="px-2 pb-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-white/25 border-b border-slate-100 dark:border-white/[0.04]">
                         Goals
                       </p>
                       <div className="mt-1.5 space-y-1">
@@ -157,14 +157,14 @@ export default function Navbar({ user }: NavbarProps) {
                               setIsFocused(false)
                               setSearchQuery("")
                             }}
-                            className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/[0.04]"
+                            className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.04]"
                           >
-                            <div className="grid h-8 w-8 place-items-center rounded-lg bg-white/[0.04] border border-white/[0.08] text-white/40">
+                            <div className="grid h-8 w-8 place-items-center rounded-lg bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/40 shadow-sm">
                               <CheckCircle2 className="h-4 w-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-[13px] font-medium text-white/90 truncate">{goalItem.title}</p>
-                              <p className="text-[10px] text-white/35 truncate">Progress: {goalItem.progress}% • Owner: {goalItem.user}</p>
+                              <p className="text-[13px] font-medium text-slate-800 dark:text-white/90 truncate">{goalItem.title}</p>
+                              <p className="text-[10px] text-slate-500 dark:text-white/35 truncate">Progress: {goalItem.progress}% • Owner: {goalItem.user}</p>
                             </div>
                           </button>
                         ))}
@@ -173,7 +173,7 @@ export default function Navbar({ user }: NavbarProps) {
                   )}
                 </div>
               ) : (
-                <div className="p-4 text-center text-xs text-white/30">
+                <div className="p-4 text-center text-xs text-slate-500 dark:text-white/30">
                   No matching people or goals found.
                 </div>
               )}
