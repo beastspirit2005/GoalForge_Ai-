@@ -57,7 +57,12 @@ const links: NavLink[] = [
   { title: "Settings", href: "/settings", icon: Settings, section: "Account" },
 ]
 
-export default function Sidebar() {
+type SidebarProps = {
+  onClose?: () => void
+  isMobile?: boolean
+}
+
+export default function Sidebar({ onClose, isMobile }: SidebarProps = {}) {
   const pathname = usePathname()
   const { user } = useAuth()
 
@@ -73,7 +78,10 @@ export default function Sidebar() {
   })
 
   return (
-    <aside className="dashboard-sidebar hidden min-h-screen w-72 shrink-0 border-r border-white/[0.06] bg-[oklch(0.11_0.02_270)] p-4 text-white lg:block">
+    <aside className={cn(
+      "dashboard-sidebar min-h-screen w-72 shrink-0 border-r border-white/[0.06] bg-[oklch(0.11_0.02_270)] p-4 text-white",
+      !isMobile && "hidden lg:block"
+    )}>
       {/* ── Logo area ── */}
       <Link href="/" className="group block">
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-4 backdrop-blur-lg transition-all duration-300 group-hover:border-white/[0.14] group-hover:bg-white/[0.07]">
@@ -106,6 +114,7 @@ export default function Sidebar() {
               )}
               <Link
                 href={link.href}
+                onClick={onClose}
                 className={cn(
                   "group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-white/50 transition-all duration-200 hover:bg-white/[0.06] hover:text-white/80",
                   active &&
