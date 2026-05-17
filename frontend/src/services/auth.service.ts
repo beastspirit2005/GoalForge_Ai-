@@ -1,0 +1,54 @@
+import { apiFetch } from "@/lib/api"
+import type { AuthResponse, LoginPayload, RegisterPayload, User } from "@/types/user"
+
+const TOKEN_KEY = "goalforge.token"
+
+export function getStoredToken(): string | null {
+  if (typeof window === "undefined") return null
+  return localStorage.getItem(TOKEN_KEY)
+}
+
+export function storeToken(token: string): void {
+  localStorage.setItem(TOKEN_KEY, token)
+}
+
+export function clearToken(): void {
+  localStorage.removeItem(TOKEN_KEY)
+}
+
+export async function loginUser(data: LoginPayload): Promise<AuthResponse> {
+  const res = await apiFetch<AuthResponse>("/auth/login", {
+    method: "POST",
+    body: data,
+  })
+  storeToken(res.access_token)
+  return res
+}
+
+export async function registerUser(data: RegisterPayload): Promise<User> {
+  return apiFetch<User>("/auth/register", {
+    method: "POST",
+    body: data,
+  })
+}
+
+export async function getCurrentUser(): Promise<User> {
+  const token = getStoredToken()
+  return apiFetch<User>("/auth/me", { token })
+}
+
+export async function requestOtp(phoneNumber: string): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>("/auth/request-otp", {
+    method: "POST",
+    body: { phone_number: phoneNumber },
+  })
+}
+
+export async function verifyOtp(phoneNumber: string, otpCode: string): Promise<AuthResponse> {
+  const res = await apiFetch<AuthResponse>("/auth/verify-otp", {
+    method: "POST",
+    body: { phone_number: phoneNumber, otp_code: otpCode },
+  })
+  storeToken(res.access_token)
+  return res
+}
