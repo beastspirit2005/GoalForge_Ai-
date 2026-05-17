@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Bell, LogOut, Search, Sparkles, User, Briefcase, Mail, CheckCircle2, TrendingUp, X } from "lucide-react"
+import { Bell, LogOut, Search, Sparkles, User, Briefcase, Mail, CheckCircle2, TrendingUp, X, Menu } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,6 +16,7 @@ type NavbarUser = {
 
 type NavbarProps = {
   user: NavbarUser
+  onOpenMobileMenu?: () => void
 }
 
 const roleLabel: Record<string, string> = {
@@ -40,7 +41,7 @@ const demoGoalsList = [
   { id: 3, title: "Grow enterprise pipeline", user: "Kabir Singh", progress: 31, risk: "High", status: "pending" }
 ]
 
-export default function Navbar({ user }: NavbarProps) {
+export default function Navbar({ user, onOpenMobileMenu }: NavbarProps) {
   const router = useRouter()
   const { logout } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
@@ -83,16 +84,23 @@ export default function Navbar({ user }: NavbarProps) {
 
   return (
     <div className="dashboard-navbar sticky top-0 z-20 flex min-h-16 items-center justify-between gap-4 border-b border-white/[0.06] bg-[oklch(0.13_0.015_270)]/80 px-4 py-3 backdrop-blur-xl sm:px-6 lg:px-8">
-      <div>
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[var(--gf-indigo)]" />
-          <h2 className="text-sm font-semibold text-white/90">
-            Performance Intelligence
-          </h2>
+      <div className="flex items-center gap-3">
+        {onOpenMobileMenu && (
+          <Button variant="ghost" size="icon" onClick={onOpenMobileMenu} className="lg:hidden text-slate-500 dark:text-white/70">
+            <Menu className="h-5 w-5" />
+          </Button>
+        )}
+        <div className="hidden sm:block">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-[var(--gf-indigo)]" />
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white/90">
+              Performance Intelligence
+            </h2>
+          </div>
+          <p className="mt-0.5 text-[12px] text-slate-500 dark:text-white/35">
+            AI-assisted goals, predictions, and workforce analytics
+          </p>
         </div>
-        <p className="mt-0.5 text-[12px] text-white/35">
-          AI-assisted goals, predictions, and workforce analytics
-        </p>
       </div>
 
       <div className="hidden items-center gap-3 md:flex">
