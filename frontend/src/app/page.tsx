@@ -54,7 +54,7 @@ const features = [
 
 export default function Home() {
   return (
-    <main className="fixed-dark min-h-screen overflow-hidden bg-[oklch(0.11_0.015_270)] text-white">
+    <main className="fixed-dark min-h-screen overflow-hidden bg-[oklch(0.11_0.015_270)] text-[#ffffff]">
       {/* Blurred background aesthetic elements */}
       <div className="pointer-events-none fixed inset-0">
         <div className="absolute -left-40 top-20 h-96 w-96 rounded-full bg-[var(--gf-indigo)]/8 blur-[120px]" />
@@ -67,18 +67,18 @@ export default function Home() {
         <nav className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-[var(--gf-indigo)] to-[var(--gf-violet)] shadow-lg shadow-[var(--gf-indigo)]/20">
-              <Zap className="h-5 w-5 text-white" />
+              <Zap className="h-5 w-5 text-[#ffffff]" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-white">GoalForge AI</h1>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">
+              <h1 className="text-lg font-bold tracking-tight text-[#ffffff]">GoalForge AI</h1>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[#ffffff]/30">
                 Workforce Intelligence
               </p>
             </div>
           </div>
           <Button
             asChild
-            className="h-9 gap-2 rounded-lg bg-white/[0.08] text-[13px] text-white/80 backdrop-blur-lg hover:bg-white/[0.14]"
+            className="h-9 gap-2 rounded-lg bg-white/[0.08] text-[13px] text-[#ffffff]/80 backdrop-blur-lg hover:bg-white/[0.14]"
           >
             <Link href="/login">Open platform</Link>
           </Button>
@@ -91,11 +91,11 @@ export default function Home() {
               <CheckCircle2 className="h-4 w-4" />
               AI-Powered Workforce Performance Intelligence
             </div>
-            <h2 className="text-5xl font-bold leading-[1.1] tracking-tight text-white sm:text-6xl lg:text-7xl">
+            <h2 className="text-5xl font-bold leading-[1.1] tracking-tight text-[#ffffff] sm:text-6xl lg:text-7xl">
               <span className="text-gradient">Turn goals</span> into action
               before teams drift off track.
             </h2>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/40">
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-[#ffffff]/40">
               GoalForge AI actively helps employees achieve goals through adaptive AI
               milestone planning, predictive intelligence, performance coaching, and
               continuous recognition systems.
