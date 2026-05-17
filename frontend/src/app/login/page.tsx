@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { BarChart3, BriefcaseBusiness, UserRound, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -108,14 +109,14 @@ export default function LoginPage() {
         <div className="grid h-full gap-0 lg:grid-cols-[0.9fr_1.2fr]">
           {/* Left Panel: Authentication Forms */}
           <div className="flex h-full flex-col justify-center rounded-t-2xl border-r border-white/[0.06] bg-[var(--gf-surface)] p-8 lg:rounded-none lg:rounded-l-2xl">
-            <div className="flex items-center gap-2">
+            <Link href="/" className="inline-flex items-center gap-2 transition-opacity hover:opacity-80">
               <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-[var(--gf-indigo)] to-[var(--gf-violet)] shadow-lg shadow-[var(--gf-indigo)]/20">
                 <Zap className="h-4 w-4 text-white" />
               </div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--gf-indigo)]">
                 GoalForge AI
               </p>
-            </div>
+            </Link>
             <h1 className="mt-6 text-3xl font-bold leading-tight tracking-tight text-white/90">
               Sign in to your workspace
             </h1>
