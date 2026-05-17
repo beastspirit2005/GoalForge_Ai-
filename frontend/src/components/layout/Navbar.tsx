@@ -238,50 +238,50 @@ export default function Navbar({ user }: NavbarProps) {
       {/* ── User Profile Detail Modal (Custom Premium Modal) ── */}
       {selectedPerson && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/[0.08] bg-[oklch(0.12_0.015_270)] p-6 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200">
+          <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[oklch(0.12_0.015_270)] p-6 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200">
             {/* Close button */}
             <button
               onClick={() => setSelectedPerson(null)}
-              className="absolute right-4 top-4 text-white/40 hover:text-white/80 transition-colors"
+              className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:text-white/40 dark:hover:text-white/80 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
 
             {/* Profile Content */}
             <div className="flex flex-col items-center text-center mt-4 animate-in fade-in-0 slide-in-from-bottom-3 duration-300">
-              <div className={`grid h-20 w-20 place-items-center rounded-2xl bg-gradient-to-br ${selectedPerson.avatarColor} text-2xl font-bold text-white shadow-xl shadow-indigo-500/10`}>
+              <div className={`grid h-20 w-20 place-items-center rounded-2xl bg-gradient-to-br ${selectedPerson.avatarColor} text-2xl font-bold text-white shadow-xl shadow-indigo-500/20`}>
                 {selectedPerson.name.split(" ").map(n => n[0]).join("")}
               </div>
-              <h3 className="mt-4 text-lg font-bold text-white">{selectedPerson.name}</h3>
+              <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">{selectedPerson.name}</h3>
               <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-[var(--gf-indigo)]/10 border border-[var(--gf-indigo)]/20 px-3 py-0.5 text-xs font-semibold text-[var(--gf-indigo)] capitalize">
                 {roleLabel[selectedPerson.role]}
               </span>
 
               {/* Metadata Info Panel */}
-              <div className="mt-6 w-full space-y-3 rounded-xl border border-white/[0.04] bg-white/[0.01] p-4 text-[13px] text-white/60">
+              <div className="mt-6 w-full space-y-3 rounded-xl border border-slate-100 dark:border-white/[0.04] bg-slate-50 dark:bg-white/[0.01] p-4 text-[13px] text-slate-600 dark:text-white/60">
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <Briefcase className="h-4 w-4 text-white/30" /> Department
+                    <Briefcase className="h-4 w-4 text-slate-400 dark:text-white/30" /> Department
                   </span>
-                  <span className="font-semibold text-white/80">{selectedPerson.department}</span>
+                  <span className="font-semibold text-slate-800 dark:text-white/80">{selectedPerson.department}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-white/30" /> Email
+                    <Mail className="h-4 w-4 text-slate-400 dark:text-white/30" /> Email
                   </span>
-                  <span className="font-semibold text-white/80">{selectedPerson.email}</span>
+                  <span className="font-semibold text-slate-800 dark:text-white/80">{selectedPerson.email}</span>
                 </div>
               </div>
 
               {/* Stats Matrix Grid */}
               <div className="mt-4 grid w-full grid-cols-2 gap-3">
-                <div className="rounded-xl border border-white/[0.04] bg-white/[0.02] p-4 text-center">
-                  <span className="text-[11px] uppercase tracking-wider text-white/35 font-semibold">Active Goals</span>
-                  <p className="mt-1 text-2xl font-bold text-white">{selectedPerson.goalsCount}</p>
+                <div className="rounded-xl border border-slate-100 dark:border-white/[0.04] bg-slate-50 dark:bg-white/[0.02] p-4 text-center">
+                  <span className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-white/35 font-semibold">Active Goals</span>
+                  <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{selectedPerson.goalsCount}</p>
                 </div>
-                <div className="rounded-xl border border-white/[0.04] bg-white/[0.02] p-4 text-center">
-                  <span className="text-[11px] uppercase tracking-wider text-white/35 font-semibold">Avg Progress</span>
-                  <p className="mt-1 text-2xl font-bold text-emerald-400">{selectedPerson.avgProgress}%</p>
+                <div className="rounded-xl border border-slate-100 dark:border-white/[0.04] bg-slate-50 dark:bg-white/[0.02] p-4 text-center">
+                  <span className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-white/35 font-semibold">Avg Progress</span>
+                  <p className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">{selectedPerson.avgProgress}%</p>
                 </div>
               </div>
 
@@ -289,9 +289,9 @@ export default function Navbar({ user }: NavbarProps) {
               <div className="mt-6 w-full">
                 <Button
                   onClick={() => setSelectedPerson(null)}
-                  className="w-full h-10 rounded-xl border border-white/10 bg-white/[0.05] text-xs text-white/80 hover:bg-white/[0.08] transition-colors"
+                  className="w-full h-10 rounded-xl bg-gradient-to-r from-[var(--gf-indigo)] to-[var(--gf-violet)] text-xs font-semibold text-white shadow-lg shadow-[var(--gf-indigo)]/25 hover:shadow-[var(--gf-indigo)]/35 transition-all duration-200"
                 >
-                  Close Profile card
+                  Close Profile Card
                 </Button>
               </div>
             </div>
