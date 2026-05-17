@@ -1,0 +1,59 @@
+# ── Render Infrastructure-as-Code Blueprint ──────────────────────────
+# This blueprint specification allows you to deploy the managed
+# PostgreSQL database and FastAPI Python backend service on Render
+# in a single click.
+
+services:
+  # ── FastAPI Backend Web Service ────────────────────────────────────
+  - type: web
+    name: goalforge-backend
+    env: python
+    
+    # Root directory of the backend inside our monorepo
+    rootDir: backend
+    
+    # Command to install python dependencies
+    buildCommand: pip install -r requirements.txt
+    
+    # Command to spin up the FastAPI uvicorn production server
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    
+    # Expose publicly
+    plan: starter
+    
+    envVars:
+      # Link automatically to our managed PostgreSQL database connection string
+      - key: DATABASE_URL
+        fromDatabase:
+          name: goalforge-db
+          property: connectionString
+          
+      # Fallback sync database connection string (if needed for migrations)
+      - key: DATABASE_URL_SYNC
+        fromDatabase:
+          name: goalforge-db
+          property: connectionString
+          
+      # Auto-generate a secure random JWT signing key on deployment
+      - key: SECRET_KEY
+        generateValue: true
+        
+      - key: ALGORITHM
+        value: HS256
+        
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "1440"
+        
+      - key: DEBUG
+        value: "false"
+        
+      # You can add your actual Gemini key in the Render UI dashboard for security
+      - key: GEMINI_API_KEY
+        value: ""
+
+databases:
+  # ── Managed PostgreSQL Database ────────────────────────────────────
+  - name: goalforge-db
+    databaseName: goalforge
+    user: postgres
+    plan: free
