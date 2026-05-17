@@ -1,0 +1,24 @@
+# ── Netlify Configuration for GoalForge AI Monorepo ──────────────────
+# This configuration file automates the build and deployment of the
+# Next.js React frontend when connected to Netlify.
+
+[build]
+  # The base directory where Netlify will look for package.json and dependencies
+  base = "frontend"
+
+  # The command executed to build the Next.js production bundle
+  command = "npm run build"
+
+  # The folder Netlify serves (Next.js default optimized output)
+  publish = ".next"
+
+# ── Plugins ──────────────────────────────────────────────────────────
+# Essential Next.js Plugin to handle API routes, SSR, and dynamic features
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# ── Environment Configuration ────────────────────────────────────────
+[build.environment]
+  # Pin Node.js version to match local development environment
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--legacy-peer-deps"
