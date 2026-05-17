@@ -70,7 +70,7 @@ export default function Home() {
               <Zap className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight">GoalForge AI</h1>
+              <h1 className="text-lg font-bold tracking-tight text-white">GoalForge AI</h1>
               <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">
                 Workforce Intelligence
               </p>
@@ -91,7 +91,7 @@ export default function Home() {
               <CheckCircle2 className="h-4 w-4" />
               AI-Powered Workforce Performance Intelligence
             </div>
-            <h2 className="text-5xl font-bold leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl">
+            <h2 className="text-5xl font-bold leading-[1.1] tracking-tight text-white sm:text-6xl lg:text-7xl">
               <span className="text-gradient">Turn goals</span> into action
               before teams drift off track.
             </h2>
