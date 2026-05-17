@@ -1,10 +1,10 @@
-# 🚀 GoalForge AI
+#  GoalForge AI
 
 **AI-Powered Goal Management & Performance Intelligence Platform**
 
 GoalForge AI is a smart enterprise web platform designed to help organizations manage employee goals, track quarterly progress, and improve overall performance using adaptive AI guidance powered by Google Gemini.
 
-## 🌟 Key Features
+##  Key Features
 
 - **AI Milestone Planning** — Converts vague goals into weekly milestones with success metrics
 - **Goal Refinement** — AI transforms informal goals into measurable enterprise objectives
@@ -15,7 +15,7 @@ GoalForge AI is a smart enterprise web platform designed to help organizations m
 - **Analytics & Visualization** — Progress charts, heatmaps, risk distribution
 - **Audit Trail** — Complete governance log of all changes
 
-## 💻 Tech Stack
+##  Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -27,7 +27,7 @@ GoalForge AI is a smart enterprise web platform designed to help organizations m
 | AI | Google Gemini 1.5 Flash |
 | Auth | JWT (python-jose + bcrypt) |
 
-## 🏃 Quick Start
+##  Quick Start
 
 ### Prerequisites
 - Python 3.11+
@@ -84,7 +84,7 @@ python scripts/seed.py
 - Backend API: http://localhost:8000
 - Swagger Docs: http://localhost:8000/docs
 
-## 🔐 Demo Credentials
+##  Demo Credentials
 
 | Role | Email | Password |
 |------|-------|----------|
@@ -92,7 +92,7 @@ python scripts/seed.py
 | Manager | manager@goalforge.ai | password123 |
 | Admin | admin@goalforge.ai | password123 |
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 GoalForge-Ai/
@@ -121,12 +121,12 @@ GoalForge-Ai/
 └── scripts/             # Setup, seed, deploy scripts
 ```
 
-## 🐳 Docker
+##  Docker
 
 ```bash
 docker-compose up -d
 ```
 
-## 📄 License
+##  License
 
 Built for hackathon demonstration purposes.
