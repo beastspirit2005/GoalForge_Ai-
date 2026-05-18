@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from "react"
 import { useTheme } from "next-themes"
-import { Camera, Moon, Sun, User as UserIcon } from "lucide-react"
+import { Camera, Key, Moon, Sun, User as UserIcon } from "lucide-react"
+import {
+  getGeminiKeyMode,
+  getCustomGeminiKey,
+  setCustomGeminiKey,
+  clearCustomGeminiKey,
+  setGeminiKeyMode,
+  type GeminiKeyMode,
+} from "@/lib/gemini-storage"
+import { listRoleSessionCounts } from "@/lib/chat-history"
 import DashboardLayout from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,6 +40,15 @@ export default function SettingsPage() {
   
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState("")
+  const [geminiMode, setGeminiMode] = useState<GeminiKeyMode>("app")
+  const [geminiKeyDraft, setGeminiKeyDraft] = useState("")
+  const [showGeminiKey, setShowGeminiKey] = useState(false)
+  const [aiKeyMessage, setAiKeyMessage] = useState("")
+
+  useEffect(() => {
+    setGeminiMode(getGeminiKeyMode())
+    setGeminiKeyDraft(getCustomGeminiKey())
+  }, [])
 
   useEffect(() => {
     if (!ready) {
@@ -200,6 +218,91 @@ export default function SettingsPage() {
 
           {/* Preferences Section */}
           <div className="space-y-6">
+            <div className="glass-card rounded-xl p-6">
+              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold dark:text-white/90">
+                <Key className="h-5 w-5 text-emerald-500" />
+                Gemini API key
+              </h2>
+              <p className="mb-4 text-xs text-slate-500 dark:text-white/40">
+                Stored only in this browser. Never uploaded to GoalForge servers.
+              </p>
+              <div className="mb-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearCustomGeminiKey()
+                    setGeminiMode("app")
+                    setGeminiKeyDraft("")
+                    setAiKeyMessage("Using the app Gemini key.")
+                  }}
+                  className={`flex-1 rounded-lg border py-2 text-xs font-semibold ${
+                    geminiMode === "app"
+                      ? "border-[var(--gf-indigo)] bg-[var(--gf-indigo)]/10 text-[var(--gf-indigo)]"
+                      : "border-slate-200 dark:border-white/[0.08] text-slate-500"
+                  }`}
+                >
+                  App key
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGeminiKeyMode("custom")
+                    setGeminiMode("custom")
+                  }}
+                  className={`flex-1 rounded-lg border py-2 text-xs font-semibold ${
+                    geminiMode === "custom"
+                      ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"
+                      : "border-slate-200 dark:border-white/[0.08] text-slate-500"
+                  }`}
+                >
+                  My key (local)
+                </button>
+              </div>
+              {geminiMode === "custom" && (
+                <div className="space-y-2">
+                  <Input
+                    type={showGeminiKey ? "text" : "password"}
+                    value={geminiKeyDraft}
+                    onChange={(e) => setGeminiKeyDraft(e.target.value)}
+                    placeholder="AIza…"
+                    className="h-9 dark:border-white/[0.08] dark:bg-white/[0.04]"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-8 text-xs"
+                      onClick={() => setShowGeminiKey(!showGeminiKey)}
+                    >
+                      {showGeminiKey ? "Hide" : "Show"}
+                    </Button>
+                    <Button
+                      type="button"
+                      className="h-8 flex-1 bg-emerald-600 text-xs text-white hover:bg-emerald-500"
+                      onClick={() => {
+                        setCustomGeminiKey(geminiKeyDraft)
+                        setGeminiMode(getGeminiKeyMode())
+                        setAiKeyMessage("API key saved in this browser only.")
+                      }}
+                    >
+                      Save in browser
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {aiKeyMessage && (
+                <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-400">{aiKeyMessage}</p>
+              )}
+              {authUser?.email && (
+                <p className="mt-4 border-t border-slate-100 pt-3 text-[11px] text-slate-500 dark:border-white/[0.06] dark:text-white/35">
+                  Saved chats:{" "}
+                  {Object.entries(listRoleSessionCounts(authUser.email))
+                    .map(([r, n]) => `${r} (${n})`)
+                    .join(" · ")}
+                </p>
+              )}
+            </div>
+
             <div className="glass-card rounded-xl p-6">
               <h2 className="mb-4 text-lg font-semibold dark:text-white/90">Appearance</h2>
               <div className="flex items-center justify-between">

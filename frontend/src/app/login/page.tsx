@@ -7,6 +7,7 @@ import { BarChart3, BriefcaseBusiness, UserRound, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/hooks/useAuth"
+import { isDemoAuthAllowed } from "@/lib/env"
 import type { DemoRole } from "@/lib/mock-auth"
 
 const roles = [
@@ -63,10 +64,17 @@ export default function LoginPage() {
       }
       const path = await loginWithApi(emailMap[role], "password123")
       router.push(path)
-    } catch (err) {
-      console.warn(`API login failed for role ${role}, falling back to mock:`, err)
-      const path = login(role)
-      router.push(path)
+    } catch (err: unknown) {
+      if (isDemoAuthAllowed()) {
+        console.warn(`API login failed for role ${role}, falling back to mock:`, err)
+        router.push(login(role))
+      } else {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Could not reach the API. Check that the backend is deployed and DATABASE_URL is set on Vercel."
+        )
+      }
     } finally {
       setLoading(false)
     }
@@ -78,20 +86,17 @@ export default function LoginPage() {
     try {
       const path = await loginWithApi(email, password)
       router.push(path)
-    } catch (err: any) {
-      console.warn("API login failed, falling back to mock:", err)
-      
-      // Map typed email to corresponding demo role, fallback to employee
-      let role: DemoRole = "employee"
-      const lowerEmail = email.toLowerCase()
-      if (lowerEmail.includes("manager")) {
-        role = "manager"
-      } else if (lowerEmail.includes("admin")) {
-        role = "admin"
+    } catch (err: unknown) {
+      if (isDemoAuthAllowed()) {
+        console.warn("API login failed, falling back to mock:", err)
+        let role: DemoRole = "employee"
+        const lowerEmail = email.toLowerCase()
+        if (lowerEmail.includes("manager")) role = "manager"
+        else if (lowerEmail.includes("admin")) role = "admin"
+        router.push(login(role))
+      } else {
+        setError(err instanceof Error ? err.message : "Sign-in failed. Please check your email and password.")
       }
-      
-      const path = login(role)
-      router.push(path)
     } finally {
       setLoading(false)
     }
@@ -118,10 +123,13 @@ export default function LoginPage() {
     try {
       const path = await loginWithOtp(phoneNumber, otpCode)
       router.push(path)
-    } catch (err: any) {
-      console.warn("API OTP verification failed, falling back to mock:", err)
-      const path = login("employee")
-      router.push(path)
+    } catch (err: unknown) {
+      if (isDemoAuthAllowed()) {
+        console.warn("API OTP verification failed, falling back to mock:", err)
+        router.push(login("employee"))
+      } else {
+        setError(err instanceof Error ? err.message : "OTP verification failed.")
+      }
     } finally {
       setLoading(false)
     }
@@ -247,10 +255,12 @@ export default function LoginPage() {
           <div className="grid gap-4 p-6 sm:grid-cols-3 lg:p-8 lg:content-center">
             <div className="col-span-full mb-2">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
-                Quick demo access
+                Quick sign-in
               </p>
               <p className="mt-1 text-[12px] text-slate-500 font-medium">
-                Click a role to instantly explore the platform
+                {isDemoAuthAllowed()
+                  ? "Demo fallback if API is offline, or use seeded accounts when API is live."
+                  : "Uses your deployed API (seeded accounts: password123)."}
               </p>
             </div>
             {roles.map((role) => {

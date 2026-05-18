@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.config import settings
 from app.core.database import create_tables
 from fastapi.staticfiles import StaticFiles
 from app.routes.ai_routes import router as ai_router
@@ -44,15 +45,21 @@ async def strip_api_prefix(request, call_next):
     return response
 
 
+_cors_origins = settings.cors_origin_list
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    allow_credentials="*" not in _cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "service": "goalforge-api"}
 
 
 @app.get("/")

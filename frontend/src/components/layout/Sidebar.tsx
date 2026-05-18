@@ -79,19 +79,19 @@ export default function Sidebar({ onClose, isMobile }: SidebarProps = {}) {
 
   return (
     <aside className={cn(
-      "dashboard-sidebar min-h-screen w-72 shrink-0 border-r border-white/[0.06] bg-[oklch(0.11_0.02_270)] p-4 text-white",
+      "dashboard-sidebar min-h-screen w-72 shrink-0 border-r border-slate-200 bg-slate-50 p-4 text-slate-900 dark:border-white/[0.06] dark:bg-[oklch(0.11_0.02_270)] dark:text-white",
       !isMobile && "hidden lg:block"
     )}>
       {/* ── Logo area ── */}
       <Link href="/" className="group block">
-        <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-4 backdrop-blur-lg transition-all duration-300 group-hover:border-white/[0.14] group-hover:bg-white/[0.07]">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-300 group-hover:border-slate-300 dark:border-white/[0.08] dark:bg-white/[0.04] dark:backdrop-blur-lg dark:group-hover:border-white/[0.14] dark:group-hover:bg-white/[0.07]">
           <div className="flex items-center gap-3">
             <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-[var(--gf-indigo)] to-[var(--gf-violet)] shadow-lg shadow-[var(--gf-indigo)]/20">
               <Zap className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="text-sm font-bold tracking-tight text-white">GoalForge AI</p>
-              <p className="text-[11px] text-white/40">Performance Intelligence</p>
+              <p className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">GoalForge AI</p>
+              <p className="text-[11px] text-slate-500 dark:text-white/40">Performance Intelligence</p>
             </div>
           </div>
         </div>
@@ -108,7 +108,7 @@ export default function Sidebar({ onClose, isMobile }: SidebarProps = {}) {
           return (
             <div key={link.href}>
               {showSection && (
-                <p className="mb-1.5 mt-5 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/25">
+                <p className="mb-1.5 mt-5 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-white/25">
                   {link.section}
                 </p>
               )}
@@ -116,15 +116,15 @@ export default function Sidebar({ onClose, isMobile }: SidebarProps = {}) {
                 href={link.href}
                 onClick={onClose}
                 className={cn(
-                  "group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-white/50 transition-all duration-200 hover:bg-white/[0.06] hover:text-white/80",
+                  "group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-slate-600 transition-all duration-200 hover:bg-slate-200/80 hover:text-slate-900 dark:text-white/50 dark:hover:bg-white/[0.06] dark:hover:text-white/80",
                   active &&
-                    "bg-gradient-to-r from-[var(--gf-indigo)]/15 to-transparent border border-[var(--gf-indigo)]/20 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+                    "border border-[var(--gf-indigo)]/25 bg-gradient-to-r from-[var(--gf-indigo)]/15 to-transparent text-slate-900 shadow-[inset_0_1px_0_rgba(0,0,0,0.04)] dark:text-white dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
                 )}
               >
                 <Icon
                   className={cn(
                     "h-4 w-4 transition-colors",
-                    active ? "text-[var(--gf-indigo)]" : "text-white/30 group-hover:text-white/60"
+                    active ? "text-[var(--gf-indigo)]" : "text-slate-400 group-hover:text-slate-600 dark:text-white/30 dark:group-hover:text-white/60"
                   )}
                 />
                 <span>{link.title}</span>
@@ -139,14 +139,14 @@ export default function Sidebar({ onClose, isMobile }: SidebarProps = {}) {
 
       {/* ── User card ── */}
       {user ? (
-        <div className="mt-6 rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 backdrop-blur-lg">
+        <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/[0.06] dark:bg-white/[0.03] dark:backdrop-blur-lg">
           <div className="flex items-center gap-3">
             <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-[var(--gf-cyan)] to-[var(--gf-indigo)] text-[11px] font-bold text-white shadow-lg">
               {user.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-white/90">{user.name}</p>
-              <p className="text-[11px] capitalize text-white/35">
+              <p className="truncate text-sm font-semibold text-slate-900 dark:text-white/90">{user.name}</p>
+              <p className="text-[11px] capitalize text-slate-500 dark:text-white/35">
                 {"role" in user ? user.role : ""}
               </p>
             </div>
@@ -156,7 +156,7 @@ export default function Sidebar({ onClose, isMobile }: SidebarProps = {}) {
 
       <Link
         href="/login"
-        className="mt-4 flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-[13px] font-medium text-white/40 transition-all duration-200 hover:border-white/[0.12] hover:bg-white/[0.06] hover:text-white/70"
+        className="mt-4 flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-[13px] font-medium text-slate-500 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-white/40 dark:hover:border-white/[0.12] dark:hover:bg-white/[0.06] dark:hover:text-white/70"
       >
         <LogIn className="h-4 w-4" />
         Switch role

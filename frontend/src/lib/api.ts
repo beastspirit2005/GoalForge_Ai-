@@ -1,13 +1,28 @@
-const getApiUrl = () => {
+import { isVercelDeployment } from "./env"
+
+/** Resolve API base URL for browser and SSR (Vercel, Render, local). */
+export function getApiUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "")
+  if (explicit) return explicit
+
+  // Browser: same-origin /api (Vercel monorepo or Next rewrite proxy)
   if (typeof window !== "undefined") {
-    // Client-side: use relative path so requests flow through the Next.js port 3000 proxy, bypassing the firewall.
     return "/api"
   }
-  // Server-side (SSR / Server Components): call the local backend directly on port 8001.
-  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001"
+
+  // SSR on Vercel: hit the deployed API route on the same host
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}/api`
+  }
+
+  return "http://localhost:8001"
 }
 
 const API_URL = getApiUrl()
+
+const API_TIMEOUT_MS =
+  Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS) ||
+  (isVercelDeployment() ? 25000 : 10000)
 
 type RequestOptions = {
   method?: string
@@ -28,10 +43,12 @@ export async function apiFetch<T = unknown>(
   }
 
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 2000)
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
+
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`
 
   try {
-    const res = await fetch(`${API_URL}${path}`, {
+    const res = await fetch(`${API_URL}${normalizedPath}`, {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
@@ -42,16 +59,25 @@ export async function apiFetch<T = unknown>(
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: res.statusText }))
-      throw new Error(err.detail || "API request failed")
+      const detail = err.detail
+      const message =
+        typeof detail === "string"
+          ? detail
+          : Array.isArray(detail)
+            ? detail.map((d: { msg?: string }) => d.msg).filter(Boolean).join(", ")
+            : "API request failed"
+      throw new Error(message || "API request failed")
     }
 
     if (res.status === 204) return undefined as T
 
     return res.json()
-  } catch (err: any) {
+  } catch (err: unknown) {
     clearTimeout(timeoutId)
-    if (err.name === "AbortError") {
-      throw new Error("Network request timed out")
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error(
+        "Request timed out. If this is your first visit, the server may still be waking up — try again."
+      )
     }
     throw err
   }

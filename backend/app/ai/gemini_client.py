@@ -28,8 +28,9 @@ def fallback_ai_plan(goal_data: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def generate_ai_plan(goal_data):
-    if not settings.GEMINI_API_KEY:
+def generate_ai_plan(goal_data, api_key: str | None = None):
+    active_key = api_key or settings.GEMINI_API_KEY
+    if not active_key:
         return fallback_ai_plan(goal_data)
 
     prompt = milestone_prompt(
@@ -42,7 +43,7 @@ def generate_ai_plan(goal_data):
     try:
         import google.generativeai as genai
 
-        genai.configure(api_key=settings.GEMINI_API_KEY)
+        genai.configure(api_key=active_key)
         model = genai.GenerativeModel("gemini-2.0-flash")
         response = model.generate_content(prompt)
         raw_response = response.text.strip()
@@ -70,9 +71,10 @@ def generate_ai_plan(goal_data):
         return plan
 
 
-def refine_goal(raw_goal: str) -> dict:
+def refine_goal(raw_goal: str, api_key: str | None = None) -> dict:
     """Refine a vague goal into a measurable enterprise goal."""
-    if not settings.GEMINI_API_KEY:
+    active_key = api_key or settings.GEMINI_API_KEY
+    if not active_key:
         return {
             "refined_title": raw_goal.strip()[:80],
             "refined_description": f"Achieve measurable progress on: {raw_goal}",
@@ -85,7 +87,7 @@ def refine_goal(raw_goal: str) -> dict:
     try:
         import google.generativeai as genai
 
-        genai.configure(api_key=settings.GEMINI_API_KEY)
+        genai.configure(api_key=active_key)
         model = genai.GenerativeModel("gemini-2.0-flash")
         response = model.generate_content(prompt)
         raw = response.text.strip()
@@ -154,7 +156,7 @@ async def call_ollama(prompt: str, model: str) -> str:
         raise Exception(f"Failed to connect to local Ollama at {url}: {str(exc)}")
 
 
-async def ai_buddy_chat(query: str, context: str, provider: str = "gemini", model: str | None = None) -> dict:
+async def ai_buddy_chat(query: str, context: str, provider: str = "gemini", model: str | None = None, api_key: str | None = None) -> dict:
     """Chat with Ai Buddy using the specified provider ('gemini' | 'ollama' | 'fallback')."""
     if provider == "ollama":
         try:
@@ -212,7 +214,8 @@ async def ai_buddy_chat(query: str, context: str, provider: str = "gemini", mode
         }
         
     else:  # Default: gemini
-        if not settings.GEMINI_API_KEY:
+        active_key = api_key or settings.GEMINI_API_KEY
+        if not active_key:
             return {
                 "response": (
                     "**Gemini API Key Missing**: No API key was found in the configuration.\n\n"
@@ -224,7 +227,7 @@ async def ai_buddy_chat(query: str, context: str, provider: str = "gemini", mode
         prompt = ai_buddy_prompt(query, context)
         try:
             import google.generativeai as genai
-            genai.configure(api_key=settings.GEMINI_API_KEY)
+            genai.configure(api_key=active_key)
             
             # Use thread pool executor to prevent blocking FastAPI's event loop
             import asyncio

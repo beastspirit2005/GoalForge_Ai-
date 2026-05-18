@@ -35,6 +35,16 @@ async def get_models():
     return {"models": models}
 
 
+@router.get("/copilot-context")
+async def copilot_context(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Return role-based copilot context only (no Gemini call). Used when the client uses a browser-stored API key."""
+    context = await get_copilot_context(db, current_user)
+    return {"context": context, "role": current_user.role}
+
+
 @router.post("/copilot", response_model=CopilotResponse)
 async def copilot(data: CopilotRequest, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Chat with Ai Buddy."""

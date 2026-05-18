@@ -1,5 +1,15 @@
 import os
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
+
+
+def _normalize_async_db_url(url: str) -> str:
+    """Render/Heroku provide postgresql:// — SQLAlchemy async needs postgresql+asyncpg://."""
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+asyncpg://", 1)
+    return url
 
 
 class Settings(BaseSettings):
@@ -17,6 +27,9 @@ class Settings(BaseSettings):
     # Gemini AI Core Config
     GEMINI_API_KEY: str = ""
 
+    # Comma-separated browser origins for CORS (Vercel preview + production URLs)
+    CORS_ORIGINS: str = ""
+
     # Base Application Config
     APP_NAME: str = "GoalForge AI"
     DEBUG: bool = True
@@ -24,6 +37,22 @@ class Settings(BaseSettings):
     class Config:
         env_file = (".env", "../.env")
         extra = "ignore"
+
+    @model_validator(mode="after")
+    def normalize_db_urls(self):
+        self.DATABASE_URL = _normalize_async_db_url(self.DATABASE_URL)
+        if self.DATABASE_URL.startswith("postgresql+asyncpg://"):
+            self.DATABASE_URL_SYNC = self.DATABASE_URL.replace(
+                "postgresql+asyncpg://", "postgresql://", 1
+            )
+        return self
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        raw = (self.CORS_ORIGINS or os.getenv("FRONTEND_URL", "")).strip()
+        if not raw:
+            return ["*"]
+        return [o.strip().rstrip("/") for o in raw.split(",") if o.strip()]
 
 
 settings = Settings()

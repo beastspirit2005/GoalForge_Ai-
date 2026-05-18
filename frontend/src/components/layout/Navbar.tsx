@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { Bell, LogOut, Search, Sparkles, User, Briefcase, Mail, CheckCircle2, TrendingUp, X, Menu } from "lucide-react"
+import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -189,6 +190,7 @@ export default function Navbar({ user, onOpenMobileMenu }: NavbarProps) {
           )}
         </div>
 
+        <ThemeToggle />
         <Button
           size="icon"
           variant="outline"
@@ -225,6 +227,7 @@ export default function Navbar({ user, onOpenMobileMenu }: NavbarProps) {
       </div>
 
       <div className="flex items-center gap-2 md:hidden">
+        <ThemeToggle />
         <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-lg bg-gradient-to-br from-[var(--gf-cyan)] to-[var(--gf-indigo)] text-[11px] font-bold text-white">
           {user.profile_picture_url || user.avatar ? (
             <img src={user.profile_picture_url || user.avatar} alt="Avatar" className="h-full w-full object-cover" />
