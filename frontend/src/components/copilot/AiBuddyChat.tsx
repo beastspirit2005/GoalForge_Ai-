@@ -129,6 +129,26 @@ export function AiBuddyChat() {
     if (savedOllama) setSelectedOllamaModel(savedOllama)
     setGeminiKeyModeState(getGeminiKeyMode())
     setCustomKeyInput(getCustomGeminiKey())
+
+    // Listen for storage changes (when key is updated in Settings)
+    const handleStorageChange = () => {
+      setGeminiKeyModeState(getGeminiKeyMode())
+      setCustomKeyInput(getCustomGeminiKey())
+    }
+
+    // Listen for window focus (when returning from Settings tab)
+    const handleFocus = () => {
+      setGeminiKeyModeState(getGeminiKeyMode())
+      setCustomKeyInput(getCustomGeminiKey())
+    }
+
+    window.addEventListener("storage", handleStorageChange)
+    window.addEventListener("focus", handleFocus)
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+      window.removeEventListener("focus", handleFocus)
+    }
   }, [])
 
   useEffect(() => {
@@ -146,8 +166,11 @@ export function AiBuddyChat() {
 
   useEffect(() => {
     const fetchModels = async () => {
+      // Only fetch models if backend is available
       try {
         const token = getStoredToken()
+        if (!token) return // Skip if not logged in
+        
         const res = await apiFetch<{ models: string[] }>("/ai/models", { token })
         if (res.models?.length) {
           setOllamaModels(res.models)
@@ -156,19 +179,8 @@ export function AiBuddyChat() {
           }
         }
       } catch {
-        try {
-          const directRes = await fetch("http://localhost:11434/api/tags")
-          if (directRes.ok) {
-            const data = await directRes.json()
-            const names = data.models?.map((m: { name: string }) => m.name) ?? []
-            if (names.length) {
-              setOllamaModels(names)
-              if (!localStorage.getItem("aiBuddyOllamaModel")) setSelectedOllamaModel(names[0])
-            }
-          }
-        } catch {
-          /* ignore */
-        }
+        // Silently fail - Ollama is optional
+        console.log('[AI Buddy] Backend not available, Ollama models not loaded')
       }
     }
     fetchModels()
@@ -205,7 +217,8 @@ export function AiBuddyChat() {
   const runBackendCopilot = async (
     query: string,
     provider: "gemini" | "ollama" | "fallback",
-    model?: string
+    model?: string,
+    apiKey?: string
   ) => {
     const token = getStoredToken()
     return apiFetch<{ response: string; source: string }>("/ai/copilot", {
@@ -216,6 +229,7 @@ export function AiBuddyChat() {
         context: "",
         provider,
         model: provider === "ollama" ? model : undefined,
+        api_key: apiKey || undefined,
       },
     })
   }
@@ -299,15 +313,20 @@ export function AiBuddyChat() {
     try {
       let res: { response: string; source: string }
 
-      if (activeProvider === "gemini" && geminiKeyMode === "custom" && getCustomGeminiKey()) {
-        res = await runGeminiWithCustomKey(userMessage)
-      } else {
-        res = await runBackendCopilot(
-          userMessage,
-          activeProvider,
-          activeProvider === "ollama" ? selectedOllamaModel : undefined
-        )
-      }
+      const customKey = getCustomGeminiKey()
+      console.log('[AI Buddy] Provider:', activeProvider)
+      console.log('[AI Buddy] Key Mode:', geminiKeyMode)
+      console.log('[AI Buddy] Has Custom Key:', !!customKey)
+      
+      const sendKey = (activeProvider === "gemini" && geminiKeyMode === "custom" && customKey) ? customKey : undefined
+      
+      console.log('[AI Buddy] Using backend copilot with key override:', !!sendKey)
+      res = await runBackendCopilot(
+        userMessage,
+        activeProvider,
+        activeProvider === "ollama" ? selectedOllamaModel : undefined,
+        sendKey
+      )
 
       applyMessages(
         [...withUser, { role: "assistant", content: res.response, source: res.source }],
@@ -371,20 +390,20 @@ export function AiBuddyChat() {
 
     try {
       let res: { response: string; source: string }
-      if (newProvider === "gemini" && geminiKeyMode === "custom" && getCustomGeminiKey()) {
-        res = await runGeminiWithCustomKey(lastQuery)
-      } else {
-        let localModel = selectedOllamaModel
-        if (newProvider === "ollama" && !localModel && ollamaModels.length > 0) {
-          localModel = ollamaModels[0]
-          setSelectedOllamaModel(localModel)
-        }
-        res = await runBackendCopilot(
-          lastQuery,
-          newProvider,
-          newProvider === "ollama" ? localModel : undefined
-        )
+      const customKey = getCustomGeminiKey()
+      const sendKey = (newProvider === "gemini" && geminiKeyMode === "custom" && customKey) ? customKey : undefined
+
+      let localModel = selectedOllamaModel
+      if (newProvider === "ollama" && !localModel && ollamaModels.length > 0) {
+        localModel = ollamaModels[0]
+        setSelectedOllamaModel(localModel)
       }
+      res = await runBackendCopilot(
+        lastQuery,
+        newProvider,
+        newProvider === "ollama" ? localModel : undefined,
+        sendKey
+      )
       applyMessages([...messages, { role: "assistant", content: res.response, source: res.source }])
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error"

@@ -24,12 +24,17 @@ export async function geminiChatFromBrowser(
   apiKey?: string
 ): Promise<{ response: string; source: string }> {
   const key = (apiKey || getCustomGeminiKey()).trim()
+  
+  console.log('[Gemini Browser] Using custom key:', key ? `${key.substring(0, 10)}...` : 'NONE')
+  
   if (!key) {
     throw new Error("No custom Gemini API key found in this browser.")
   }
 
   const prompt = buildBuddyPrompt(query, context)
   const url = `${GEMINI_BASE}/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(key)}`
+  
+  console.log('[Gemini Browser] Making request to:', GEMINI_BASE)
 
   const res = await fetch(url, {
     method: "POST",
@@ -41,7 +46,22 @@ export async function geminiChatFromBrowser(
 
   if (!res.ok) {
     const errBody = await res.text().catch(() => "")
-    throw new Error(errBody || `Gemini request failed (${res.status})`)
+    let errorMessage = `Gemini API request failed (${res.status})`
+    
+    // Try to parse error details
+    try {
+      const errorData = JSON.parse(errBody)
+      if (errorData.error?.message) {
+        errorMessage = errorData.error.message
+      }
+    } catch {
+      // If not JSON, use raw error body
+      if (errBody) {
+        errorMessage = errBody.substring(0, 200) // Limit error message length
+      }
+    }
+    
+    throw new Error(errorMessage)
   }
 
   const data = (await res.json()) as {

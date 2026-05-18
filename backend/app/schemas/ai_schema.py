@@ -32,6 +32,8 @@ class CopilotRequest(BaseModel):
     context: str = ""
     provider: str = "gemini"  # "gemini" | "ollama" | "fallback"
     model: str | None = None  # Specific Ollama model name, if selected
+    api_key: str | None = None
+
 
 
 class CopilotResponse(BaseModel):

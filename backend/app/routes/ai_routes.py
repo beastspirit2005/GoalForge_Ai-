@@ -52,7 +52,13 @@ async def copilot(data: CopilotRequest, db: AsyncSession = Depends(get_db), curr
     if not context:
         context = await get_copilot_context(db, current_user)
         
-    result = await ai_buddy_chat(data.query, context, provider=data.provider, model=data.model)
+    result = await ai_buddy_chat(
+        data.query,
+        context,
+        provider=data.provider,
+        model=data.model,
+        api_key=data.api_key
+    )
     return CopilotResponse(**result)
 
 
