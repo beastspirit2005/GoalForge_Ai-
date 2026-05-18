@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowRight, Plus, Sparkles, TrendingUp, Zap } from "lucide-react"
 import GoalProgress from "@/components/dashboard/GoalProgress"
@@ -13,6 +14,18 @@ import { useAuth } from "@/hooks/useAuth"
 export default function EmployeeDashboardPage() {
   const { user } = useAuth()
   const displayName = user?.name || "Employee"
+  const [greeting, setGreeting] = useState("Hello")
+
+  useEffect(() => {
+    const hour = new Date().getHours()
+    if (hour < 12) {
+      setGreeting("Good morning")
+    } else if (hour < 17) {
+      setGreeting("Good afternoon")
+    } else {
+      setGreeting("Good evening")
+    }
+  }, [])
 
   return (
     <DashboardLayout>
@@ -32,7 +45,7 @@ export default function EmployeeDashboardPage() {
                 </p>
               </div>
               <h1 className="mt-3 text-3xl font-bold tracking-tight text-white lg:text-4xl">
-                Good morning, {displayName}
+                {greeting}, {displayName}
               </h1>
               <p className="mt-2 max-w-xl text-[14px] leading-6 text-white/40">
                 Your onboarding goal is healthy. The AI coach recommends closing
