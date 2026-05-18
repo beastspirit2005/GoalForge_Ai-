@@ -38,6 +38,7 @@ export function AiBuddyChat() {
   const [activeProvider, setActiveProvider] = useState<"gemini" | "ollama" | "fallback">("gemini")
   const [ollamaModels, setOllamaModels] = useState<string[]>([])
   const [selectedOllamaModel, setSelectedOllamaModel] = useState<string>("")
+  const [ollamaEndpoint, setOllamaEndpoint] = useState<string>("http://localhost:11434")
   
   // Privacy & Chat Caching Controls
   const [saveHistory, setSaveHistory] = useState(true)
@@ -47,6 +48,13 @@ export function AiBuddyChat() {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
+
+  // Save custom Ollama endpoint to localStorage when updated
+  useEffect(() => {
+    if (ollamaEndpoint) {
+      localStorage.setItem("aiBuddyOllamaEndpoint", ollamaEndpoint)
+    }
+  }, [ollamaEndpoint])
 
   // Load preferences and models on mount
   useEffect(() => {
@@ -62,8 +70,12 @@ export function AiBuddyChat() {
       setSelectedOllamaModel(savedOllama)
     }
 
-    // 3. Fetch pulled local Ollama models from backend
-    const fetchModels = async () => {
+    // 3. Load custom Ollama API endpoint
+    const savedEndpoint = localStorage.getItem("aiBuddyOllamaEndpoint") || "http://localhost:11434"
+    setOllamaEndpoint(savedEndpoint)
+
+    // 4. Fetch pulled local Ollama models from backend or custom endpoint fallback
+    const fetchModels = async (endpointToUse: string) => {
       try {
         const token = getStoredToken()
         const res = await apiFetch<{ models: string[] }>("/ai/models", { token })
@@ -75,9 +87,10 @@ export function AiBuddyChat() {
           }
         }
       } catch (err) {
-        console.warn("Failed to load local Ollama models from backend, trying direct browser query to localhost:11434:", err)
+        console.warn("Failed to load local Ollama models from backend, trying direct browser query:", err)
         try {
-          const directRes = await fetch("http://localhost:11434/api/tags")
+          const cleanEndpoint = endpointToUse.replace(/\/$/, "")
+          const directRes = await fetch(`${cleanEndpoint}/api/tags`)
           if (directRes.ok) {
             const data = await directRes.json()
             if (data.models && data.models.length > 0) {
@@ -89,11 +102,11 @@ export function AiBuddyChat() {
             }
           }
         } catch (directErr) {
-          console.error("Direct browser fetch to local Ollama failed:", directErr)
+          console.error("Direct browser fetch to custom Ollama endpoint failed:", directErr)
         }
       }
     }
-    fetchModels()
+    fetchModels(savedEndpoint)
 
     // Listen to clear chat triggers
     const handleClear = () => {
@@ -219,7 +232,8 @@ export function AiBuddyChat() {
     } catch (err: any) {
       if (activeProvider === "ollama" && selectedOllamaModel) {
         try {
-          const directRes = await fetch("http://localhost:11434/api/generate", {
+          const cleanEndpoint = ollamaEndpoint.replace(/\/$/, "")
+          const directRes = await fetch(`${cleanEndpoint}/api/generate`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -290,7 +304,8 @@ export function AiBuddyChat() {
     } catch (err: any) {
       if (newProvider === "ollama" && localModel) {
         try {
-          const directRes = await fetch("http://localhost:11434/api/generate", {
+          const cleanEndpoint = ollamaEndpoint.replace(/\/$/, "")
+          const directRes = await fetch(`${cleanEndpoint}/api/generate`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -449,31 +464,50 @@ export function AiBuddyChat() {
               </div>
 
               {activeProvider === "ollama" && (
-                <div className="space-y-1.5 animate-in fade-in duration-200">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <Sliders className="h-3.5 w-3.5 text-indigo-400" />
-                    Select Local Model
-                  </label>
-                  {ollamaModels.length > 0 ? (
-                    <select
-                      value={selectedOllamaModel}
-                      onChange={(e) => setSelectedOllamaModel(e.target.value)}
+                <div className="space-y-3 animate-in fade-in duration-200">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                      <Cpu className="h-3.5 w-3.5 text-indigo-400" />
+                      Ollama API Endpoint URL
+                    </label>
+                    <input
+                      type="text"
+                      value={ollamaEndpoint}
+                      onChange={(e) => setOllamaEndpoint(e.target.value)}
+                      placeholder="http://localhost:11434"
                       className="w-full h-9 rounded-lg border border-slate-800 bg-slate-900 px-3 py-1 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    >
-                      {ollamaModels.map((m) => (
-                        <option key={m} value={m}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <div className="text-[11px] text-amber-300 border border-amber-500/20 bg-amber-500/5 p-3 rounded-lg flex items-start gap-2 leading-relaxed">
-                      <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-400" />
-                      <span>
-                        No pulled local models detected! Make sure Ollama is running (`ollama serve`) and you have pulled a model (e.g. `ollama pull gemma2:2b` or `ollama pull phi3`).
-                      </span>
-                    </div>
-                  )}
+                    />
+                    <p className="text-[9px] text-slate-500 leading-normal">
+                      Ex: Use <code className="text-slate-400">http://localhost:11434</code>. For mobile access, use your computer's Wi-Fi IP. For cloud (Vercel) bypass of mixed content, run a secure tunnel like <code className="text-indigo-400 font-semibold">npx localtunnel --port 11434</code> and paste the HTTPS URL here!
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                      <Sliders className="h-3.5 w-3.5 text-indigo-400" />
+                      Select Local Model
+                    </label>
+                    {ollamaModels.length > 0 ? (
+                      <select
+                        value={selectedOllamaModel}
+                        onChange={(e) => setSelectedOllamaModel(e.target.value)}
+                        className="w-full h-9 rounded-lg border border-slate-800 bg-slate-900 px-3 py-1 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      >
+                        {ollamaModels.map((m) => (
+                          <option key={m} value={m}>
+                            {m}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="text-[11px] text-amber-300 border border-amber-500/20 bg-amber-500/5 p-3 rounded-lg flex items-start gap-2 leading-relaxed">
+                        <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-400" />
+                        <span>
+                          No pulled local models detected! Make sure Ollama is running (`ollama serve`) and you have pulled a model (e.g. `ollama pull gemma2:2b` or `ollama pull phi3`).
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
