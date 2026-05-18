@@ -32,6 +32,18 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
+# Strip /api prefix when routed through Vercel's proxy
+@app.middleware("http")
+async def strip_api_prefix(request, call_next):
+    path = request.scope.get("path", "")
+    if path.startswith("/api"):
+        # Internally route to the path without /api
+        request.scope["path"] = path[len("/api"):]
+    response = await call_next(request)
+    return response
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
