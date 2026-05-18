@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: goalforge
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
     volumes:
@@ -26,7 +26,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:root@db:5432/goalforge
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/goalforge
       SECRET_KEY: ${SECRET_KEY:-goalforge-super-secret-change-in-production}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       OLLAMA_HOST: http://ollama:11434
