@@ -15,227 +15,194 @@ import { Button } from "@/components/ui/button"
 
 const features = [
   {
-    title: "AI milestone planning",
-    body: "Convert vague goals into weekly milestones, owner actions, and success metrics.",
+    title: "AI Milestone Planning",
+    body: "Convert vague goals into weekly milestones, owner actions, and clear success metrics.",
     icon: Brain,
-    gradient: "from-[var(--gf-indigo)] to-[var(--gf-violet)]",
   },
   {
-    title: "Risk prediction",
-    body: "Spot slow-moving goals before deadline week with smart heuristic-based predictions.",
+    title: "Risk Prediction",
+    body: "Spot slow-moving goals before deadline week with smart heuristic-based health alerts.",
     icon: ShieldAlert,
-    gradient: "from-[var(--gf-rose)] to-[var(--gf-amber)]",
   },
   {
-    title: "Performance intelligence",
-    body: "Monthly, quarterly, and yearly performance tracking with AI-generated narratives.",
+    title: "Performance Intelligence",
+    body: "Monthly, quarterly, and yearly performance tracking with clear AI-generated insights.",
     icon: Activity,
-    gradient: "from-[var(--gf-emerald)] to-[var(--gf-cyan)]",
   },
   {
-    title: "Employee recognition",
-    body: "Leaderboards, badges, streaks, and trophies that celebrate consistent execution.",
+    title: "Employee Recognition",
+    body: "Celebrate consistent execution with leaderboard achievements, streaks, and trophies.",
     icon: Trophy,
-    gradient: "from-[var(--gf-amber)] to-[var(--gf-rose)]",
   },
   {
-    title: "Predictive analytics",
-    body: "Completion probability, burnout risk, and delayed goal detection using smart heuristics.",
+    title: "Predictive Analytics",
+    body: "Analyze completion probability, team burnout risk, and delayed goal detection.",
     icon: BarChart3,
-    gradient: "from-[var(--gf-cyan)] to-[var(--gf-indigo)]",
   },
   {
-    title: "AI performance copilot",
-    body: "Built-in AI assistant for goal coaching, prioritization, and team summaries.",
+    title: "AI Performance Copilot",
+    body: "A built-in performance assistant for goal coaching, prioritization, and summaries.",
     icon: Sparkles,
-    gradient: "from-[var(--gf-violet)] to-[var(--gf-indigo)]",
   },
 ]
 
 export default function Home() {
   return (
-    <main className="fixed-dark min-h-screen overflow-hidden bg-[oklch(0.11_0.015_270)] text-[#ffffff]">
-      {/* Blurred background aesthetic elements */}
-      <div className="pointer-events-none fixed inset-0">
-        <div className="absolute -left-40 top-20 h-96 w-96 rounded-full bg-[var(--gf-indigo)]/8 blur-[120px]" />
-        <div className="absolute right-0 top-1/3 h-80 w-80 rounded-full bg-[var(--gf-violet)]/6 blur-[100px]" />
-        <div className="absolute bottom-20 left-1/3 h-72 w-72 rounded-full bg-[var(--gf-cyan)]/5 blur-[100px]" />
+    <main className="min-h-screen bg-[#030712] text-slate-100 selection:bg-indigo-500/30">
+      {/* Subtle Background Glow */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -left-40 -top-40 h-[600px] w-[600px] rounded-full bg-indigo-950/15 blur-[150px]" />
+        <div className="absolute right-0 top-1/4 h-[500px] w-[500px] rounded-full bg-violet-950/10 blur-[130px]" />
       </div>
 
-      <section className="relative grid min-h-screen content-between px-6 py-6 sm:px-10 lg:px-16">
-        {/* Header navigation bar */}
-        <nav className="flex items-center justify-between">
+      <div className="relative mx-auto max-w-7xl px-6 py-6 sm:px-8 lg:px-12 flex flex-col min-h-screen justify-between">
+        {/* Navigation */}
+        <nav className="flex items-center justify-between border-b border-slate-900 pb-5">
           <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-[var(--gf-indigo)] to-[var(--gf-violet)] shadow-lg shadow-[var(--gf-indigo)]/20">
-              <Zap className="h-5 w-5 text-[#ffffff]" />
+            <div className="grid h-9 w-9 place-items-center rounded-lg bg-indigo-600/10 border border-indigo-500/20 text-indigo-400">
+              <Zap className="h-4.5 w-4.5" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-[#ffffff]">GoalForge AI</h1>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[#ffffff]/30">
-                Workforce Intelligence
-              </p>
+              <h1 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+                GoalForge <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">AI</span>
+              </h1>
             </div>
           </div>
           <Button
             asChild
-            className="h-9 gap-2 rounded-lg bg-white/[0.08] text-[13px] text-[#ffffff]/80 backdrop-blur-lg hover:bg-white/[0.14]"
+            variant="ghost"
+            className="h-8.5 rounded-lg border border-slate-800 bg-slate-900/50 hover:bg-slate-800 hover:text-white text-xs font-semibold px-4 transition-all"
           >
-            <Link href="/login">Open platform</Link>
+            <Link href="/login">Sign In</Link>
           </Button>
         </nav>
 
-        {/* Hero section */}
-        <div className="grid gap-12 py-14 lg:grid-cols-[minmax(0,1fr)_520px] lg:items-center">
-          <div className="max-w-4xl">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--gf-indigo)]/20 bg-[var(--gf-indigo)]/8 px-4 py-1.5 text-[13px] text-[var(--gf-indigo)] shadow-lg shadow-[var(--gf-indigo)]/10">
-              <CheckCircle2 className="h-4 w-4" />
-              AI-Powered Workforce Performance Intelligence
+        {/* Hero Area */}
+        <div className="grid gap-12 py-16 lg:grid-cols-[1fr_420px] lg:items-center">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/10 bg-indigo-500/5 px-3 py-1 text-[11px] font-semibold text-indigo-400 tracking-wide uppercase">
+              <Sparkles className="h-3.5 w-3.5" />
+              Workforce Intelligence
             </div>
-            <h2 className="text-5xl font-bold leading-[1.1] tracking-tight text-[#ffffff] sm:text-6xl lg:text-7xl">
-              <span className="text-gradient">Turn goals</span> into action
-              before teams drift off track.
+            <h2 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
+              Turn Goals into <br />
+              <span className="bg-gradient-to-r from-indigo-400 via-indigo-200 to-violet-400 bg-clip-text text-transparent">Consistent Execution.</span>
             </h2>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-[#ffffff]/40">
-              GoalForge AI actively helps employees achieve goals through adaptive AI
-              milestone planning, predictive intelligence, performance coaching, and
-              continuous recognition systems.
+            <p className="max-w-xl text-sm leading-relaxed text-slate-400">
+              GoalForge AI helps teams achieve objectives through clean, automated milestone generation, heuristic risk predictions, and a dedicated performance copilot.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-wrap gap-3 pt-2">
               <Button
                 asChild
-                className="h-12 gap-2 rounded-xl bg-gradient-to-r from-[var(--gf-indigo)] to-[var(--gf-violet)] text-white shadow-lg shadow-[var(--gf-indigo)]/25 transition-all hover:shadow-[var(--gf-indigo)]/35"
+                className="h-10.5 px-5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-lg shadow-indigo-600/15"
               >
-                <Link href="/employee/dashboard">
-                  Start employee demo
-                  <ArrowRight className="h-4 w-4" />
+                <Link href="/employee/dashboard" className="flex items-center gap-1.5">
+                  Launch Employee Demo
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </Button>
               <Button
                 asChild
-                className="h-12 rounded-xl border border-white/10 bg-white/[0.05] text-white/70 backdrop-blur-lg hover:bg-white/[0.08]"
+                className="h-10.5 px-5 rounded-lg border border-slate-800 bg-slate-900/50 hover:bg-slate-800 hover:text-white text-slate-400 font-semibold text-xs transition-all"
               >
-                <Link href="/manager/dashboard">View manager console</Link>
+                <Link href="/manager/dashboard">Manager Console</Link>
               </Button>
             </div>
           </div>
 
-          {/* Live data preview widget */}
-          <div className="glass-panel p-5 shadow-2xl">
-            <div className="rounded-xl border border-white/[0.06] bg-[var(--gf-surface)] p-5">
-              <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">
-                    Execution health
-                  </p>
-                  <p className="mt-1 text-lg font-semibold text-white/90">Q2 Goal Cycle</p>
-                </div>
-                <div className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[12px] font-medium text-emerald-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_theme(colors.emerald.400/0.6)]" />
-                  Live
-                </div>
+          {/* Clean Dashboard Status Preview */}
+          <div className="rounded-xl border border-slate-800 bg-slate-950/40 backdrop-blur-md p-5 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-900 pb-3">
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                  Execution Health
+                </p>
+                <p className="mt-0.5 text-sm font-bold text-slate-200">Q2 Goal Cycle</p>
               </div>
-              <div className="mt-5 grid grid-cols-3 gap-3 text-center">
-                <div className="rounded-xl bg-gradient-to-br from-[var(--gf-indigo)]/20 to-[var(--gf-indigo)]/5 p-4">
-                  <p className="text-2xl font-bold text-white">78%</p>
-                  <p className="mt-1 text-[10px] text-white/35">completion</p>
-                </div>
-                <div className="rounded-xl bg-gradient-to-br from-[var(--gf-cyan)]/20 to-[var(--gf-cyan)]/5 p-4">
-                  <p className="text-2xl font-bold text-white">41</p>
-                  <p className="mt-1 text-[10px] text-white/35">AI plans</p>
-                </div>
-                <div className="rounded-xl bg-gradient-to-br from-[var(--gf-amber)]/20 to-[var(--gf-amber)]/5 p-4">
-                  <p className="text-2xl font-bold text-white">5</p>
-                  <p className="mt-1 text-[10px] text-white/35">risk alerts</p>
-                </div>
+              <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Active
               </div>
-              <div className="mt-5 space-y-3">
-                <div className="rounded-lg border border-white/[0.06] bg-white/[0.03] p-3">
-                  <div className="mb-2 flex items-center justify-between text-[12px]">
-                    <span className="font-medium text-white/70">Engineering delivery</span>
-                    <span className="text-white/35">69%</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-white/[0.06]">
-                    <div className="h-1.5 w-[69%] rounded-full bg-gradient-to-r from-[var(--gf-indigo)] to-[var(--gf-cyan)]" />
-                  </div>
-                </div>
-                <div className="rounded-lg border border-white/[0.06] bg-white/[0.03] p-3">
-                  <div className="mb-2 flex items-center justify-between text-[12px]">
-                    <span className="font-medium text-white/70">People Ops onboarding</span>
-                    <span className="text-white/35">81%</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-white/[0.06]">
-                    <div className="h-1.5 w-[81%] rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400" />
-                  </div>
-                </div>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-2.5 text-center">
+              <div className="rounded-lg border border-slate-900 bg-slate-950/60 p-3">
+                <p className="text-lg font-extrabold text-white">78%</p>
+                <p className="text-[9px] font-medium text-slate-500 mt-0.5">Completion</p>
+              </div>
+              <div className="rounded-lg border border-slate-900 bg-slate-950/60 p-3">
+                <p className="text-lg font-extrabold text-white">41</p>
+                <p className="text-[9px] font-medium text-slate-500 mt-0.5">AI Milestones</p>
+              </div>
+              <div className="rounded-lg border border-slate-900 bg-slate-950/60 p-3">
+                <p className="text-lg font-extrabold text-white">5</p>
+                <p className="text-[9px] font-medium text-slate-500 mt-0.5">Risk Alerts</p>
               </div>
             </div>
 
-            {/* Feature pills */}
-            <div className="mt-4 grid gap-2">
-              {features.slice(0, 3).map((feature) => {
-                const Icon = feature.icon
-                return (
-                  <div
-                    key={feature.title}
-                    className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.05]"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br ${feature.gradient} shadow-md`}
-                      >
-                        <Icon className="h-4 w-4 text-white" />
-                      </span>
-                      <p className="text-[13px] font-semibold text-white/85">{feature.title}</p>
-                    </div>
-                    <p className="mt-2 text-[12px] leading-5 text-white/35">{feature.body}</p>
-                  </div>
-                )
-              })}
+            <div className="space-y-2 pt-1">
+              <div className="rounded-lg border border-slate-900 bg-slate-950/60 p-2.5">
+                <div className="flex items-center justify-between text-[11px] mb-1.5">
+                  <span className="font-semibold text-slate-400">Engineering delivery</span>
+                  <span className="text-slate-500">69%</span>
+                </div>
+                <div className="h-1 rounded-full bg-slate-900 overflow-hidden">
+                  <div className="h-full w-[69%] rounded-full bg-indigo-500" />
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-900 bg-slate-950/60 p-2.5">
+                <div className="flex items-center justify-between text-[11px] mb-1.5">
+                  <span className="font-semibold text-slate-400">People Ops onboarding</span>
+                  <span className="text-slate-500">81%</span>
+                </div>
+                <div className="h-1 rounded-full bg-slate-900 overflow-hidden">
+                  <div className="h-full w-[81%] rounded-full bg-emerald-500" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Platform capabilities grid */}
-        <div className="mb-12">
-          <div className="mb-8 text-center">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--gf-indigo)]">
-              Platform capabilities
+        {/* Capabilities Section */}
+        <div className="border-t border-slate-900 pt-12 pb-16">
+          <div className="text-center max-w-xl mx-auto mb-10 space-y-1.5">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-400">
+              Platform Features
             </p>
-            <h3 className="mt-2 text-2xl font-bold text-white/90">
-              Everything you need for workforce excellence
+            <h3 className="text-xl font-bold text-white">
+              Minimal, focused execution toolkits
             </h3>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((feature) => {
               const Icon = feature.icon
               return (
                 <div
                   key={feature.title}
-                  className="glass-card-hover rounded-xl p-5"
+                  className="rounded-xl border border-slate-900/60 bg-slate-950/20 p-5 hover:border-slate-800 hover:bg-slate-950/40 transition-all duration-300 group"
                 >
-                  <span
-                    className={`grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br ${feature.gradient} shadow-lg`}
-                  >
-                    <Icon className="h-5 w-5 text-white" />
+                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-indigo-600/5 border border-indigo-500/10 text-indigo-400 group-hover:bg-indigo-600/10 group-hover:text-indigo-300 transition-colors">
+                    <Icon className="h-4 w-4" />
                   </span>
-                  <p className="mt-4 text-[14px] font-semibold text-white/85">{feature.title}</p>
-                  <p className="mt-1.5 text-[13px] leading-6 text-white/35">{feature.body}</p>
+                  <p className="mt-4 text-xs font-bold text-slate-200">{feature.title}</p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-slate-400/80">{feature.body}</p>
                 </div>
               )
             })}
           </div>
         </div>
 
-        {/* Footer info links */}
-        <div className="grid gap-3 border-t border-white/[0.06] pt-5 text-[12px] text-white/30 md:grid-cols-3">
-          <span className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-[var(--gf-indigo)]" />
-            FastAPI + Gemini AI backend
+        {/* Footer */}
+        <footer className="border-t border-slate-900 py-6 flex flex-col sm:flex-row items-center justify-between text-[10px] text-slate-600 gap-3">
+          <span className="flex items-center gap-1.5">
+            <Sparkles className="h-3 w-3 text-indigo-500/80" />
+            FastAPI + Gemini AI Backend
           </span>
-          <span>Employee, manager, and admin role flows</span>
-          <span>Production-grade performance intelligence</span>
-        </div>
-      </section>
+          <span>Dual Employee & Manager Dashboards</span>
+          <span>© {new Date().getFullYear()} GoalForge. All rights reserved.</span>
+        </footer>
+      </div>
     </main>
   )
 }
