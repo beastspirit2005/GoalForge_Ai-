@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import { Bot, X, Send, User, Sparkles, Settings, Sliders, Cpu, AlertTriangle } from "lucide-react"
+import { useState, useRef, useEffect, useCallback } from "react"
+import { Bot, X, Send, User, Sparkles, Settings, Sliders, Cpu, AlertTriangle, MessageSquarePlus, Trash2, ShieldAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { apiFetch } from "@/lib/api"
@@ -39,6 +39,9 @@ export function AiBuddyChat() {
   const [ollamaModels, setOllamaModels] = useState<string[]>([])
   const [selectedOllamaModel, setSelectedOllamaModel] = useState<string>("")
   
+  // Privacy & Chat Caching Controls
+  const [saveHistory, setSaveHistory] = useState(true)
+  
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -59,13 +62,7 @@ export function AiBuddyChat() {
       setSelectedOllamaModel(savedOllama)
     }
 
-    // 3. Load chat logs
-    const savedChat = localStorage.getItem("aiBuddyChat")
-    if (savedChat) {
-      setMessages(JSON.parse(savedChat))
-    }
-
-    // 4. Fetch pulled local Ollama models from backend
+    // 3. Fetch pulled local Ollama models from backend
     const fetchModels = async () => {
       try {
         const token = getStoredToken()
@@ -85,33 +82,53 @@ export function AiBuddyChat() {
 
     // Listen to clear chat triggers
     const handleClear = () => {
+      const greeting = getGreeting(role)
       setMessages([
-        { role: "assistant", content: `Chat cleared! How can I help you today?`, source: "system" }
+        { role: "assistant", content: greeting, source: "system" }
       ])
-      localStorage.removeItem("aiBuddyChat")
+      if (user?.email) {
+        localStorage.removeItem(`aiBuddyChat_${user.email}`)
+      }
     }
     window.addEventListener("clear-ai-chat", handleClear)
     return () => window.removeEventListener("clear-ai-chat", handleClear)
-  }, [])
+  }, [role, user?.email])
 
-  // Set greeting once the user role becomes available if there's no chat history
+  // Load user-specific chat history and preferences when user.email is ready
   useEffect(() => {
-    const savedChat = localStorage.getItem("aiBuddyChat")
-    if (!savedChat && role) {
+    if (!user?.email) return
+
+    // Load Save History toggle preference
+    const savedToggle = localStorage.getItem(`aiBuddySaveHistory_${user.email}`)
+    const isSaveEnabled = savedToggle !== "false"
+    setSaveHistory(isSaveEnabled)
+
+    // Load private user-scoped chat log
+    const userKey = `aiBuddyChat_${user.email}`
+    const savedChat = localStorage.getItem(userKey)
+    if (savedChat) {
+      setMessages(JSON.parse(savedChat))
+    } else {
       setMessages([
         { role: "assistant", content: getGreeting(role), source: "system" }
       ])
     }
-  }, [role])
+  }, [user?.email, role])
 
-  // Save chat and provider preferences on change
+  // Save chat log on changes (respecting privacy toggle)
   useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem("aiBuddyChat", JSON.stringify(messages))
+    if (!user?.email || messages.length === 0) return
+    const userKey = `aiBuddyChat_${user.email}`
+    
+    if (saveHistory) {
+      localStorage.setItem(userKey, JSON.stringify(messages))
+    } else {
+      localStorage.removeItem(userKey)
     }
     scrollToBottom()
-  }, [messages])
+  }, [messages, user?.email, saveHistory])
 
+  // Handle provider and model preference persistent saving
   useEffect(() => {
     localStorage.setItem("aiBuddyProvider", activeProvider)
   }, [activeProvider])
@@ -121,6 +138,46 @@ export function AiBuddyChat() {
       localStorage.setItem("aiBuddyOllamaModel", selectedOllamaModel)
     }
   }, [selectedOllamaModel])
+
+  // New Chat (Clear current session)
+  const handleNewChat = useCallback(() => {
+    const greeting = getGreeting(role)
+    setMessages([
+      { role: "assistant", content: greeting, source: "system" }
+    ])
+    if (user?.email && saveHistory) {
+      localStorage.setItem(`aiBuddyChat_${user.email}`, JSON.stringify([
+        { role: "assistant", content: greeting, source: "system" }
+      ]))
+    }
+  }, [role, user?.email, saveHistory])
+
+  // Delete Chat History Permanently
+  const handleDeleteChat = useCallback(() => {
+    if (confirm("Are you sure you want to permanently delete your private chat history with Ai Buddy?")) {
+      const greeting = getGreeting(role)
+      setMessages([
+        { role: "assistant", content: greeting, source: "system" }
+      ])
+      if (user?.email) {
+        localStorage.removeItem(`aiBuddyChat_${user.email}`)
+      }
+      alert("Chat history deleted successfully!")
+    }
+  }, [role, user?.email])
+
+  // Toggle Save History Preference
+  const handleToggleSaveHistory = useCallback((enabled: boolean) => {
+    setSaveHistory(enabled)
+    if (user?.email) {
+      localStorage.setItem(`aiBuddySaveHistory_${user.email}`, String(enabled))
+      if (!enabled) {
+        localStorage.removeItem(`aiBuddyChat_${user.email}`)
+      } else {
+        localStorage.setItem(`aiBuddyChat_${user.email}`, JSON.stringify(messages))
+      }
+    }
+  }, [user?.email, messages])
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return
@@ -281,16 +338,25 @@ export function AiBuddyChat() {
               <Button
                 variant="ghost"
                 size="icon"
+                className="h-8 w-8 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                onClick={handleNewChat}
+                title="New Chat"
+              >
+                <MessageSquarePlus className="h-4.5 w-4.5 text-indigo-100" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 className={`h-8 w-8 rounded-lg transition-colors text-white/80 hover:text-white ${showSettings ? "bg-white/15 text-white" : "hover:bg-white/10"}`}
                 onClick={() => setShowSettings(!showSettings)}
-                title="Settings"
+                title="AI Settings & Privacy"
               >
                 <Settings className="h-4.5 w-4.5" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 rounded-lg text-white/80 hover:text-white hover:bg-white/10"
+                className="h-8 w-8 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
                 onClick={() => setIsOpen(false)}
               >
                 <X className="h-4.5 w-4.5" />
@@ -300,7 +366,7 @@ export function AiBuddyChat() {
 
           {/* Settings Panel */}
           {showSettings && (
-            <div className="border-b border-slate-800 bg-[#0c1122] p-4 space-y-3 animate-in slide-in-from-top duration-200 shadow-inner">
+            <div className="border-b border-slate-800 bg-[#0c1122] p-4 space-y-4 animate-in slide-in-from-top duration-200 shadow-inner">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                   <Cpu className="h-3.5 w-3.5 text-indigo-400" />
@@ -351,6 +417,41 @@ export function AiBuddyChat() {
                   )}
                 </div>
               )}
+
+              {/* Privacy & History Management */}
+              <div className="pt-3 border-t border-slate-800 space-y-2.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <ShieldAlert className="h-3.5 w-3.5 text-indigo-400" />
+                  Privacy & Chat Logs
+                </label>
+                
+                <div className="flex items-center justify-between px-0.5">
+                  <span className="text-[11px] text-slate-300 font-medium">Save Chat History</span>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleSaveHistory(!saveHistory)}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      saveHistory ? "bg-indigo-600" : "bg-slate-800"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                        saveHistory ? "translate-x-4" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={handleDeleteChat}
+                  variant="outline"
+                  className="w-full h-8 border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 text-rose-300 hover:text-rose-200 text-[10px] font-semibold flex items-center justify-center gap-1.5 rounded-lg transition-all"
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+                  Clear & Delete Chat Logs
+                </Button>
+              </div>
             </div>
           )}
 
