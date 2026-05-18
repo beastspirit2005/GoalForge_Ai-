@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
+import { Outfit } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LocalStoragePolyfill } from "@/components/LocalStoragePolyfill";
 import "./globals.css";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  weight: ["300", "400", "500", "600", "700", "800"],
+});
 
 export const metadata: Metadata = {
   title: "GoalForge AI",
@@ -14,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="h-full antialiased font-sans">
+    <html lang="en" suppressHydrationWarning className={`${outfit.variable} h-full antialiased font-sans`}>
       <body className="min-h-full flex flex-col">
         <LocalStoragePolyfill />
         <ThemeProvider
