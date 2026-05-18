@@ -13,7 +13,7 @@ export type GeneratePlanResponse = {
   raw_response?: string
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
+import { API_URL } from "@/lib/api"
 
 export function createLocalGoalPlan(payload: GeneratePlanPayload): GeneratePlanResponse {
   const title = payload.title.trim() || "this goal"

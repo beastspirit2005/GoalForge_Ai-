@@ -7,7 +7,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/hooks/useAuth"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, API_URL } from "@/lib/api"
 import { updateDemoSession } from "@/lib/mock-auth"
 import { getStoredToken } from "@/services/auth.service"
 
@@ -103,7 +103,7 @@ export default function SettingsPage() {
       const formData = new FormData()
       formData.append("file", file)
       
-      const res = await fetch("http://localhost:8000/auth/avatar", {
+      const res = await fetch(`${API_URL}/auth/avatar`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
