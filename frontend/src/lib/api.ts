@@ -1,24 +1,10 @@
 const getApiUrl = () => {
-  const envUrl = process.env.NEXT_PUBLIC_API_URL
-  
   if (typeof window !== "undefined") {
-    const hostname = window.location.hostname
-    
-    // If the browser loaded the page from a remote host (e.g., mobile phone connecting to desktop Wi-Fi IP)
-    // and the hardcoded env url points to localhost, dynamically map it to the desktop's local IP address instead.
-    if (envUrl && envUrl.includes("localhost") && hostname !== "localhost" && hostname !== "127.0.0.1") {
-      return `${window.location.protocol}//${hostname}:8001`
-    }
-    
-    if (!envUrl) {
-      if (hostname !== "localhost" && hostname !== "127.0.0.1") {
-        return "/api"
-      }
-      return "http://localhost:8001"
-    }
+    // Client-side: use relative path so requests flow through the Next.js port 3000 proxy, bypassing the firewall.
+    return "/api"
   }
-  
-  return envUrl || "http://localhost:8001"
+  // Server-side (SSR / Server Components): call the local backend directly on port 8001.
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001"
 }
 
 const API_URL = getApiUrl()
