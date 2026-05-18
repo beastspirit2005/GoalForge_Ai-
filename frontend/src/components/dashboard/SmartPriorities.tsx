@@ -7,6 +7,7 @@ import { getStoredToken } from "@/services/auth.service"
 import { Goal } from "@/types/goal"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { demoGoals } from "@/lib/demo-data"
 
 export function SmartPriorities() {
   const [priorities, setPriorities] = useState<Goal[]>([])
@@ -17,7 +18,7 @@ export function SmartPriorities() {
       const token = getStoredToken()
       if (!token) {
         // Direct local data injection in demo/mock mode
-        setPriorities(demoGoals.slice(0, 3))
+        setPriorities(demoGoals.slice(0, 3) as any as Goal[])
         setLoading(false)
         return
       }
@@ -27,7 +28,7 @@ export function SmartPriorities() {
         setPriorities(res.slice(0, 3)) // Show top 3
       } catch (err) {
         console.warn("Failed to fetch prioritized goals, falling back to local:", err)
-        setPriorities(demoGoals.slice(0, 3))
+        setPriorities(demoGoals.slice(0, 3) as any as Goal[])
       } finally {
         setLoading(false)
       }
