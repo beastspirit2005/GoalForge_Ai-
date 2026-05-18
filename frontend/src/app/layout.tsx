@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
+import { LocalStoragePolyfill } from "@/components/LocalStoragePolyfill";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="h-full antialiased font-sans">
       <body className="min-h-full flex flex-col">
+        <LocalStoragePolyfill />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

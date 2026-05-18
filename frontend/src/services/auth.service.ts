@@ -5,15 +5,23 @@ const TOKEN_KEY = "goalforge.token"
 
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null
-  return localStorage.getItem(TOKEN_KEY)
+  try {
+    return localStorage.getItem(TOKEN_KEY)
+  } catch {
+    return null
+  }
 }
 
 export function storeToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token)
+  try {
+    localStorage.setItem(TOKEN_KEY, token)
+  } catch {}
 }
 
 export function clearToken(): void {
-  localStorage.removeItem(TOKEN_KEY)
+  try {
+    localStorage.removeItem(TOKEN_KEY)
+  } catch {}
 }
 
 export async function loginUser(data: LoginPayload): Promise<AuthResponse> {
