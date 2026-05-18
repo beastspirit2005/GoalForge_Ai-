@@ -41,6 +41,7 @@ export function AiBuddyChat() {
   
   // Privacy & Chat Caching Controls
   const [saveHistory, setSaveHistory] = useState(true)
+  const [isDeletedFeedback, setIsDeletedFeedback] = useState(false)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -169,16 +170,17 @@ export function AiBuddyChat() {
 
   // Delete Chat History Permanently
   const handleDeleteChat = useCallback(() => {
-    if (confirm("Are you sure you want to permanently delete your private chat history with Ai Buddy?")) {
-      const greeting = getGreeting(role)
-      setMessages([
-        { role: "assistant", content: greeting, source: "system" }
-      ])
-      if (user?.email) {
-        localStorage.removeItem(`aiBuddyChat_${user.email}`)
-      }
-      alert("Chat history deleted successfully!")
+    const greeting = getGreeting(role)
+    setMessages([
+      { role: "assistant", content: greeting, source: "system" }
+    ])
+    if (user?.email) {
+      localStorage.removeItem(`aiBuddyChat_${user.email}`)
     }
+    setIsDeletedFeedback(true)
+    setTimeout(() => {
+      setIsDeletedFeedback(false)
+    }, 2000)
   }, [role, user?.email])
 
   // Toggle Save History Preference
@@ -505,10 +507,14 @@ export function AiBuddyChat() {
                   type="button"
                   onClick={handleDeleteChat}
                   variant="outline"
-                  className="w-full h-8 border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 text-rose-300 hover:text-rose-200 text-[10px] font-semibold flex items-center justify-center gap-1.5 rounded-lg transition-all"
+                  className={`w-full h-8 rounded-lg text-[10px] font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                    isDeletedFeedback
+                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:text-emerald-200"
+                      : "border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 text-rose-300 hover:text-rose-200"
+                  }`}
                 >
-                  <Trash2 className="h-3.5 w-3.5 text-rose-400" />
-                  Clear & Delete Chat Logs
+                  <Trash2 className={`h-3.5 w-3.5 ${isDeletedFeedback ? "text-emerald-400" : "text-rose-400"}`} />
+                  {isDeletedFeedback ? "Logs Cleared Successfully!" : "Clear & Delete Chat Logs"}
                 </Button>
               </div>
             </div>
