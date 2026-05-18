@@ -40,11 +40,15 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def normalize_db_urls(self):
-        self.DATABASE_URL = _normalize_async_db_url(self.DATABASE_URL)
+        self.DATABASE_URL = _normalize_async_db_url(self.DATABASE_URL.strip())
+        self.DATABASE_URL_SYNC = self.DATABASE_URL_SYNC.strip()
         if self.DATABASE_URL.startswith("postgresql+asyncpg://"):
             self.DATABASE_URL_SYNC = self.DATABASE_URL.replace(
                 "postgresql+asyncpg://", "postgresql://", 1
             )
+        self.SECRET_KEY = self.SECRET_KEY.strip()
+        self.GEMINI_API_KEY = self.GEMINI_API_KEY.strip()
+        self.CORS_ORIGINS = self.CORS_ORIGINS.strip()
         return self
 
     @property
