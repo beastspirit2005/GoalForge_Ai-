@@ -14,7 +14,9 @@ import { useAuth } from "@/hooks/useAuth"
 export default function EmployeeDashboardPage() {
   const { user } = useAuth()
   const displayName = user?.name || "Employee"
-  const [greeting, setGreeting] = useState("Hello")
+  const [greeting, setGreeting] = useState("Good morning")
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [activeStep, setActiveStep] = useState(0)
 
   useEffect(() => {
     const hour = new Date().getHours()
@@ -25,7 +27,18 @@ export default function EmployeeDashboardPage() {
     } else {
       setGreeting("Good evening")
     }
+
+    // Only show onboarding if not dismissed
+    const dismissed = localStorage.getItem("gf_onboarding_dismissed")
+    if (!dismissed) {
+      setShowOnboarding(true)
+    }
   }, [])
+
+  const dismissOnboarding = () => {
+    localStorage.setItem("gf_onboarding_dismissed", "true")
+    setShowOnboarding(false)
+  }
 
   return (
     <DashboardLayout>
@@ -75,6 +88,114 @@ export default function EmployeeDashboardPage() {
             </div>
           </div>
         </section>
+
+        {/* Quick-Start Interactive Onboarding Card */}
+        {showOnboarding && (
+          <section className="glass-card animate-scale-in relative overflow-hidden rounded-2xl p-6 shadow-xl border border-white/[0.08]">
+            <div className="pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-[var(--gf-cyan)]/5 blur-2xl" />
+            
+            <div className="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--gf-indigo)] to-[var(--gf-cyan)] text-white shadow-lg shadow-[var(--gf-indigo)]/20">
+                  <Zap className="h-5 w-5 animate-pulse" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-white/95">Welcome to GoalForge AI! — Quick-Start Guide</h2>
+                  <p className="text-[12px] text-white/45 mt-0.5">Let's walk through how your performance scores, check-ins, and AI insights work together.</p>
+                </div>
+              </div>
+              
+              <button 
+                onClick={dismissOnboarding}
+                className="shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/[0.18] bg-white/[0.02] hover:bg-white/[0.06] text-white/50 hover:text-white/90 transition-all cursor-pointer"
+              >
+                Dismiss Guide
+              </button>
+            </div>
+
+            {/* Stepper Grid */}
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                {
+                  title: "1. Define Smart Goals",
+                  desc: "Type a simple aspiration. The AI Goal Refiner will instantly shape it into a measurable objective.",
+                  badge: "Refiner AI",
+                },
+                {
+                  title: "2. Build Milestones",
+                  desc: "Split your goals into actionable weekly checkbox tasks to build systematic progress.",
+                  badge: "Actionable Steps",
+                },
+                {
+                  title: "3. Weekly Check-Ins",
+                  desc: "Log your progress and get manager reviews to drive your dashboard momentum.",
+                  badge: "Consistency",
+                },
+                {
+                  title: "4. AI Insights & Scores",
+                  desc: "Unlock risk predictions, coaching feedback, and automatic calculated performance scores.",
+                  badge: "Analytics AI",
+                }
+              ].map((step, idx) => (
+                <div 
+                  key={idx}
+                  onClick={() => setActiveStep(idx)}
+                  className={`cursor-pointer rounded-xl border p-4 transition-all duration-300 ${
+                    activeStep === idx 
+                      ? "border-[var(--gf-indigo)] bg-[var(--gf-indigo)]/5 shadow-lg shadow-[var(--gf-indigo)]/5"
+                      : "border-white/[0.05] bg-white/[0.01] hover:border-white/[0.12] hover:bg-white/[0.03]"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                      activeStep === idx 
+                        ? "bg-[var(--gf-indigo)]/25 text-indigo-200" 
+                        : "bg-white/[0.05] text-white/35"
+                    }`}>
+                      {step.badge}
+                    </span>
+                    {activeStep === idx && (
+                      <div className="h-2 w-2 rounded-full bg-[var(--gf-cyan)] animate-pulse" />
+                    )}
+                  </div>
+                  
+                  <h3 className={`mt-3 text-[13px] font-bold transition-colors ${
+                    activeStep === idx ? "text-white" : "text-white/70"
+                  }`}>
+                    {step.title}
+                  </h3>
+                  
+                  <p className={`mt-1.5 text-[11px] leading-relaxed transition-colors ${
+                    activeStep === idx ? "text-white/60" : "text-white/30"
+                  }`}>
+                    {step.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Stepper Detail Tooltip Bar */}
+            <div className="mt-5 flex flex-col justify-between gap-3 rounded-xl bg-white/[0.02] border border-white/[0.04] p-4 text-[12px] text-white/60 md:flex-row md:items-center">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 shrink-0 text-[var(--gf-cyan)] animate-pulse" />
+                <span>
+                  {activeStep === 0 && "💡 AI Pro-Tip: When creating a goal, tap the Refinement AI button to auto-inject professional metrics and success bounds!"}
+                  {activeStep === 1 && "💡 AI Pro-Tip: The AI forecast engine requires at least 3 milestones per goal to calculate dynamic risk scores correctly."}
+                  {activeStep === 2 && "💡 AI Pro-Tip: Keeping check-ins frequent raises consistency scores; skipping weeks triggers high-risk alerts."}
+                  {activeStep === 3 && "💡 AI Pro-Tip: Quarterly performance metrics evaluate overall goal completion rate, velocity, and consistency."}
+                </span>
+              </div>
+              
+              <Link 
+                href={activeStep === 0 || activeStep === 1 ? "/employee/goals/create" : activeStep === 2 ? "/employee/checkins" : "/employee/ai-insights"}
+                className="flex items-center gap-1 font-semibold text-[var(--gf-cyan)] hover:text-white transition-colors"
+              >
+                {activeStep === 0 || activeStep === 1 ? "Start Now" : activeStep === 2 ? "Go to Check-Ins" : "View Insights"}
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </section>
+        )}
 
         {/* KPI metrics row */}
         <section className="stagger-children grid gap-4 md:grid-cols-2 xl:grid-cols-4">
