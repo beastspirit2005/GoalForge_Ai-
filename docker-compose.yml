@@ -29,8 +29,10 @@ services:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/goalforge
       SECRET_KEY: ${SECRET_KEY:-goalforge-super-secret-change-in-production}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OLLAMA_HOST: http://ollama:11434
     depends_on:
       - db
+      - ollama
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   # Next.js Frontend Container
@@ -47,5 +49,34 @@ services:
     depends_on:
       - backend
 
+  # Local Ollama AI Container
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+
+  # Helper service to automatically pre-pull lightweight model
+  ollama-pull-model:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama:/root/.ollama
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      echo 'Waiting for Ollama server to boot...';
+      until curl -s http://ollama:11434/api/tags >/dev/null; do
+        sleep 2;
+      done;
+      echo 'Pulling gemma2:2b model (lightweight & highly capable)...';
+      ollama pull gemma2:2b;
+      echo 'gemma2:2b model pulled successfully!';
+      "
+    depends_on:
+      - ollama
+
 volumes:
   pgdata:
+  ollama:
