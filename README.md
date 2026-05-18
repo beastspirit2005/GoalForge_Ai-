@@ -187,8 +187,39 @@ The root `vercel.json` leverages experimental unified services to deploy both fr
 
 ### Docker Environment
 
+GoalForge AI is fully containerized and cloud-ready. You can run the entire platform locally or deploy it to production using Docker and Docker Compose.
+
+#### 1. Instant Start (Pull Pre-Built Images from Docker Hub)
+You don't need to compile any code or install dependencies. Simply run:
 ```bash
-docker-compose up -d
+docker compose up -d
+```
+Docker will automatically pull our pre-compiled, production-ready images directly from Docker Hub:
+* 🐍 **Backend (FastAPI)**: [1065925/goalforge-backend](https://hub.docker.com/r/1065925/goalforge-backend)
+* ⚛️ **Frontend (Next.js)**: [1065925/goalforge-frontend](https://hub.github.com/r/1065925/goalforge-frontend)
+
+#### 2. Re-building & Uploading Container Images
+If you make changes to the source code and want to rebuild the containers and push them to your Docker Hub registry:
+
+##### Windows (One-Click Secure Interactive Deployer)
+We have created a secure, interactive utility script. Simply execute:
+```cmd
+.\scripts\push-docker.bat
+```
+*The script will securely prompt you for your Docker Hub credentials, execute a safe `--password-stdin` login, dynamically re-tag the pre-built images with your account, and push them to Docker Hub.*
+
+##### Manual Terminal Commands
+```bash
+# 1. Build local container images
+docker build -t 1065925/goalforge-backend:latest ./backend
+docker build -t 1065925/goalforge-frontend:latest ./frontend
+
+# 2. Login to Docker Hub
+docker login -u 1065925
+
+# 3. Push to your Docker Hub registry
+docker push 1065925/goalforge-backend:latest
+docker push 1065925/goalforge-frontend:latest
 ```
 
 ---
