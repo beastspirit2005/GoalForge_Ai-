@@ -14,12 +14,20 @@ export function SmartPriorities() {
 
   useEffect(() => {
     async function fetchPriorities() {
+      const token = getStoredToken()
+      if (!token) {
+        // Direct local data injection in demo/mock mode
+        setPriorities(demoGoals.slice(0, 3))
+        setLoading(false)
+        return
+      }
+
       try {
-        const token = getStoredToken()
         const res = await apiFetch<Goal[]>("/goals/prioritized", { token })
         setPriorities(res.slice(0, 3)) // Show top 3
       } catch (err) {
-        console.error("Failed to fetch priorities", err)
+        console.warn("Failed to fetch prioritized goals, falling back to local:", err)
+        setPriorities(demoGoals.slice(0, 3))
       } finally {
         setLoading(false)
       }
