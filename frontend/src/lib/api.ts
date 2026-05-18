@@ -27,20 +27,34 @@ export async function apiFetch<T = unknown>(
     headers["Authorization"] = `Bearer ${token}`
   }
 
-  const res = await fetch(`${API_URL}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 2000)
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }))
-    throw new Error(err.detail || "API request failed")
+  try {
+    const res = await fetch(`${API_URL}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }))
+      throw new Error(err.detail || "API request failed")
+    }
+
+    if (res.status === 204) return undefined as T
+
+    return res.json()
+  } catch (err: any) {
+    clearTimeout(timeoutId)
+    if (err.name === "AbortError") {
+      throw new Error("Network request timed out")
+    }
+    throw err
   }
-
-  if (res.status === 204) return undefined as T
-
-  return res.json()
 }
 
 export { API_URL }
