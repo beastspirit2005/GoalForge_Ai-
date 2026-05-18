@@ -90,7 +90,11 @@ export function AiBuddyChat() {
         console.warn("Failed to load local Ollama models from backend, trying direct browser query:", err)
         try {
           const cleanEndpoint = endpointToUse.replace(/\/$/, "")
-          const directRes = await fetch(`${cleanEndpoint}/api/tags`)
+          const directRes = await fetch(`${cleanEndpoint}/api/tags`, {
+            headers: {
+              "Bypass-Tunnel-Reminder": "true",
+            },
+          })
           if (directRes.ok) {
             const data = await directRes.json()
             if (data.models && data.models.length > 0) {
@@ -237,6 +241,7 @@ export function AiBuddyChat() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "Bypass-Tunnel-Reminder": "true",
             },
             body: JSON.stringify({
               model: selectedOllamaModel,
@@ -309,6 +314,7 @@ export function AiBuddyChat() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "Bypass-Tunnel-Reminder": "true",
             },
             body: JSON.stringify({
               model: localModel,
