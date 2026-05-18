@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Request
 import os
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -65,6 +65,7 @@ async def update_me(data: UserUpdate, db: AsyncSession = Depends(get_db), curren
 
 @router.post("/avatar", response_model=UserResponse)
 async def upload_avatar(
+    request: Request,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -80,7 +81,8 @@ async def upload_avatar(
     with open(file_path, "wb") as f:
         f.write(await file.read())
         
-    current_user.profile_picture_url = f"http://localhost:8000/uploads/avatars/{filename}"
+    base_url = str(request.base_url).rstrip("/")
+    current_user.profile_picture_url = f"{base_url}/uploads/avatars/{filename}"
     await db.commit()
     await db.refresh(current_user)
     
