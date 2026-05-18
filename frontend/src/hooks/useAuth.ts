@@ -15,6 +15,7 @@ import {
 } from "@/services/auth.service"
 
 // Also keep the demo-mode auth for fallback
+import { isDemoAuthAllowed } from "@/lib/env"
 import {
   clearDemoSession,
   getDemoSession,
@@ -41,14 +42,18 @@ export function useAuth() {
         })
         .catch(() => {
           clearToken()
-          // Fallback to demo session
-          const demo = getDemoSession()
-          setUser(demo)
+          if (isDemoAuthAllowed()) {
+            setUser(getDemoSession())
+          } else {
+            setUser(null)
+          }
           setReady(true)
         })
+    } else if (isDemoAuthAllowed()) {
+      setUser(getDemoSession())
+      setReady(true)
     } else {
-      const demo = getDemoSession()
-      setUser(demo)
+      setUser(null)
       setReady(true)
     }
   }, [])

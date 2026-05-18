@@ -52,17 +52,17 @@ export default function DashboardLayout({
 
   if (!ready || !user || !isRoleAllowed(pathname, user.role)) {
     return (
-      <div className="grid min-h-screen place-items-center bg-slate-950 text-white">
-        <div className="rounded-lg border border-white/10 bg-white/10 p-6 text-center shadow-2xl">
+      <div className="grid min-h-screen place-items-center bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+        <div className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-2xl dark:border-white/10 dark:bg-white/10">
           <div className="mx-auto h-10 w-10 animate-pulse rounded-md bg-sky-300" />
-          <p className="mt-4 text-sm text-slate-300">Checking demo session...</p>
+          <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">Checking session...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-screen text-slate-950 relative">
+    <div className="relative flex min-h-screen bg-background text-foreground">
       {/* Desktop Sidebar */}
       <Sidebar />
 

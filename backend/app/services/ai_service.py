@@ -13,7 +13,7 @@ from app.models.recognition import LeaderboardEntry
 from app.services.milestone_service import bulk_create_milestones
 
 
-async def generate_and_store_plan(db: AsyncSession, goal: Goal) -> dict:
+async def generate_and_store_plan(db: AsyncSession, goal: Goal, api_key: str | None = None) -> dict:
     """
     Call the AI to generate milestones + recommendations, then persist
     the milestones and recommendation on the goal row.
@@ -25,7 +25,7 @@ async def generate_and_store_plan(db: AsyncSession, goal: Goal) -> dict:
         "deadline": goal.deadline or "",
     }
 
-    plan = generate_ai_plan(goal_data)
+    plan = generate_ai_plan(goal_data, api_key=api_key)
 
     # Persist milestones
     if plan.get("milestones"):
@@ -49,9 +49,9 @@ async def generate_and_store_plan(db: AsyncSession, goal: Goal) -> dict:
     return plan
 
 
-def generate_plan_stateless(goal_data: dict) -> dict:
+def generate_plan_stateless(goal_data: dict, api_key: str | None = None) -> dict:
     """Generate a plan without persisting – for the public endpoint."""
-    return generate_ai_plan(goal_data)
+    return generate_ai_plan(goal_data, api_key=api_key)
 
 
 async def get_copilot_context(db: AsyncSession, user: User) -> str:
