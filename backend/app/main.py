@@ -1,11 +1,12 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.database import create_tables
-from fastapi.staticfiles import StaticFiles
 from app.routes.ai_routes import router as ai_router
 from app.routes.admin_routes import router as admin_router
 from app.routes.analytics_routes import router as analytics_router
@@ -54,7 +55,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+_uploads_dir = Path(__file__).resolve().parent.parent / "uploads"
+_uploads_avatars = _uploads_dir / "avatars"
+_uploads_avatars.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(_uploads_dir)), name="uploads")
 
 
 @app.get("/health")

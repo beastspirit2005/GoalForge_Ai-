@@ -13,6 +13,11 @@ $RECYCLE.BIN/
 .env.test.local
 .env.production.local
 *.env
+.env.vercel
+.env.production.local
+.vercel
+backend/uploads/avatars/*
+!backend/uploads/avatars/.gitkeep
 token.txt
 
 # ── Next.js / Node.js (Frontend) ──────────────────────────────
@@ -60,3 +65,5 @@ frontend/dev-server.err.log
 # ── Media Uploads ─────────────────────────────────────────────
 backend/app/uploads/*
 !backend/app/uploads/.gitkeep
+
+.vercel
