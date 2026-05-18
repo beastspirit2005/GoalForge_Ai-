@@ -116,7 +116,7 @@ def refine_goal(raw_goal: str) -> dict:
 
 async def get_ollama_models() -> list[str]:
     """Fetch the list of pulled models from the local Ollama API."""
-    url = "http://localhost:11434/api/tags"
+    url = "http://127.0.0.1:11434/api/tags"
     try:
         async with httpx.AsyncClient(timeout=2.0) as client:
             res = await client.get(url)
@@ -138,7 +138,7 @@ async def get_ollama_model() -> str:
 
 async def call_ollama(prompt: str, model: str) -> str:
     """Call the local Ollama generate API."""
-    url = "http://localhost:11434/api/generate"
+    url = "http://127.0.0.1:11434/api/generate"
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             res = await client.post(url, json={
