@@ -52,9 +52,24 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [successMsg, setSuccessMsg] = useState("")
 
-  const handleLogin = (role: DemoRole) => {
-    const path = login(role)
-    router.push(path)
+  const handleLogin = async (role: DemoRole) => {
+    setLoading(true)
+    setError("")
+    try {
+      const emailMap: Record<DemoRole, string> = {
+        employee: "employee@goalforge.ai",
+        manager: "manager@goalforge.ai",
+        admin: "admin@goalforge.ai",
+      }
+      const path = await loginWithApi(emailMap[role], "password123")
+      router.push(path)
+    } catch (err) {
+      console.warn(`API login failed for role ${role}, falling back to mock:`, err)
+      const path = login(role)
+      router.push(path)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleApiLogin = async () => {
