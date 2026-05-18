@@ -5,11 +5,15 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(120) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
+    phone_number VARCHAR(20) UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL DEFAULT 'employee',
     department VARCHAR(120),
     manager_id INTEGER REFERENCES users(id),
     is_active BOOLEAN DEFAULT TRUE,
+    otp_code VARCHAR(6),
+    otp_expires_at TIMESTAMPTZ,
+    profile_picture_url VARCHAR(500),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
