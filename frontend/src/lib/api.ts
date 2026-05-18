@@ -1,7 +1,27 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 
-  (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1"
-    ? "/api"
-    : "http://localhost:8001")
+const getApiUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL
+  
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname
+    
+    // If the browser loaded the page from a remote host (e.g., mobile phone connecting to desktop Wi-Fi IP)
+    // and the hardcoded env url points to localhost, dynamically map it to the desktop's local IP address instead.
+    if (envUrl && envUrl.includes("localhost") && hostname !== "localhost" && hostname !== "127.0.0.1") {
+      return `${window.location.protocol}//${hostname}:8001`
+    }
+    
+    if (!envUrl) {
+      if (hostname !== "localhost" && hostname !== "127.0.0.1") {
+        return "/api"
+      }
+      return "http://localhost:8001"
+    }
+  }
+  
+  return envUrl || "http://localhost:8001"
+}
+
+const API_URL = getApiUrl()
 
 type RequestOptions = {
   method?: string
