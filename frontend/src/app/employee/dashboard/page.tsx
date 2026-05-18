@@ -8,8 +8,12 @@ import DashboardLayout from "@/components/layout/DashboardLayout"
 import { SmartPriorities } from "@/components/dashboard/SmartPriorities"
 import { Button } from "@/components/ui/button"
 import { demoGoals, stats } from "@/lib/demo-data"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function EmployeeDashboardPage() {
+  const { user } = useAuth()
+  const displayName = user?.name || "Employee"
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -28,7 +32,7 @@ export default function EmployeeDashboardPage() {
                 </p>
               </div>
               <h1 className="mt-3 text-3xl font-bold tracking-tight text-white lg:text-4xl">
-                Good morning, Aarav
+                Good morning, {displayName}
               </h1>
               <p className="mt-2 max-w-xl text-[14px] leading-6 text-white/40">
                 Your onboarding goal is healthy. The AI coach recommends closing
