@@ -75,7 +75,22 @@ export function AiBuddyChat() {
           }
         }
       } catch (err) {
-        console.error("Failed to load local Ollama models from backend:", err)
+        console.warn("Failed to load local Ollama models from backend, trying direct browser query to localhost:11434:", err)
+        try {
+          const directRes = await fetch("http://localhost:11434/api/tags")
+          if (directRes.ok) {
+            const data = await directRes.json()
+            if (data.models && data.models.length > 0) {
+              const names = data.models.map((m: any) => m.name)
+              setOllamaModels(names)
+              if (!savedOllama) {
+                setSelectedOllamaModel(names[0])
+              }
+            }
+          }
+        } catch (directErr) {
+          console.error("Direct browser fetch to local Ollama failed:", directErr)
+        }
       }
     }
     fetchModels()
@@ -202,6 +217,28 @@ export function AiBuddyChat() {
       
       setMessages((prev) => [...prev, { role: "assistant", content: res.response, source: res.source }])
     } catch (err: any) {
+      if (activeProvider === "ollama" && selectedOllamaModel) {
+        try {
+          const directRes = await fetch("http://localhost:11434/api/generate", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: selectedOllamaModel,
+              prompt: userMessage,
+              stream: false,
+            }),
+          })
+          if (directRes.ok) {
+            const data = await directRes.json()
+            setMessages((prev) => [...prev, { role: "assistant", content: data.response, source: "ollama" }])
+            return
+          }
+        } catch (directErr) {
+          console.error("Direct browser fetch to local Ollama generation failed:", directErr)
+        }
+      }
       setMessages((prev) => [...prev, { 
         role: "assistant", 
         content: `Oops! I encountered an error with ${activeProvider}: ${err?.message || "Unknown error"}. Would you like to try switching to another provider?`,
@@ -229,10 +266,10 @@ export function AiBuddyChat() {
       source: "system" 
     }])
 
+    let localModel = selectedOllamaModel
     try {
       const token = getStoredToken()
       // Determine what model to use
-      let localModel = selectedOllamaModel
       if (newProvider === "ollama" && !localModel && ollamaModels.length > 0) {
         localModel = ollamaModels[0]
         setSelectedOllamaModel(localModel)
@@ -251,6 +288,28 @@ export function AiBuddyChat() {
       
       setMessages((prev) => [...prev, { role: "assistant", content: res.response, source: res.source }])
     } catch (err: any) {
+      if (newProvider === "ollama" && localModel) {
+        try {
+          const directRes = await fetch("http://localhost:11434/api/generate", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: localModel,
+              prompt: lastQuery,
+              stream: false,
+            }),
+          })
+          if (directRes.ok) {
+            const data = await directRes.json()
+            setMessages((prev) => [...prev, { role: "assistant", content: data.response, source: "ollama" }])
+            return
+          }
+        } catch (directErr) {
+          console.error("Direct browser fetch to local Ollama generation failed during switch:", directErr)
+        }
+      }
       setMessages((prev) => [...prev, { 
         role: "assistant", 
         content: `Failed to connect to ${newProvider}: ${err?.message || "Unknown error"}.`,
