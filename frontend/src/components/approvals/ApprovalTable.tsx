@@ -6,6 +6,7 @@ import { managerQueue } from "@/lib/demo-data"
 import { useState, useEffect } from "react"
 import { addLocalAuditLog } from "@/lib/local-audit-logs"
 import { useAuth } from "@/hooks/useAuth"
+import { addLocalNotification } from "@/lib/local-notifications"
 
 type QueueItem = {
   goalId?: string
@@ -107,6 +108,23 @@ export default function ApprovalTable() {
       title: getCleanTitle(activeItem.request),
       target: getCleanTarget(activeItem.impact)
     })
+
+    // Trigger Notification for the employee
+    if (isEdited) {
+      addLocalNotification({
+        title: "Goal Approved with Adjustments",
+        message: `Your goal "${getCleanTitle(originalText)}" was edited and approved by your manager. New Title: "${getCleanTitle(activeItem.request)}"`,
+        type: "success",
+        recipientRole: "employee"
+      })
+    } else {
+      addLocalNotification({
+        title: "Goal Approved",
+        message: `Your goal "${getCleanTitle(activeItem.request)}" was approved by your manager.`,
+        type: "success",
+        recipientRole: "employee"
+      })
+    }
   }
 
   const handleReject = (index: number) => {
@@ -137,6 +155,14 @@ export default function ApprovalTable() {
 
     // Propagate changes to employee goals
     updateDemoGoalStatus(activeItem.goalId, nextStatus)
+
+    // Trigger Notification for the employee
+    addLocalNotification({
+      title: "Goal Rejected",
+      message: `Your goal "${getCleanTitle(originalText)}" was rejected by your manager.`,
+      type: "error",
+      recipientRole: "employee"
+    })
   }
 
   const startEditing = (index: number) => {
