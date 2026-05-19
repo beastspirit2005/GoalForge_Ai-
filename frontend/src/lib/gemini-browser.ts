@@ -1,6 +1,6 @@
 /** Direct Gemini calls from the browser — API key stays in localStorage only. */
 
-import { getCustomGeminiKey } from "./gemini-storage"
+import { normalizeGeminiKey, resolveCustomGeminiKey } from "./gemini-storage"
 
 const GEMINI_MODEL = "gemini-2.0-flash"
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta"
@@ -23,18 +23,15 @@ export async function geminiChatFromBrowser(
   context: string,
   apiKey?: string
 ): Promise<{ response: string; source: string }> {
-  const key = (apiKey || getCustomGeminiKey()).trim()
-  
-  console.log('[Gemini Browser] Using custom key:', key ? `${key.substring(0, 10)}...` : 'NONE')
-  
+  const key = normalizeGeminiKey(apiKey || resolveCustomGeminiKey())
   if (!key) {
-    throw new Error("No custom Gemini API key found in this browser.")
+    throw new Error(
+      "No Gemini API key found. Open Ai Buddy settings, choose “My key”, paste your key, and click Save."
+    )
   }
 
   const prompt = buildBuddyPrompt(query, context)
   const url = `${GEMINI_BASE}/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(key)}`
-  
-  console.log('[Gemini Browser] Making request to:', GEMINI_BASE)
 
   const res = await fetch(url, {
     method: "POST",
@@ -47,20 +44,14 @@ export async function geminiChatFromBrowser(
   if (!res.ok) {
     const errBody = await res.text().catch(() => "")
     let errorMessage = `Gemini API request failed (${res.status})`
-    
-    // Try to parse error details
     try {
-      const errorData = JSON.parse(errBody)
+      const errorData = JSON.parse(errBody) as { error?: { message?: string } }
       if (errorData.error?.message) {
         errorMessage = errorData.error.message
       }
     } catch {
-      // If not JSON, use raw error body
-      if (errBody) {
-        errorMessage = errBody.substring(0, 200) // Limit error message length
-      }
+      if (errBody) errorMessage = errBody.slice(0, 200)
     }
-    
     throw new Error(errorMessage)
   }
 

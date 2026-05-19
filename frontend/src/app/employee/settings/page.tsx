@@ -9,6 +9,9 @@ import {
   setCustomGeminiKey,
   clearCustomGeminiKey,
   setGeminiKeyMode,
+  resolveCustomGeminiKey,
+  syncGeminiKeyFromStorage,
+  GEMINI_KEY_CHANGED_EVENT,
   type GeminiKeyMode,
 } from "@/lib/gemini-storage"
 import { listRoleSessionCounts } from "@/lib/chat-history"
@@ -46,8 +49,18 @@ export default function SettingsPage() {
   const [aiKeyMessage, setAiKeyMessage] = useState("")
 
   useEffect(() => {
-    setGeminiMode(getGeminiKeyMode())
-    setGeminiKeyDraft(getCustomGeminiKey())
+    const sync = () => {
+      const { mode, key } = syncGeminiKeyFromStorage()
+      setGeminiMode(mode)
+      setGeminiKeyDraft(key)
+    }
+    sync()
+    window.addEventListener(GEMINI_KEY_CHANGED_EVENT, sync)
+    window.addEventListener("focus", sync)
+    return () => {
+      window.removeEventListener(GEMINI_KEY_CHANGED_EVENT, sync)
+      window.removeEventListener("focus", sync)
+    }
   }, [])
 
   useEffect(() => {
@@ -246,8 +259,17 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setGeminiKeyMode("custom")
-                    setGeminiMode("custom")
+                    const key = resolveCustomGeminiKey(geminiKeyDraft)
+                    if (key) {
+                      setCustomGeminiKey(key)
+                      setGeminiKeyDraft(key)
+                      setAiKeyMessage("Your key is saved in this browser.")
+                    } else {
+                      setGeminiKeyMode("custom")
+                      setGeminiMode("custom")
+                      setAiKeyMessage("Paste your key below, then click Save in browser.")
+                    }
+                    setGeminiMode(getGeminiKeyMode())
                   }}
                   className={`flex-1 rounded-lg border py-2 text-xs font-semibold ${
                     geminiMode === "custom"
@@ -280,7 +302,13 @@ export default function SettingsPage() {
                       type="button"
                       className="h-8 flex-1 bg-emerald-600 text-xs text-white hover:bg-emerald-500"
                       onClick={() => {
-                        setCustomGeminiKey(geminiKeyDraft)
+                        const key = resolveCustomGeminiKey(geminiKeyDraft)
+                        if (!key) {
+                          setAiKeyMessage("Enter a valid Gemini API key.")
+                          return
+                        }
+                        setCustomGeminiKey(key)
+                        setGeminiKeyDraft(key)
                         setGeminiMode(getGeminiKeyMode())
                         setAiKeyMessage("API key saved in this browser only.")
                       }}
