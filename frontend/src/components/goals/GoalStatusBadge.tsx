@@ -11,6 +11,11 @@ const statusClass: Record<GoalStatus, string> = {
   "Needs Review": "border-amber-500/20 bg-amber-500/10 text-amber-400",
   "At Risk": "border-rose-500/20 bg-rose-500/10 text-rose-400",
   Completed: "border-white/10 bg-white/5 text-white/60",
+  "Pending Approval": "border-amber-500/20 bg-amber-500/10 text-amber-400",
+  Approved: "border-emerald-500/20 bg-emerald-500/10 text-emerald-400",
+  "Approved after Editing": "border-cyan-500/20 bg-cyan-500/10 text-cyan-400",
+  Rejected: "border-rose-500/20 bg-rose-500/10 text-rose-400",
+  Escalated: "border-pink-500/20 bg-pink-500/10 text-pink-400",
 }
 
 const riskClass: Record<GoalRisk, string> = {
@@ -24,6 +29,11 @@ const statusDot: Record<GoalStatus, string> = {
   "Needs Review": "bg-amber-400 shadow-[0_0_6px_theme(colors.amber.400/0.6)]",
   "At Risk": "bg-rose-400 shadow-[0_0_6px_theme(colors.rose.400/0.6)]",
   Completed: "bg-white/40",
+  "Pending Approval": "bg-amber-400 shadow-[0_0_6px_theme(colors.amber.400/0.6)]",
+  Approved: "bg-emerald-400 shadow-[0_0_6px_theme(colors.emerald.400/0.6)]",
+  "Approved after Editing": "bg-cyan-400 shadow-[0_0_6px_theme(colors.cyan.400/0.6)]",
+  Rejected: "bg-rose-400 shadow-[0_0_6px_theme(colors.rose.400/0.6)]",
+  Escalated: "bg-pink-400 shadow-[0_0_6px_theme(colors.pink.400/0.6)]",
 }
 
 export default function GoalStatusBadge({ status, risk }: Props) {

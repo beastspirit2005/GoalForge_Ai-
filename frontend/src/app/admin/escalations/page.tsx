@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { AlertTriangle, CheckCircle2, Clock3, ShieldAlert } from "lucide-react"
 import DashboardLayout from "@/components/layout/DashboardLayout"
 import { Badge } from "@/components/ui/badge"
@@ -74,11 +74,47 @@ const riskStyles: Record<string, string> = {
 }
 
 export default function AdminEscalationsPage() {
-  const [escalations, setEscalations] = useState<Escalation[]>(initialEscalations)
-  const [selectedId, setSelectedId] = useState<number | null>(initialEscalations[0]?.id ?? null)
+  const [escalations, setEscalations] = useState<Escalation[]>([])
+  const [selectedId, setSelectedId] = useState<number | null>(null)
   const [message, setMessage] = useState("")
+  const [mounted, setMounted] = useState(false)
 
   const selectedEscalation = escalations.find((item) => item.id === selectedId) ?? null
+
+  const loadEscalations = () => {
+    try {
+      const stored = window.localStorage.getItem("goalforge.demo.escalations")
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        setEscalations(parsed)
+        if (parsed.length > 0 && selectedId === null) {
+          setSelectedId(parsed[0].id)
+        }
+      } else {
+        window.localStorage.setItem("goalforge.demo.escalations", JSON.stringify(initialEscalations))
+        setEscalations(initialEscalations)
+        if (initialEscalations.length > 0 && selectedId === null) {
+          setSelectedId(initialEscalations[0].id)
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load escalations", e)
+    }
+  }
+
+  useEffect(() => {
+    setMounted(true)
+    loadEscalations()
+
+    const handleUpdate = () => loadEscalations()
+    window.addEventListener("escalations-updated", handleUpdate)
+    return () => window.removeEventListener("escalations-updated", handleUpdate)
+  }, [selectedId])
+
+  const saveEscalations = (newEscalations: Escalation[]) => {
+    setEscalations(newEscalations)
+    window.localStorage.setItem("goalforge.demo.escalations", JSON.stringify(newEscalations))
+  }
 
   const escalationStats = useMemo(() => {
     const count = (status: EscalationStatus) => escalations.filter((item) => item.status === status).length
@@ -104,15 +140,13 @@ export default function AdminEscalationsPage() {
       note: "New scan detected stalled progress and missing weekly evidence.",
     }
 
-    setEscalations((current) => {
-      if (current.some((item) => item.id === scannedEscalation.id)) {
-        return current.map((item) =>
-          item.id === scannedEscalation.id ? { ...item, status: "Open", updated: scannedEscalation.updated } : item
+    const next = escalations.some((item) => item.id === scannedEscalation.id)
+      ? escalations.map((item) =>
+          item.id === scannedEscalation.id ? { ...item, status: "Open" as const, updated: scannedEscalation.updated } : item
         )
-      }
+      : [scannedEscalation, ...escalations]
 
-      return [scannedEscalation, ...current]
-    })
+    saveEscalations(next)
     setSelectedId(scannedEscalation.id)
     setMessage("Scan completed. 1 escalation needs review.")
   }
@@ -127,15 +161,26 @@ export default function AdminEscalationsPage() {
       return
     }
 
-    setEscalations((current) =>
-      current.map((item) =>
-        item.id === selectedEscalation.id
-          ? { ...item, status, updated: "17 May 2026, 11:15" }
-          : item
-      )
+    const next = escalations.map((item) =>
+      item.id === selectedEscalation.id
+        ? {
+            ...item,
+            status,
+            updated: new Date().toLocaleString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit"
+            })
+          }
+        : item
     )
+    saveEscalations(next)
     setMessage(`Escalation marked as ${status.toLowerCase()}.`)
   }
+
+  if (!mounted) return null
 
   return (
     <DashboardLayout>

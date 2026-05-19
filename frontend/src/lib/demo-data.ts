@@ -11,7 +11,7 @@ import {
 } from "lucide-react"
 
 export type GoalRisk = "Low" | "Medium" | "High"
-export type GoalStatus = "On Track" | "Needs Review" | "At Risk" | "Completed"
+export type GoalStatus = "On Track" | "Needs Review" | "At Risk" | "Completed" | "Pending Approval" | "Approved" | "Approved after Editing" | "Rejected" | "Escalated"
 
 export type Goal = {
   id: string

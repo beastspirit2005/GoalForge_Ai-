@@ -8,6 +8,7 @@ import { addLocalAuditLog } from "@/lib/local-audit-logs"
 import { useAuth } from "@/hooks/useAuth"
 
 type QueueItem = {
+  goalId?: string
   employee: string
   request: string
   impact: string
@@ -41,6 +42,40 @@ export default function ApprovalTable() {
     window.localStorage.setItem("goalforge.demo.queue", JSON.stringify(newQueue))
   }
 
+  const getCleanTitle = (requestText: string) => {
+    return requestText.replace(/^Approve new goal:\s*/i, "").trim()
+  }
+
+  const getCleanTarget = (impactText: string) => {
+    const match = impactText.match(/Target:\s*(.*)/i)
+    return match ? match[1].trim() : impactText.trim()
+  }
+
+  const updateDemoGoalStatus = (goalId: string | undefined, nextStatus: any, updatedFields?: { title?: string; target?: string }) => {
+    if (!goalId) return
+    try {
+      const stored = window.localStorage.getItem("goalforge.demo.goals")
+      if (stored) {
+        const goals = JSON.parse(stored)
+        const updated = goals.map((g: any) => {
+          if (g.id === goalId) {
+            return {
+              ...g,
+              status: nextStatus,
+              ...(updatedFields?.title ? { title: updatedFields.title } : {}),
+              ...(updatedFields?.target ? { target: updatedFields.target } : {})
+            }
+          }
+          return g
+        })
+        window.localStorage.setItem("goalforge.demo.goals", JSON.stringify(updated))
+        window.dispatchEvent(new Event("local-goals-updated"))
+      }
+    } catch (e) {
+      console.error("Failed to update demo goal status", e)
+    }
+  }
+
   const handleApprove = (index: number) => {
     const item = queue[index]
     const activeItem = editingIndex === index
@@ -52,6 +87,7 @@ export default function ApprovalTable() {
 
     const isEdited = activeItem.wasEdited || (editingIndex === index && (activeItem.request !== item.request || activeItem.impact !== item.impact))
     const action = isEdited ? "goal_approved_after_edit" : "goal_approved"
+    const nextStatus = isEdited ? "Approved after Editing" : "Approved"
     
     const originalText = activeItem.originalRequest || item.request
     const detail = isEdited
@@ -64,6 +100,12 @@ export default function ApprovalTable() {
       entity: "approval",
       entityId: activeItem.employee.replace(/\s+/g, '-').toLowerCase(),
       detail: detail
+    })
+
+    // Propagate changes to employee goals
+    updateDemoGoalStatus(activeItem.goalId, nextStatus, {
+      title: getCleanTitle(activeItem.request),
+      target: getCleanTarget(activeItem.impact)
     })
   }
 
@@ -78,6 +120,7 @@ export default function ApprovalTable() {
 
     const isEdited = activeItem.wasEdited || (editingIndex === index && (activeItem.request !== item.request || activeItem.impact !== item.impact))
     const action = isEdited ? "goal_rejected_after_edit" : "goal_rejected"
+    const nextStatus = "Rejected"
     
     const originalText = activeItem.originalRequest || item.request
     const detail = isEdited
@@ -91,6 +134,9 @@ export default function ApprovalTable() {
       entityId: activeItem.employee.replace(/\s+/g, '-').toLowerCase(),
       detail: detail
     })
+
+    // Propagate changes to employee goals
+    updateDemoGoalStatus(activeItem.goalId, nextStatus)
   }
 
   const startEditing = (index: number) => {
