@@ -253,6 +253,20 @@ export default function EmployeeDashboardPage() {
                     <ArrowRight className="h-3.5 w-3.5 opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0.5" />
                   </Link>
                 ))}
+                
+                {/* Dynamically show option to restore onboarding guide if dismissed */}
+                {!showOnboarding && (
+                  <button
+                    onClick={() => {
+                      localStorage.removeItem("gf_onboarding_dismissed")
+                      setShowOnboarding(true)
+                    }}
+                    className="w-full text-left group flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] p-3 text-[13px] font-medium text-white/50 transition-all duration-200 hover:border-white/[0.12] hover:bg-white/[0.05] hover:text-white/80 cursor-pointer"
+                  >
+                    <span>Show Quick-Start Guide</span>
+                    <Sparkles className="h-3.5 w-3.5 opacity-0 transition-all duration-200 group-hover:opacity-100 text-[var(--gf-cyan)]" />
+                  </button>
+                )}
               </div>
             </div>
           </div>
