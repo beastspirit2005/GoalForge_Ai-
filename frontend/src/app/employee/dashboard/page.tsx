@@ -101,7 +101,7 @@ export default function EmployeeDashboardPage() {
                 </div>
                 <div>
                   <h2 className="text-base font-bold text-white/95">Welcome to GoalForge AI! — Quick-Start Guide</h2>
-                  <p className="text-[12px] text-white/45 mt-0.5">Let's walk through how your performance scores, check-ins, and AI insights work together.</p>
+                  <p className="text-[12px] text-white/45 mt-0.5">Let&apos;s walk through how your performance scores, check-ins, and AI insights work together.</p>
                 </div>
               </div>
               

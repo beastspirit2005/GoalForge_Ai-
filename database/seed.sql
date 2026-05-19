@@ -3,11 +3,11 @@
 
 -- Users (password hash = bcrypt of "password123")
 INSERT INTO users (name, email, password_hash, role, department) VALUES
-('Aarav Mehta', 'employee@goalforge.ai', '$2b$12$LJ4.9UpD6VZ3Bz0BL1EX8.HnZq7cG5r5W5YkJ5m3z.v9H0QFbK3Ym', 'employee', 'People Ops'),
-('Priya Nair', 'manager@goalforge.ai', '$2b$12$LJ4.9UpD6VZ3Bz0BL1EX8.HnZq7cG5r5W5YkJ5m3z.v9H0QFbK3Ym', 'manager', 'Engineering'),
-('Rohan Kapoor', 'admin@goalforge.ai', '$2b$12$LJ4.9UpD6VZ3Bz0BL1EX8.HnZq7cG5r5W5YkJ5m3z.v9H0QFbK3Ym', 'admin', 'HR'),
-('Neha Rao', 'neha@goalforge.ai', '$2b$12$LJ4.9UpD6VZ3Bz0BL1EX8.HnZq7cG5r5W5YkJ5m3z.v9H0QFbK3Ym', 'employee', 'Engineering'),
-('Kabir Singh', 'kabir@goalforge.ai', '$2b$12$LJ4.9UpD6VZ3Bz0BL1EX8.HnZq7cG5r5W5YkJ5m3z.v9H0QFbK3Ym', 'employee', 'Sales');
+('Aarav Mehta', 'employee@goalforge.ai', '$2b$12$zA76FnlxRcjUJX1De7Qh8.8T2s/A83X8KM91K0Xf/RPoR66TH84Jy', 'employee', 'People Ops'),
+('Priya Nair', 'manager@goalforge.ai', '$2b$12$zA76FnlxRcjUJX1De7Qh8.8T2s/A83X8KM91K0Xf/RPoR66TH84Jy', 'manager', 'Engineering'),
+('Rohan Kapoor', 'admin@goalforge.ai', '$2b$12$zA76FnlxRcjUJX1De7Qh8.8T2s/A83X8KM91K0Xf/RPoR66TH84Jy', 'admin', 'HR'),
+('Neha Rao', 'neha@goalforge.ai', '$2b$12$zA76FnlxRcjUJX1De7Qh8.8T2s/A83X8KM91K0Xf/RPoR66TH84Jy', 'employee', 'Engineering'),
+('Kabir Singh', 'kabir@goalforge.ai', '$2b$12$zA76FnlxRcjUJX1De7Qh8.8T2s/A83X8KM91K0Xf/RPoR66TH84Jy', 'employee', 'Sales');
 
 -- Set manager relationships
 UPDATE users SET manager_id = 2 WHERE email IN ('employee@goalforge.ai', 'neha@goalforge.ai', 'kabir@goalforge.ai');
