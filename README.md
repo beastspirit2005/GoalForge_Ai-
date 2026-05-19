@@ -16,6 +16,8 @@ GoalForge AI has been upgraded with enterprise-grade features to bring next-gene
 *   **Interactive AI Buddy**: A persistent, role-aware conversational assistant acting as a goal coach. Powered by a multi-provider engine supporting Google Gemini, local Ollama models, or a fallback rules-based offline engine. Equipped with quick-failover toggles and data privacy switches.
 *   **Responsive Mobile Drawer Navigation**: Full access to dashboard views on Android, iOS, and smaller mobile screens. Includes a slide-out hamburger navigation sidebar drawer that remains responsive across all page dimensions.
 *   **Dynamic User Administration**: A comprehensive admin dashboard suite allowing administrators to onboard and offboard users. It supports creation, modification, and deletion of employee and manager accounts, which updates the backend database and registers compliance audit logs in real-time.
+*   **Employee-to-Admin Escalation Pipe**: When a goal is rejected or modified by a manager, the employee can instantly raise an escalation directly to the Admin console via an interactive glassmorphic dialog. Submitting an escalation logs a compliance audit record, changes the goal status badge to Escalated, and appends a detailed entry in the Admin Escalations queue.
+*   **Live Role-Based Reactive Notifications**: A premium notifications system with pulsing alerts, read/unread states, and role-based message filtering. The system alerts employees in real-time when their goals are approved, rejected, or modified with exact goal titles, and alerts managers and admins when goals are created or escalated with precise date/time stamps.
 
 ---
 
