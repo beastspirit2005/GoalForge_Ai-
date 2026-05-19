@@ -197,9 +197,9 @@ docker compose up -d
 ```
 
 Use **compose**, not standalone `docker run` on a single image — the stack needs Postgres, backend, and frontend together. The frontend image proxies `/api` to the backend at build time (`API_PROXY_TARGET=http://backend:8000`). If you see **Internal Server Error** on login/API calls, rebuild the frontend image after pulling latest source (older Hub images proxied to the wrong port).
-Docker will automatically pull our pre-compiled, production-ready images directly from Docker Hub:
+Docker will automatically pull our pre-compiled, production-ready images directly from Docker Hub (only the `latest` tag is published):
 * 🐍 **Backend (FastAPI)**: [1065925/goalforge-backend](https://hub.docker.com/r/1065925/goalforge-backend)
-* ⚛️ **Frontend (Next.js)**: [1065925/goalforge-frontend](https://hub.github.com/r/1065925/goalforge-frontend)
+* ⚛️ **Frontend (Next.js)**: [1065925/goalforge-frontend](https://hub.docker.com/r/1065925/goalforge-frontend)
 
 #### 2. Re-building & Uploading Container Images
 If you make changes to the source code and want to rebuild the containers and push them to your Docker Hub registry:
