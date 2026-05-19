@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # PostgreSQL Container Setup (16 Alpine)
   db:
@@ -33,7 +31,6 @@ services:
     depends_on:
       - db
       - ollama
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   # Next.js Frontend Container
   frontend:
@@ -41,11 +38,14 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        API_PROXY_TARGET: http://backend:8000
     restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://backend:8000
+      # SSR fetches; rewrites are set at image build via API_PROXY_TARGET ARG.
+      API_PROXY_TARGET: http://backend:8000
     depends_on:
       - backend
 
