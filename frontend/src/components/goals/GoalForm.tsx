@@ -55,6 +55,7 @@ export default function GoalForm() {
   }
 
   const handleAddGoal = async () => {
+    if (saving) return // Prevent double-click submissions
     setSaving(true)
     setError("")
     setMessage("")
@@ -67,52 +68,35 @@ export default function GoalForm() {
         setGenerated(true)
       }
 
+      // 1. Always write to the local session storage so the goal shows up immediately 
+      // in the employee dashboard and manager approvals queue with a valid, matching goalId.
+      addLocalDemoGoal({
+        ...form,
+        plan: activePlan,
+      })
+
+      // 2. Asynchronously sync to backend database if a session token is active
       const token = getStoredToken()
       if (token) {
-        // Add to manager approval queue locally so it is visible in the manager section
         try {
-          const queueKey = "goalforge.demo.queue"
-          const rawQueue = window.localStorage.getItem(queueKey)
-          const currentQueue = rawQueue ? JSON.parse(rawQueue) : managerQueue
-          const newQueueItem = {
-            employee: "Aarav Mehta",
-            request: `Approve new goal: ${form.title}`,
-            impact: `${activePlan.risk} Risk. Target: ${form.target}`,
-            status: "Pending"
-          }
-          window.localStorage.setItem(queueKey, JSON.stringify([newQueueItem, ...currentQueue]))
-        } catch (e) {
-          console.error("Failed to add to manager queue", e)
+          const goal = await createGoal({
+            title: form.title,
+            description: form.description,
+            target: form.target,
+            deadline: form.deadline,
+            weightage: 25,
+          })
+          await generateStoredGoalPlan(goal.id)
+        } catch (apiErr) {
+          console.warn("Backend database sync bypassed: API server is offline.", apiErr)
         }
-
-        const goal = await createGoal({
-          title: form.title,
-          description: form.description,
-          target: form.target,
-          deadline: form.deadline,
-          weightage: 25,
-        })
-        await generateStoredGoalPlan(goal.id)
-        setMessage("Goal added and AI plan attached.")
-        router.push("/employee/goals")
-        return
       }
 
-      addLocalDemoGoal({
-        ...form,
-        plan: activePlan,
-      })
-      setMessage("Goal added to this demo session.")
+      setMessage("Goal successfully created!")
       router.push("/employee/goals")
     } catch (err) {
-      const activePlan = plan ?? createLocalGoalPlan(form)
-      addLocalDemoGoal({
-        ...form,
-        plan: activePlan,
-      })
-      setGenerated(true)
-      setMessage("Backend unavailable, so the goal was added to this demo session.")
-      router.push("/employee/goals")
+      console.error("Failed to create goal locally", err)
+      setError("Failed to create goal in this session.")
     } finally {
       setSaving(false)
     }
