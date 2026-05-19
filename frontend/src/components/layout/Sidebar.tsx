@@ -72,7 +72,7 @@ export default function Sidebar({ onClose, isMobile }: SidebarProps = {}) {
     if (!role) return false
     if (link.section === "Account") return true
     if (role === "admin") return true
-    if (role === "manager" && (link.section === "Manager" || link.section === "Employee")) return true
+    if (role === "manager" && link.section === "Manager") return true
     if (role === "employee" && link.section === "Employee") return true
     return false
   })
