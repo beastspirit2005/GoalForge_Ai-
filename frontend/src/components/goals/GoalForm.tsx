@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Brain, CalendarDays, Loader2, Plus, Send, Target } from "lucide-react"
 import { useRouter } from "next/navigation"
 import MilestoneCard from "@/components/ai/MilestoneCard"
@@ -26,6 +26,7 @@ const generatedMilestones = [
 
 export default function GoalForm() {
   const router = useRouter()
+  const isSavingRef = useRef(false)
   const [generated, setGenerated] = useState(false)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -55,7 +56,8 @@ export default function GoalForm() {
   }
 
   const handleAddGoal = async () => {
-    if (saving) return // Prevent double-click submissions
+    if (isSavingRef.current) return // Prevent duplicate/triple click submissions
+    isSavingRef.current = true
     setSaving(true)
     setError("")
     setMessage("")
@@ -98,6 +100,7 @@ export default function GoalForm() {
       console.error("Failed to create goal locally", err)
       setError("Failed to create goal in this session.")
     } finally {
+      isSavingRef.current = false
       setSaving(false)
     }
   }
