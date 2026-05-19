@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { addLocalDemoGoal } from "@/lib/local-demo-goals"
+import { managerQueue } from "@/lib/demo-data"
 import { generateGoalPlan, createLocalGoalPlan, type GeneratePlanResponse } from "@/services/ai.service"
 import { createGoal, generateGoalPlan as generateStoredGoalPlan } from "@/services/goal.service"
 import { getStoredToken } from "@/services/auth.service"
@@ -68,6 +69,22 @@ export default function GoalForm() {
 
       const token = getStoredToken()
       if (token) {
+        // Add to manager approval queue locally so it is visible in the manager section
+        try {
+          const queueKey = "goalforge.demo.queue"
+          const rawQueue = window.localStorage.getItem(queueKey)
+          const currentQueue = rawQueue ? JSON.parse(rawQueue) : managerQueue
+          const newQueueItem = {
+            employee: "Aarav Mehta",
+            request: `Approve new goal: ${form.title}`,
+            impact: `${activePlan.risk} Risk. Target: ${form.target}`,
+            status: "Pending"
+          }
+          window.localStorage.setItem(queueKey, JSON.stringify([newQueueItem, ...currentQueue]))
+        } catch (e) {
+          console.error("Failed to add to manager queue", e)
+        }
+
         const goal = await createGoal({
           title: form.title,
           description: form.description,

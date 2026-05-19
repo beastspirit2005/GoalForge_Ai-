@@ -1,6 +1,6 @@
 "use client"
 
-import type { Goal, GoalRisk, GoalStatus } from "@/lib/demo-data"
+import { managerQueue, type Goal, type GoalRisk, type GoalStatus } from "@/lib/demo-data"
 import type { GeneratePlanResponse } from "@/services/ai.service"
 
 const LOCAL_GOALS_KEY = "goalforge.demo.goals"
@@ -73,5 +73,22 @@ export function addLocalDemoGoal(input: LocalGoalInput) {
   }
 
   window.localStorage.setItem(LOCAL_GOALS_KEY, JSON.stringify([nextGoal, ...current]))
+
+  // Add to manager approval queue too
+  try {
+    const queueKey = "goalforge.demo.queue"
+    const rawQueue = window.localStorage.getItem(queueKey)
+    const currentQueue = rawQueue ? JSON.parse(rawQueue) : managerQueue
+    const newQueueItem = {
+      employee: "Aarav Mehta",
+      request: `Approve new goal: ${input.title}`,
+      impact: `${input.plan.risk} Risk. Target: ${input.target}`,
+      status: "Pending"
+    }
+    window.localStorage.setItem(queueKey, JSON.stringify([newQueueItem, ...currentQueue]))
+  } catch (e) {
+    console.error("Failed to add to manager queue", e)
+  }
+
   return nextGoal
 }
