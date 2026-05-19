@@ -6,13 +6,11 @@ echo   GoalForge AI - Secure Docker Hub Image Pusher
 echo ===================================================
 echo.
 
-:: Prompt securely for credentials
 set /p DOCKER_USERNAME="Enter Docker Hub Username: "
 set /p DOCKER_PASSWORD="Enter Docker Hub Password/Token: "
 
 echo.
-echo [1/3] Logging into Docker Hub...
-:: Use password-stdin pipe to log in securely without printing password
+echo [1/4] Logging into Docker Hub...
 echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin
 
 if %ERRORLEVEL% NEQ 0 (
@@ -24,18 +22,31 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
-echo [2/3] Tagging local container images for user '%DOCKER_USERNAME%'...
-docker tag beastspirit2005/goalforge-backend:latest %DOCKER_USERNAME%/goalforge-backend:latest
-docker tag beastspirit2005/goalforge-frontend:latest %DOCKER_USERNAME%/goalforge-frontend:latest
+echo [2/4] Building images (frontend proxies /api to backend:8000)...
+docker build -t %DOCKER_USERNAME%/goalforge-backend:latest ./backend
+docker build -t %DOCKER_USERNAME%/goalforge-frontend:latest --build-arg API_PROXY_TARGET=http://backend:8000 ./frontend
+
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [ERROR] Docker build failed!
+    pause
+    exit /b %ERRORLEVEL%
+)
 
 echo.
-echo [3/3] Uploading images to Docker Hub...
-echo.
-echo Pushing: %DOCKER_USERNAME%/goalforge-backend:latest
+echo [3/4] Pushing backend...
 docker push %DOCKER_USERNAME%/goalforge-backend:latest
+
 echo.
-echo Pushing: %DOCKER_USERNAME%/goalforge-frontend:latest
+echo [4/4] Pushing frontend...
 docker push %DOCKER_USERNAME%/goalforge-frontend:latest
+
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [ERROR] Docker push failed!
+    pause
+    exit /b %ERRORLEVEL%
+)
 
 echo.
 echo ===================================================

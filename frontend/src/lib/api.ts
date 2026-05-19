@@ -10,6 +10,10 @@ export function getApiUrl(): string {
     return "/api"
   }
 
+  // SSR in Docker / compose: talk to backend on the internal network
+  const internal = process.env.API_PROXY_TARGET?.replace(/\/$/, "")
+  if (internal) return internal
+
   // SSR on Vercel: hit the deployed API route on the same host
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}/api`

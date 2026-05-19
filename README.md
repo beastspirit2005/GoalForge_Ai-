@@ -190,10 +190,13 @@ The root `vercel.json` leverages experimental unified services to deploy both fr
 GoalForge AI is fully containerized and cloud-ready. You can run the entire platform locally or deploy it to production using Docker and Docker Compose.
 
 #### 1. Instant Start (Pull Pre-Built Images from Docker Hub)
-You don't need to compile any code or install dependencies. Simply run:
+You don't need to compile any code or install dependencies. Run from the repo root (so Postgres init scripts mount correctly):
+
 ```bash
 docker compose up -d
 ```
+
+Use **compose**, not standalone `docker run` on a single image — the stack needs Postgres, backend, and frontend together. The frontend image proxies `/api` to the backend at build time (`API_PROXY_TARGET=http://backend:8000`). If you see **Internal Server Error** on login/API calls, rebuild the frontend image after pulling latest source (older Hub images proxied to the wrong port).
 Docker will automatically pull our pre-compiled, production-ready images directly from Docker Hub:
 * 🐍 **Backend (FastAPI)**: [1065925/goalforge-backend](https://hub.docker.com/r/1065925/goalforge-backend)
 * ⚛️ **Frontend (Next.js)**: [1065925/goalforge-frontend](https://hub.github.com/r/1065925/goalforge-frontend)
