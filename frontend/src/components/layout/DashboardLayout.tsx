@@ -95,7 +95,7 @@ export default function DashboardLayout({
         <Navbar 
           user={{
             name: user.name,
-            role: "role" in user ? user.role : "",
+            role: ("role" in user ? user.role : "employee") as "employee" | "manager" | "admin",
             avatar: "avatar" in user ? (user as Record<string, string>).avatar : undefined,
             profile_picture_url: "profile_picture_url" in user ? user.profile_picture_url : undefined,
           }} 

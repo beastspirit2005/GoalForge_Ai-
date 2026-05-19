@@ -7,10 +7,11 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/hooks/useAuth"
+import { getLocalNotifications, markAllAsRead, markAsRead, type Notification } from "@/lib/local-notifications"
 
 type NavbarUser = {
   name: string
-  role: string
+  role: "employee" | "manager" | "admin"
   avatar?: string
   profile_picture_url?: string | null
 }
@@ -49,17 +50,36 @@ export default function Navbar({ user, onOpenMobileMenu }: NavbarProps) {
   const [isFocused, setIsFocused] = useState(false)
   const [selectedPerson, setSelectedPerson] = useState<typeof demoUsers[0] | null>(null)
   const searchRef = useRef<HTMLDivElement>(null)
+  
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false)
+  const notifRef = useRef<HTMLDivElement>(null)
+
+  const loadNotifs = () => {
+    const all = getLocalNotifications()
+    const filtered = all.filter(n => n.recipientRole === user.role)
+    setNotifications(filtered)
+  }
+
+  useEffect(() => {
+    loadNotifs()
+    window.addEventListener("notifications-updated", loadNotifs)
+    return () => window.removeEventListener("notifications-updated", loadNotifs)
+  }, [user.role])
 
   const handleLogout = () => {
     logout()
     router.replace("/login")
   }
 
-  // Handle click outside to close dropdown
+  // Handle click outside to close dropdowns
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setIsFocused(false)
+      }
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotifDropdown(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -191,15 +211,76 @@ export default function Navbar({ user, onOpenMobileMenu }: NavbarProps) {
         </div>
 
         <ThemeToggle />
-        <Button
-          size="icon"
-          variant="outline"
-          aria-label="Notifications"
-          onClick={() => alert("No new notifications")}
-          className="dark:border-white/[0.08] border-slate-200 dark:bg-white/[0.04] bg-slate-100 dark:text-white/40 text-slate-500 dark:hover:border-white/[0.14] hover:border-slate-300 dark:hover:bg-white/[0.07] hover:bg-slate-200 dark:hover:text-white/70 hover:text-slate-700"
-        >
-          <Bell className="h-4 w-4" />
-        </Button>
+        <div className="relative" ref={notifRef}>
+          <Button
+            size="icon"
+            variant="outline"
+            aria-label="Notifications"
+            onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+            className="relative dark:border-white/[0.08] border-slate-200 dark:bg-white/[0.04] bg-slate-100 dark:text-white/40 text-slate-500 dark:hover:border-white/[0.14] hover:border-slate-300 dark:hover:bg-white/[0.07] hover:bg-slate-200 dark:hover:text-white/70 hover:text-slate-700"
+          >
+            <Bell className="h-4 w-4" />
+            {notifications.filter(n => !n.read).length > 0 && (
+              <span className="absolute top-1 right-1 flex h-2 w-2 items-center justify-center rounded-full bg-rose-500 shadow-sm ring-1 ring-[oklch(0.13_0.015_270)] animate-pulse" />
+            )}
+          </Button>
+
+          {/* Notifications Dropdown Drawer */}
+          {showNotifDropdown && (
+            <div className="absolute right-0 top-11 z-30 w-80 overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/95 dark:bg-[oklch(0.14_0.015_270)]/95 p-3 shadow-2xl backdrop-blur-xl animate-in fade-in-0 slide-in-from-top-2 duration-150">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/[0.04] pb-2">
+                <p className="text-xs font-bold text-slate-800 dark:text-white/90">
+                  Notifications ({notifications.filter(n => !n.read).length} unread)
+                </p>
+                {notifications.filter(n => !n.read).length > 0 && (
+                  <button
+                    onClick={() => markAllAsRead(user.role)}
+                    className="text-[10px] font-semibold text-[var(--gf-indigo)] hover:underline"
+                  >
+                    Mark all as read
+                  </button>
+                )}
+              </div>
+
+              <div className="mt-2 max-h-[280px] overflow-y-auto space-y-2 p-0.5">
+                {notifications.map((notif) => (
+                  <div
+                    key={notif.id}
+                    onClick={() => markAsRead(notif.id)}
+                    className={`group flex items-start gap-2.5 rounded-lg p-2.5 text-left cursor-pointer transition-colors ${
+                      notif.read
+                        ? "hover:bg-slate-100 dark:hover:bg-white/[0.02] opacity-75"
+                        : "bg-slate-50 dark:bg-white/[0.03] border-l-2 border-[var(--gf-indigo)] hover:bg-slate-100/80 dark:hover:bg-white/[0.05]"
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[12px] font-bold text-slate-800 dark:text-white/95 truncate">
+                          {notif.title}
+                        </p>
+                        {!notif.read && (
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--gf-indigo)]" />
+                        )}
+                      </div>
+                      <p className="mt-1 text-[11px] leading-4 text-slate-600 dark:text-white/60">
+                        {notif.message}
+                      </p>
+                      <p className="mt-1.5 text-[9px] text-slate-400 dark:text-white/35">
+                        {notif.date}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+
+                {notifications.length === 0 && (
+                  <div className="py-8 text-center text-xs text-slate-500 dark:text-white/30">
+                    No new notifications.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-3 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 backdrop-blur-lg">
           <div className="grid h-8 w-8 place-items-center overflow-hidden rounded-lg bg-gradient-to-br from-[var(--gf-cyan)] to-[var(--gf-indigo)] text-[11px] font-bold text-white shadow-lg shadow-[var(--gf-indigo)]/20">
             {user.profile_picture_url || user.avatar ? (
