@@ -61,7 +61,7 @@ export function addLocalDemoGoal(input: LocalGoalInput) {
     department: "People Ops",
     progress: 0,
     deadline: formatDateLabel(input.deadline),
-    status: statusFromRisk(input.plan.risk),
+    status: "Pending Approval",
     risk: input.plan.risk,
     target: input.target,
     recommendation: input.plan.recommendation,
@@ -80,6 +80,7 @@ export function addLocalDemoGoal(input: LocalGoalInput) {
     const rawQueue = window.localStorage.getItem(queueKey)
     const currentQueue = rawQueue ? JSON.parse(rawQueue) : managerQueue
     const newQueueItem = {
+      goalId: id,
       employee: "Aarav Mehta",
       request: `Approve new goal: ${input.title}`,
       impact: `${input.plan.risk} Risk. Target: ${input.target}`,

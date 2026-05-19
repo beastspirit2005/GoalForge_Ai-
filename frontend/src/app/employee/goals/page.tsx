@@ -9,10 +9,16 @@ import { getLocalDemoGoals } from "@/lib/local-demo-goals"
 import Link from "next/link"
 
 export default function GoalsPage() {
-  const [goals, setGoals] = useState<Goal[]>(demoGoals)
+  const [goals, setGoals] = useState<Goal[]>([])
 
   useEffect(() => {
-    setGoals([...getLocalDemoGoals(), ...demoGoals])
+    const handleUpdate = () => {
+      setGoals([...getLocalDemoGoals(), ...demoGoals])
+    }
+    
+    handleUpdate()
+    window.addEventListener("local-goals-updated", handleUpdate)
+    return () => window.removeEventListener("local-goals-updated", handleUpdate)
   }, [])
 
   return (
