@@ -1,33 +1,38 @@
 # GoalForge AI
 
-**AI-Powered Goal Management & Performance Intelligence Platform**
+**AI-Powered Goal Management and Performance Intelligence Platform**
 
-GoalForge AI is a smart enterprise web platform designed to help organizations manage employee goals, track quarterly progress, and improve overall performance using adaptive AI guidance powered by Google Gemini and local LLM orchestration.
+GoalForge AI is an advanced enterprise web platform designed to help organizations manage employee goals, track quarterly progress, and improve overall performance using adaptive AI guidance powered by Google Gemini and local LLM orchestration.
 
 ---
 
-## What's New
+## What is New
 
-We have recently upgraded GoalForge AI with enterprise-grade features to bring next-generation usability, offline privacy, and responsive styling to the platform:
+GoalForge AI has been upgraded with enterprise-grade features to bring next-generation usability, absolute role-based access security, and premium styling to the platform:
 
-*   **Interactive AI Buddy (Role-Aware Performance Copilot)** — A persistent conversational assistant that acts as a goal coach. Backed by a multi-provider engine (Google Gemini 2.0 Flash, local Ollama, or an offline rules-based fallback) with user-scoped chat logs, quick-failover buttons, and a data privacy toggle.
-*   **Responsive Mobile Drawer Navigation** — Fully responsive layouts for Android and iOS devices. The navbar includes a modern hamburger menu that toggles an interactive slide-out sidebar overlay, making all employee, manager, and administrator dashboard views completely accessible on small screens.
-*   **Dynamic User Administration** — A complete admin control suite for onboarding and offboarding. Administrators can create, edit, and delete employee and manager accounts directly from the UI, which automatically streams to the backend database and logs actions in the compliance audit trail.
-*   **Production-Grade JWT Authenticated Sessions** — Quick login cards now perform actual API JWT logins rather than relying on frontend-only mock state, ensuring real auth tokens are established, with graceful fallback.
-*   **Unified Monorepo & Auto-URL Routing** — Zero-config deployment. Includes a root-level `vercel.json` and backend prefix-stripping middleware for Vercel, coupled with auto-detecting frontend API URLs that seamlessly adapt to production environments.
+*   **Access Control Separation**: Fully hardened route guards and dynamically filtered sidebars. Users signed in under the L1 Manager role are completely isolated from employee dashboard pages, and all employee-specific sidebar navigation elements are hidden, preventing cross-role access leakage.
+*   **Interactive Inline Editing during Approval**: Managers can now edit request descriptions and impact levels directly inline inside their approval table. Featuring a slick, glassmorphic edit state toggled via an edit icon, with custom focus inputs, save and cancel controls, and instant compliance logging in the audit trail.
+*   **Automatic Employee-to-Manager Goal Approval Routing**: When an employee creates a new AI-powered goal in their console, the platform automatically formats and pushes a pending approval request into the manager's queue in real-time, regardless of whether local session mode or active backend mode is utilized.
+*   **Interactive AI Buddy**: A persistent, role-aware conversational assistant acting as a goal coach. Powered by a multi-provider engine supporting Google Gemini, local Ollama models, or a fallback rules-based offline engine. Equipped with quick-failover toggles and data privacy switches.
+*   **Responsive Mobile Drawer Navigation**: Full access to dashboard views on Android, iOS, and smaller mobile screens. Includes a slide-out hamburger navigation sidebar drawer that remains responsive across all page dimensions.
+*   **Dynamic User Administration**: A comprehensive admin dashboard suite allowing administrators to onboard and offboard users. It supports creation, modification, and deletion of employee and manager accounts, which updates the backend database and registers compliance audit logs in real-time.
 
 ---
 
 ## Key Features
 
-- **AI Milestone Planning** — Converts vague goals into weekly milestones with success metrics.
-- **Goal Refinement** — AI transforms informal goals into measurable enterprise objectives.
-- **Risk Prediction** — Identifies slow-moving goals before deadline week.
-- **Role-Based Dashboards** — Employee, Manager, and Admin each get tailored views.
-- **Approval Workflow** — Submit → Approve/Reject → Lock/Unlock cycle.
-- **Quarterly Check-ins** — Track actual achievement with manager feedback.
-- **Analytics & Visualization** — Progress charts, heatmaps, risk distribution.
-- **Audit Trail** — Complete governance log of all user creation, edits, and state transitions.
+### Important Enterprise Features
+*   **Role-Based Security Isolation**: Strict pathway barriers in frontend and backend separating Employee, L1 Manager, and Admin environments, ensuring total segregation of duties.
+*   **Inline Change Modification**: Allows managers to tweak goal descriptions and impact weights in-line inside the queue, resolving approval blocks instantly without manual backtracking.
+*   **End-to-End Goal Approval Pipeline**: Automatic handoff from employee creation -> manager approval/rejection -> admin unlocking.
+*   **Tamper-Evident Audit Trail**: A complete compliance ledger tracking all user state changes, security overrides, and goal edits with timestamps.
+
+### Core Platform Capabilities
+*   **AI Milestone Planning**: Converted informal goals into structured weekly milestone tasks with clear progress indicators.
+*   **Goal Refinement Engine**: Refines basic user text inputs into professional, measurable key results using LLM cognitive modeling.
+*   **Risk Prediction Analytics**: Scans target deadlines, weights, and current check-in milestones to flag high-risk goals before they become overdue.
+*   **Quarterly Progress Check-ins**: Provides periodic check-in forms with numeric actuals and comments.
+*   **Executive Metrics Dashboard**: Visualization widgets including department progress charts, active goal counts, and risk distribution heatmaps.
 
 ---
 
@@ -36,14 +41,14 @@ We have recently upgraded GoalForge AI with enterprise-grade features to bring n
 | Layer | Technology | Description |
 |:---|:---|:---|
 | **Frontend** | Next.js 16, React 19, TypeScript | Premium enterprise framework with Server-Side Rendering support |
-| **Styling & UI** | Tailwind CSS 4, shadcn/ui, Radix UI | Modern dark/light glassmorphic variables, fluid transitions |
-| **Charts** | Recharts | Interactive SVG charts & visual metrics |
+| **Styling and UI** | Tailwind CSS 4, shadcn/ui, Radix UI | Modern dark/light glassmorphic variables, fluid transitions |
+| **Charts** | Recharts | Interactive SVG charts and visual metrics |
 | **Backend** | FastAPI (Python) | High-performance async REST framework |
 | **Database** | PostgreSQL | Robust SQL schema containing user-scoped chat logs and check-ins |
 | **Cloud AI** | Google Gemini 2.0 Flash | Cloud-based cognitive model for milestone planning and goal refinement |
-| **Local AI** | Ollama (`llama3`, `gemma2:2b`, etc.) | Fully sovereign, local-first model provider for offline developer environments |
+| **Local AI** | Ollama (gemma2:2b, llama3, etc.) | Fully sovereign, local-first model provider for offline developer environments |
 | **Offline LLM** | Rules-based Fallback AI | Adaptive fallback logic for offline access and API-free setups |
-| **Auth** | JWT (python-jose + bcrypt) | Secure, state-based, and role-authorized JWT tokens |
+| **Auth** | JWT (python-jose and bcrypt) | Secure, state-based, and role-authorized JWT tokens |
 
 ---
 
@@ -53,14 +58,14 @@ We have recently upgraded GoalForge AI with enterprise-grade features to bring n
 - Python 3.11+
 - Node.js 18+
 - PostgreSQL 16+
-- *(Optional)* [Ollama](https://ollama.com/) (For local private AI workflows)
+- (Optional) Ollama (For local private AI workflows)
 
 ---
 
 ### 1. Clone and Install
 
 ```bash
-git clone https://github.com/your-org/GoalForge-Ai.git
+git clone https://github.com/beastspirit2005/GoalForge_Ai-.git
 cd GoalForge-Ai
 ```
 
@@ -86,7 +91,7 @@ psql -U postgres -c "CREATE DATABASE goalforge;"
    ```
 2. Create a `.env` file in the root backend folder (or update the main `.env` in the workspace root):
    ```env
-   DATABASE_URL=postgresql+asyncpg://postgres:yourpassword@localhost:55432/goalforge
+   DATABASE_URL=postgresql+asyncpg://postgres:yourpassword@localhost:5432/goalforge
    GEMINI_API_KEY=AIzaSy...   # Google Gemini API key
    SECRET_KEY=your-jwt-secret-key-here
    ```
@@ -121,8 +126,8 @@ python scripts/seed.py
 
 ### 6. Local AI Orchestration (Ollama Setup)
 
-If you wish to use **Local AI** for private goal guidance:
-1. Make sure [Ollama](https://ollama.com/) is installed and running:
+If you wish to use Local AI for private goal guidance:
+1. Make sure Ollama is installed and running:
    ```bash
    ollama serve
    ```
@@ -131,10 +136,8 @@ If you wish to use **Local AI** for private goal guidance:
    ollama pull llama3         # Default fallback model
    # or
    ollama pull gemma2:2b      # Lightweight Google local model
-   # or
-   ollama pull phi3:mini      # High-performance local model
    ```
-3. Open the **AI Buddy settings panel** in the bottom-right corner of the dashboard, choose the **Ollama** provider, and select your pulled model!
+3. Open the AI Buddy settings panel in the bottom-right corner of the dashboard, choose the Ollama provider, and select your pulled model.
 
 ---
 
@@ -155,23 +158,23 @@ GoalForge-Ai/
 ├── vercel.json          # Root multi-service unified routing configuration
 ├── backend/
 │   └── app/
-│       ├── ai/          # Gemini & Ollama client, system prompts, offline rules
+│       ├── ai/          # Gemini and Ollama client, system prompts, offline rules
 │       ├── core/        # Config, auth sessions, database connections
 │       ├── logic/       # Business rules (validation, scoring)
 │       ├── models/      # SQLAlchemy ORM models (Goals, Check-ins, Chat Logs)
 │       ├── routes/      # FastAPI REST routes (Admin, User Management, AI Copilot)
 │       ├── schemas/     # Pydantic schemas (JWT token responses, chat queries)
 │       ├── services/    # Business services layer (Audit trails, scores)
-│       └── main.py      # Strips /api prefix, handlesStaticFiles, mounts routes
+│       └── main.py      # Strips /api prefix, handles static files, mounts routes
 ├── frontend/
 │   ├── vercel.json      # Next.js specific settings
 │   └── src/
 │       ├── app/         # Next.js page layouts (Login, Settings, Dashboards)
-│       ├── components/  # Tailwind glassmorphic UI components & AI Buddy drawer
+│       ├── components/  # Tailwind glassmorphic UI components and AI Buddy drawer
 │       ├── hooks/       # Custom React hooks (useAuth, useGoals, useAi)
 │       ├── lib/         # API fetch utilities (supports auto production URL detection)
 │       └── services/    # API authentication client
-├── database/            # SQL schemas & database init scripts
+├── database/            # SQL schemas and database init scripts
 └── scripts/             # Database seed and maintenance scripts
 ```
 
@@ -181,8 +184,8 @@ GoalForge-Ai/
 
 ### Vercel Multi-Service Architecture
 The root `vercel.json` leverages experimental unified services to deploy both frontend and backend as a single monorepo:
-*   The **FastAPI backend** is mapped to run under `/api` with a routePrefix.
-*   The **Next.js frontend** runs on `/` and automatically rewrites requests to `/api` when deployed.
+*   The FastAPI backend is mapped to run under `/api` with a routePrefix.
+*   The Next.js frontend runs on `/` and automatically rewrites requests to `/api` when deployed.
 *   Our prefix-stripping middleware handles path routing on the server.
 
 ### Docker Environment
@@ -190,26 +193,18 @@ The root `vercel.json` leverages experimental unified services to deploy both fr
 GoalForge AI is fully containerized and cloud-ready. You can run the entire platform locally or deploy it to production using Docker and Docker Compose.
 
 #### 1. Instant Start (Pull Pre-Built Images from Docker Hub)
-You don't need to compile any code or install dependencies. Run from the repo root (so Postgres init scripts mount correctly):
+You can run the entire platform locally by running from the repo root:
 
 ```bash
 docker compose up -d
 ```
 
-Use **compose**, not standalone `docker run` on a single image — the stack needs Postgres, backend, and frontend together. The frontend image proxies `/api` to the backend at build time (`API_PROXY_TARGET=http://backend:8000`). If you see **Internal Server Error** on login/API calls, rebuild the frontend image after pulling latest source (older Hub images proxied to the wrong port).
 Docker will automatically pull our pre-compiled, production-ready images directly from Docker Hub (only the `latest` tag is published):
-* 🐍 **Backend (FastAPI)**: [1065925/goalforge-backend](https://hub.docker.com/r/1065925/goalforge-backend)
-* ⚛️ **Frontend (Next.js)**: [1065925/goalforge-frontend](https://hub.docker.com/r/1065925/goalforge-frontend)
+* Backend (FastAPI): [1065925/goalforge-backend](https://hub.docker.com/r/1065925/goalforge-backend)
+* Frontend (Next.js): [1065925/goalforge-frontend](https://hub.docker.com/r/1065925/goalforge-frontend)
 
-#### 2. Re-building & Uploading Container Images
+#### 2. Re-building and Uploading Container Images
 If you make changes to the source code and want to rebuild the containers and push them to your Docker Hub registry:
-
-##### Windows (One-Click Secure Interactive Deployer)
-We have created a secure, interactive utility script. Simply execute:
-```cmd
-.\scripts\push-docker.bat
-```
-*The script will securely prompt you for your Docker Hub credentials, execute a safe `--password-stdin` login, dynamically re-tag the pre-built images with your account, and push them to Docker Hub.*
 
 ##### Manual Terminal Commands
 ```bash
