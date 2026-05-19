@@ -30,6 +30,9 @@ import {
   getCustomGeminiKey,
   setCustomGeminiKey,
   clearCustomGeminiKey,
+  resolveCustomGeminiKey,
+  syncGeminiKeyFromStorage,
+  GEMINI_KEY_CHANGED_EVENT,
   type GeminiKeyMode,
 } from "@/lib/gemini-storage"
 import { geminiChatFromBrowser } from "@/lib/gemini-browser"
@@ -89,6 +92,7 @@ export function AiBuddyChat() {
   const [geminiKeyMode, setGeminiKeyModeState] = useState<GeminiKeyMode>("app")
   const [customKeyInput, setCustomKeyInput] = useState("")
   const [showCustomKey, setShowCustomKey] = useState(false)
+  const [keySaveMessage, setKeySaveMessage] = useState("")
 
   const [saveHistory, setSaveHistory] = useState(true)
   const [isDeletedFeedback, setIsDeletedFeedback] = useState(false)
@@ -130,24 +134,24 @@ export function AiBuddyChat() {
     setGeminiKeyModeState(getGeminiKeyMode())
     setCustomKeyInput(getCustomGeminiKey())
 
-    // Listen for storage changes (when key is updated in Settings)
-    const handleStorageChange = () => {
-      setGeminiKeyModeState(getGeminiKeyMode())
-      setCustomKeyInput(getCustomGeminiKey())
+    const refreshGeminiKeyState = () => {
+      const { mode, key } = syncGeminiKeyFromStorage()
+      setGeminiKeyModeState(mode)
+      setCustomKeyInput(key)
     }
 
-    // Listen for window focus (when returning from Settings tab)
-    const handleFocus = () => {
-      setGeminiKeyModeState(getGeminiKeyMode())
-      setCustomKeyInput(getCustomGeminiKey())
-    }
+    const handleStorageChange = () => refreshGeminiKeyState()
+    const handleFocus = () => refreshGeminiKeyState()
+    const handleKeyChanged = () => refreshGeminiKeyState()
 
     window.addEventListener("storage", handleStorageChange)
     window.addEventListener("focus", handleFocus)
+    window.addEventListener(GEMINI_KEY_CHANGED_EVENT, handleKeyChanged)
 
     return () => {
       window.removeEventListener("storage", handleStorageChange)
       window.removeEventListener("focus", handleFocus)
+      window.removeEventListener(GEMINI_KEY_CHANGED_EVENT, handleKeyChanged)
     }
   }, [])
 
@@ -209,9 +213,43 @@ export function AiBuddyChat() {
     return res.context
   }
 
-  const runGeminiWithCustomKey = async (query: string) => {
+  const runGeminiWithCustomKey = async (query: string, apiKey: string) => {
     const context = await fetchCopilotContext()
-    return geminiChatFromBrowser(query, context)
+    try {
+      return await geminiChatFromBrowser(query, context, apiKey)
+    } catch {
+      // Browser CORS/network — proxy once through API without storing the key
+      const token = getStoredToken()
+      const proxied = await apiFetch<{ response: string; source: string }>("/ai/copilot", {
+        method: "POST",
+        token,
+        body: {
+          query,
+          context,
+          provider: "gemini",
+          api_key: apiKey,
+        },
+      })
+      return {
+        response: proxied.response,
+        source: "gemini (your key)",
+      }
+    }
+  }
+
+  const selectCustomKeyMode = () => {
+    const draft = resolveCustomGeminiKey(customKeyInput)
+    if (draft) {
+      setCustomGeminiKey(draft)
+      setCustomKeyInput(draft)
+      setKeySaveMessage("Your key is saved in this browser.")
+    } else {
+      setGeminiKeyMode("custom")
+      setGeminiKeyModeState("custom")
+      setKeySaveMessage("Paste your key below, then click Save.")
+      return
+    }
+    setGeminiKeyModeState("custom")
   }
 
   const runBackendCopilot = async (
@@ -286,15 +324,24 @@ export function AiBuddyChat() {
   }
 
   const handleSaveCustomKey = () => {
-    setCustomGeminiKey(customKeyInput)
-    setGeminiKeyModeState(getGeminiKeyMode())
-    setGeminiKeyMode("custom")
+    const key = resolveCustomGeminiKey(customKeyInput)
+    if (!key) {
+      setKeySaveMessage("Enter a valid Gemini API key first.")
+      return
+    }
+    setCustomGeminiKey(key)
+    setCustomKeyInput(key)
+    setGeminiKeyModeState("custom")
+    setKeySaveMessage("Key saved in this browser only.")
+    setTimeout(() => setKeySaveMessage(""), 3000)
   }
 
   const handleUseAppKey = () => {
     clearCustomGeminiKey()
     setGeminiKeyModeState("app")
     setCustomKeyInput("")
+    setKeySaveMessage("Using the app Gemini key.")
+    setTimeout(() => setKeySaveMessage(""), 3000)
   }
 
   const handleSend = async () => {
@@ -313,20 +360,21 @@ export function AiBuddyChat() {
     try {
       let res: { response: string; source: string }
 
-      const customKey = getCustomGeminiKey()
-      console.log('[AI Buddy] Provider:', activeProvider)
-      console.log('[AI Buddy] Key Mode:', geminiKeyMode)
-      console.log('[AI Buddy] Has Custom Key:', !!customKey)
-      
-      const sendKey = (activeProvider === "gemini" && geminiKeyMode === "custom" && customKey) ? customKey : undefined
-      
-      console.log('[AI Buddy] Using backend copilot with key override:', !!sendKey)
-      res = await runBackendCopilot(
-        userMessage,
-        activeProvider,
-        activeProvider === "ollama" ? selectedOllamaModel : undefined,
-        sendKey
-      )
+      if (activeProvider === "gemini" && geminiKeyMode === "custom") {
+        const customKey = resolveCustomGeminiKey(customKeyInput)
+        if (!customKey) {
+          throw new Error(
+            "My key mode is on but no key is saved. Paste your Gemini API key in settings and click Save."
+          )
+        }
+        res = await runGeminiWithCustomKey(userMessage, customKey)
+      } else {
+        res = await runBackendCopilot(
+          userMessage,
+          activeProvider,
+          activeProvider === "ollama" ? selectedOllamaModel : undefined
+        )
+      }
 
       applyMessages(
         [...withUser, { role: "assistant", content: res.response, source: res.source }],
@@ -390,20 +438,25 @@ export function AiBuddyChat() {
 
     try {
       let res: { response: string; source: string }
-      const customKey = getCustomGeminiKey()
-      const sendKey = (newProvider === "gemini" && geminiKeyMode === "custom" && customKey) ? customKey : undefined
 
-      let localModel = selectedOllamaModel
-      if (newProvider === "ollama" && !localModel && ollamaModels.length > 0) {
-        localModel = ollamaModels[0]
-        setSelectedOllamaModel(localModel)
+      if (newProvider === "gemini" && geminiKeyMode === "custom") {
+        const customKey = resolveCustomGeminiKey(customKeyInput)
+        if (!customKey) {
+          throw new Error("Save your Gemini API key before switching to My key mode.")
+        }
+        res = await runGeminiWithCustomKey(lastQuery, customKey)
+      } else {
+        let localModel = selectedOllamaModel
+        if (newProvider === "ollama" && !localModel && ollamaModels.length > 0) {
+          localModel = ollamaModels[0]
+          setSelectedOllamaModel(localModel)
+        }
+        res = await runBackendCopilot(
+          lastQuery,
+          newProvider,
+          newProvider === "ollama" ? localModel : undefined
+        )
       }
-      res = await runBackendCopilot(
-        lastQuery,
-        newProvider,
-        newProvider === "ollama" ? localModel : undefined,
-        sendKey
-      )
       applyMessages([...messages, { role: "assistant", content: res.response, source: res.source }])
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error"
@@ -646,10 +699,7 @@ export function AiBuddyChat() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => {
-                            setGeminiKeyMode("custom")
-                            setGeminiKeyModeState("custom")
-                          }}
+                          onClick={selectCustomKeyMode}
                           className={`rounded-lg border py-1.5 text-xs font-semibold transition-all ${
                             geminiKeyMode === "custom"
                               ? "border-emerald-500/50 bg-emerald-600/20 text-emerald-200"
@@ -659,6 +709,9 @@ export function AiBuddyChat() {
                           My key
                         </button>
                       </div>
+                      {keySaveMessage && (
+                        <p className="text-[10px] font-medium text-emerald-300">{keySaveMessage}</p>
+                      )}
                       {geminiKeyMode === "custom" && (
                         <div className="space-y-2 animate-in fade-in">
                           <div className="relative">
