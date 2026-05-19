@@ -7,7 +7,15 @@ import { useState, useEffect } from "react"
 import { addLocalAuditLog } from "@/lib/local-audit-logs"
 import { useAuth } from "@/hooks/useAuth"
 
-type QueueItem = typeof managerQueue[0]
+type QueueItem = {
+  employee: string
+  request: string
+  impact: string
+  status: string
+  wasEdited?: boolean
+  originalRequest?: string
+  originalImpact?: string
+}
 
 export default function ApprovalTable() {
   const { user } = useAuth()
@@ -36,36 +44,52 @@ export default function ApprovalTable() {
   const handleApprove = (index: number) => {
     const item = queue[index]
     const activeItem = editingIndex === index
-      ? { ...item, request: editRequest, impact: editImpact }
+      ? { ...item, request: editRequest, impact: editImpact, wasEdited: true }
       : item
       
     saveQueue(queue.filter((_, idx) => idx !== index))
     setEditingIndex(null)
+
+    const isEdited = activeItem.wasEdited || (editingIndex === index && (activeItem.request !== item.request || activeItem.impact !== item.impact))
+    const action = isEdited ? "goal_approved_after_edit" : "goal_approved"
+    
+    const originalText = activeItem.originalRequest || item.request
+    const detail = isEdited
+      ? `Approved goal after editing: "${activeItem.request}" (originally: "${originalText}") for ${activeItem.employee}`
+      : `Approved request: "${activeItem.request}" for ${activeItem.employee}`
     
     addLocalAuditLog({
       user: user ? user.name : "Manager",
-      action: "goal_approved",
+      action: action,
       entity: "approval",
       entityId: activeItem.employee.replace(/\s+/g, '-').toLowerCase(),
-      detail: `Approved request: "${activeItem.request}" for ${activeItem.employee}`
+      detail: detail
     })
   }
 
   const handleReject = (index: number) => {
     const item = queue[index]
     const activeItem = editingIndex === index
-      ? { ...item, request: editRequest, impact: editImpact }
+      ? { ...item, request: editRequest, impact: editImpact, wasEdited: true }
       : item
 
     saveQueue(queue.filter((_, idx) => idx !== index))
     setEditingIndex(null)
 
+    const isEdited = activeItem.wasEdited || (editingIndex === index && (activeItem.request !== item.request || activeItem.impact !== item.impact))
+    const action = isEdited ? "goal_rejected_after_edit" : "goal_rejected"
+    
+    const originalText = activeItem.originalRequest || item.request
+    const detail = isEdited
+      ? `Rejected goal after editing: "${activeItem.request}" (originally: "${originalText}") for ${activeItem.employee}`
+      : `Rejected request: "${activeItem.request}" for ${activeItem.employee}`
+
     addLocalAuditLog({
       user: user ? user.name : "Manager",
-      action: "goal_rejected",
+      action: action,
       entity: "approval",
       entityId: activeItem.employee.replace(/\s+/g, '-').toLowerCase(),
-      detail: `Rejected request: "${activeItem.request}" for ${activeItem.employee}`
+      detail: detail
     })
   }
 
@@ -78,10 +102,16 @@ export default function ApprovalTable() {
   const handleSave = (index: number) => {
     const nextQueue = [...queue]
     const oldRequest = nextQueue[index].request
+    const originalRequest = nextQueue[index].originalRequest || oldRequest
+    const originalImpact = nextQueue[index].originalImpact || nextQueue[index].impact
+
     nextQueue[index] = {
       ...nextQueue[index],
       request: editRequest,
-      impact: editImpact
+      impact: editImpact,
+      wasEdited: true,
+      originalRequest,
+      originalImpact
     }
     saveQueue(nextQueue)
     setEditingIndex(null)
