@@ -11,7 +11,9 @@ import { getLocalAuditLogs, AuditLog } from "@/lib/local-audit-logs"
 
 const actionColors: Record<string, string> = {
   goal_approved: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+  goal_approved_after_edit: "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20",
   goal_rejected: "bg-rose-500/10 text-rose-400 border border-rose-500/20",
+  goal_rejected_after_edit: "bg-pink-500/10 text-pink-400 border border-pink-500/20",
   goal_created: "bg-sky-500/10 text-sky-400 border border-sky-500/20",
   goal_submitted: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
   goal_updated: "bg-violet-500/10 text-violet-400 border border-violet-500/20",
