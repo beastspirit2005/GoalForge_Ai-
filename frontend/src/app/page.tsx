@@ -194,13 +194,22 @@ export default function Home() {
         </div>
 
         {/* Footer */}
-        <footer className="border-t border-slate-200/80 py-6 flex flex-col sm:flex-row items-center justify-between text-[10px] text-slate-400 font-semibold gap-3">
-          <span className="flex items-center gap-1.5">
-            <Sparkles className="h-3 w-3 text-indigo-500/80" />
-            FastAPI + Gemini AI Backend
+        <footer className="border-t border-slate-200/80 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-[11px] text-slate-400 font-medium">
+          <div className="flex items-center gap-1.5 justify-center md:justify-start order-2 md:order-1">
+            <Sparkles className="h-3.5 w-3.5 text-indigo-500/80 fill-indigo-500/5 animate-pulse" />
+            <span>FastAPI + Gemini AI Backend</span>
+          </div>
+
+          <div className="flex items-center gap-1 justify-center order-1 md:order-2 bg-slate-50 border border-slate-200/60 rounded-full px-4 py-1.5 shadow-sm hover:shadow-md hover:border-slate-300/80 transition-all duration-300">
+            <span className="text-[10px] font-semibold text-slate-400 tracking-wide uppercase">Made by</span>
+            <span className="text-xs font-extrabold bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 bg-clip-text text-transparent transition-all duration-300 hover:scale-[1.03] inline-block cursor-default select-none pl-0.5">
+              Harshit Sharma
+            </span>
+          </div>
+
+          <span className="text-[10px] text-slate-400/80 order-3 text-center md:text-right">
+            © {new Date().getFullYear()} GoalForge. All rights reserved.
           </span>
-          <span>Dual Employee & Manager Dashboards</span>
-          <span>© {new Date().getFullYear()} GoalForge. All rights reserved.</span>
         </footer>
       </div>
     </main>
