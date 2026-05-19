@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import type { Goal } from "@/lib/demo-data"
 import { addLocalAuditLog } from "@/lib/local-audit-logs"
+import { addLocalNotification } from "@/lib/local-notifications"
 
 type Props = {
   goal: Goal
@@ -97,7 +98,23 @@ export default function GoalCard({ goal }: Props) {
       }
       window.localStorage.setItem("goalforge.demo.escalations", JSON.stringify([newEsc, ...currentEsc]))
 
-      // 3. Log to audit trail
+      // 3. Trigger Notifications
+      const escalationTime = newEsc.updated
+      addLocalNotification({
+        title: "Goal Escalated",
+        message: `You escalated the goal "${goal.title}" to Admin on ${escalationTime}.`,
+        type: "info",
+        recipientRole: "employee"
+      })
+
+      addLocalNotification({
+        title: "Goal Escalated - Action Required",
+        message: `${goal.owner || "Aarav Mehta"} has escalated the goal "${goal.title}" on ${escalationTime}.`,
+        type: "warning",
+        recipientRole: "admin"
+      })
+
+      // 4. Log to audit trail
       addLocalAuditLog({
         user: goal.owner || "Aarav Mehta",
         action: "goal_updated",
@@ -106,7 +123,7 @@ export default function GoalCard({ goal }: Props) {
         detail: `Escalated goal "${goal.title}" to Admin. Reason: ${reason}`
       })
 
-      // 4. Dispatch update events
+      // 5. Dispatch update events
       window.dispatchEvent(new Event("local-goals-updated"))
       window.dispatchEvent(new Event("escalations-updated"))
 

@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle2, Clock3, ShieldAlert } from "lucide-react"
 import DashboardLayout from "@/components/layout/DashboardLayout"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { addLocalNotification } from "@/lib/local-notifications"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type EscalationStatus = "Open" | "Acknowledged" | "Resolved"
@@ -161,23 +162,42 @@ export default function AdminEscalationsPage() {
       return
     }
 
+    const timestamp = new Date().toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }).replace(",", " at")
+
     const next = escalations.map((item) =>
       item.id === selectedEscalation.id
         ? {
             ...item,
             status,
-            updated: new Date().toLocaleString("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit"
-            })
+            updated: timestamp
           }
         : item
     )
     saveEscalations(next)
     setMessage(`Escalation marked as ${status.toLowerCase()}.`)
+
+    // Notify the employee!
+    if (status === "Acknowledged") {
+      addLocalNotification({
+        title: "Escalation Acknowledged",
+        message: `Your issue is acknowledged and under consideration. Escalation for "${selectedEscalation.goal}" was acknowledged by Admin on ${timestamp}.`,
+        type: "info",
+        recipientRole: "employee"
+      })
+    } else if (status === "Resolved") {
+      addLocalNotification({
+        title: "Escalation Resolved",
+        message: `Your issue is solved. Escalation for "${selectedEscalation.goal}" has been marked as Resolved by Admin on ${timestamp}.`,
+        type: "success",
+        recipientRole: "employee"
+      })
+    }
   }
 
   if (!mounted) return null

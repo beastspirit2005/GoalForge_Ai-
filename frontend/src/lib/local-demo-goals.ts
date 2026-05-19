@@ -2,6 +2,7 @@
 
 import { managerQueue, type Goal, type GoalRisk, type GoalStatus } from "@/lib/demo-data"
 import type { GeneratePlanResponse } from "@/services/ai.service"
+import { addLocalNotification } from "@/lib/local-notifications"
 
 const LOCAL_GOALS_KEY = "goalforge.demo.goals"
 
@@ -87,6 +88,13 @@ export function addLocalDemoGoal(input: LocalGoalInput) {
       status: "Pending"
     }
     window.localStorage.setItem(queueKey, JSON.stringify([newQueueItem, ...currentQueue]))
+    
+    addLocalNotification({
+      title: "Goal Created - Attention Required",
+      message: `Aarav Mehta has created a new goal: "${input.title}"`,
+      type: "warning",
+      recipientRole: "manager"
+    })
   } catch (e) {
     console.error("Failed to add to manager queue", e)
   }
