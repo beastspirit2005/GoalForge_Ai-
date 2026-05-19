@@ -96,7 +96,7 @@ export function roleHome(role: DemoRole) {
   }
 
   if (role === "admin") {
-    return "/admin/analytics"
+    return "/admin/org-analytics"
   }
 
   return "/employee/dashboard"

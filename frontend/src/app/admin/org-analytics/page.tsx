@@ -1,3 +1,5 @@
+"use client"
+
 import CompletionChart from "@/components/analytics/CompletionChart"
 import LineChartCard from "@/components/analytics/LineChartCard"
 import PieChartCard from "@/components/analytics/PieChartCard"

@@ -47,7 +47,7 @@ const links: NavLink[] = [
   { title: "Predictions", href: "/manager/predictions", icon: Zap, section: "Manager" },
   // Admin
   { title: "Admin Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, section: "Admin" },
-  { title: "Analytics", href: "/admin/analytics", icon: BarChart3, section: "Admin" },
+  { title: "Analytics", href: "/admin/org-analytics", icon: BarChart3, section: "Admin" },
   { title: "Users", href: "/admin/users", icon: Users, section: "Admin" },
   { title: "Recognition", href: "/admin/recognition", icon: Award, section: "Admin" },
   { title: "Audit Logs", href: "/admin/audit-logs", icon: FileText, section: "Admin" },
