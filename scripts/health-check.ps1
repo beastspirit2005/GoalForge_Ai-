@@ -8,6 +8,7 @@ $failed = 0
 $passed = 0
 
 function Report($name, $ok, $detail) {
+    Write-Host "DEBUG: Report called for '$name' with ok=$ok, detail='$detail'" -ForegroundColor Yellow
     if ($ok) {
         $script:passed++
         Write-Host "[PASS] $name — $detail" -ForegroundColor Green
@@ -20,7 +21,7 @@ function Report($name, $ok, $detail) {
 Write-Host "`n=== GoalForge AI Health & Stability Check ===`n" -ForegroundColor Cyan
 
 # Docker services
-$containers = docker compose ps --format json 2>$null | ConvertFrom-Json
+$containers = try { docker compose ps --format json 2>$null | ConvertFrom-Json } catch { $null }
 if ($containers) {
     $down = @($containers | Where-Object { $_.State -notmatch "running" })
     Report "Docker compose services" ($down.Count -eq 0) "$(@($containers).Count) services, $($down.Count) not running"
@@ -31,7 +32,7 @@ if ($containers) {
 # HTTP endpoints
 function Test-Http($name, $uri, $method = "GET", $body = $null) {
     try {
-        $params = @{ Uri = $uri; Method = $method; TimeoutSec = 30; UseBasicParsing = $true }
+        $params = @{ Uri = $uri; Method = $method; TimeoutSec = 30; UseBasicParsing = $true; ErrorAction = "Stop" }
         if ($body) { $params.ContentType = "application/json"; $params.Body = $body }
         $r = Invoke-WebRequest @params
         Report $name ($r.StatusCode -ge 200 -and $r.StatusCode -lt 300) "HTTP $($r.StatusCode)"
@@ -48,10 +49,10 @@ Test-Http "Frontend home" "http://localhost:3000/" | Out-Null
 
 $loginBody = '{"email":"employee@goalforge.ai","password":"password123"}'
 try {
-    $login = Invoke-RestMethod -Uri "http://localhost:8000/auth/login" -Method POST -ContentType "application/json" -Body $loginBody -TimeoutSec 30
+    $login = Invoke-RestMethod -Uri "http://localhost:8000/auth/login" -Method POST -ContentType "application/json" -Body $loginBody -TimeoutSec 30 -ErrorAction Stop
     Report "Auth login" $true "token issued"
     $headers = @{ Authorization = "Bearer $($login.access_token)" }
-    Invoke-RestMethod -Uri "http://localhost:8000/goals/" -Headers $headers -TimeoutSec 30 | Out-Null
+    Invoke-RestMethod -Uri "http://localhost:8000/goals/" -Headers $headers -TimeoutSec 30 -ErrorAction Stop | Out-Null
     Report "Goals API (authenticated)" $true "OK"
 } catch {
     Report "Auth login" $false $_.Exception.Message
@@ -63,7 +64,7 @@ Test-Http "Ollama" "http://localhost:11434/api/tags" | Out-Null
 
 # Production (optional)
 try {
-    $vh = Invoke-RestMethod -Uri "https://goal-forge-ai-lake.vercel.app/api/health" -TimeoutSec 60
+    $vh = Invoke-RestMethod -Uri "https://goal-forge-ai-lake.vercel.app/api/health" -TimeoutSec 60 -ErrorAction Stop
     Report "Vercel /api/health" ($vh.status -eq "ok") $vh.status
 } catch {
     Report "Vercel /api/health" $false "unreachable or not configured"
