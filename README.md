@@ -1,4 +1,4 @@
-# GoalForge AI 🚀
+# GoalForge AI
 
 **AI-Powered OKR Management and Performance Intelligence Platform**
 
@@ -6,7 +6,7 @@ GoalForge AI is an advanced, enterprise-grade platform designed to align organiz
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 GoalForge AI utilizes a highly decoupled, containerized multi-service architecture designed for absolute performance, privacy-first computing, and seamless developer onboarding.
 
@@ -40,24 +40,24 @@ graph TD
 
 ---
 
-## ⚡ What is New & Enterprise-Ready
+## What is New and Enterprise-Ready
 
 GoalForge AI is packed with non-trivial engineering solutions designed to impress hiring managers and solve genuine corporate needs:
 
-*   **🔒 Strict Role-Based Security Isolation**: Fully hardened React route guards and backend middleware pathways. L1 Managers and Administrators are strictly isolated from employee consoles, automatically hiding and blocking access to sensitive API endpoints.
-*   **📊 Algorithmic Heuristics Engine**: Replaces slow, resource-heavy neural networks with an optimized, pure-mathematics predictive engine that calculates completion probability and employee burnout risk in microseconds (see [Prediction Engine](#-prediction-heuristics)).
-*   **🛠️ Interactive In-Line Approvals**: Allows managers to tweak goal descriptions, weights, and impact scores directly inside their approval table via a glassmorphic state, maintaining team momentum and reducing audit back-and-forth.
-*   **📡 Employee-to-Manager Routing**: Goal creations immediately format and inject pending items into the respective manager's queue with active real-time notification triggers.
-*   **🚨 Employee-to-Admin Escalation Pipe**: Rejected or modified goals can be instantly escalated to the Admin console via a compliant glassmorphic pipeline that updates audit databases and logs history records.
-*   **🤖 Role-Aware AI Copilot Chat Drawer**: A persistent, floating dashboard assistant providing context-aware goal refinement. Supports multi-provider toggles and user-scoped data privacy switches.
+*   **Strict Role-Based Security Isolation**: Fully hardened React route guards and backend middleware pathways. L1 Managers and Administrators are strictly isolated from employee consoles, automatically hiding and blocking access to sensitive API endpoints.
+*   **Algorithmic Heuristics Engine**: Replaces slow, resource-heavy neural networks with an optimized, pure-mathematics predictive engine that calculates completion probability and employee burnout risk in microseconds (see [Prediction Engine](#prediction-heuristics)).
+*   **Interactive In-Line Approvals**: Allows managers to tweak goal descriptions, weights, and impact scores directly inside their approval table via a glassmorphic state, maintaining team momentum and reducing audit back-and-forth.
+*   **Employee-to-Manager Routing**: Goal creations immediately format and inject pending items into the respective manager's queue with active real-time notification triggers.
+*   **Employee-to-Admin Escalation Pipe**: Rejected or modified goals can be instantly escalated to the Admin console via a compliant glassmorphic pipeline that updates audit databases and logs history records.
+*   **Role-Aware AI Copilot Chat Drawer**: A persistent, floating dashboard assistant providing context-aware goal refinement. Supports multi-provider toggles and user-scoped data privacy switches.
 
 ---
 
-## 📈 Prediction Heuristics
+## Prediction Heuristics
 
 Rather than training a costly, lag-heavy machine learning model, GoalForge AI relies on a **high-speed, deterministic heuristic mathematical model** inside `backend/app/ai/prediction_engine.py` to analyze performance trends:
 
-### 🎯 Goal Completion Probability ($40\% / 20\% / 15\% / 15\% / 10\%$)
+### Goal Completion Probability ($40\% / 20\% / 15\% / 15\% / 10\%$)
 $$P(\text{Completion}) = (R_{\text{progress}} \times 0.40) + (T_{\text{milestone}} \times 0.20) + (W_{\text{load}} \times 0.15) + (U_{\text{recency}} \times 0.15) + (P_{\text{priority}} \times 0.10)$$
 
 *   **Progress Rate ($40\%$):** Real vs. expected progress relative to the remaining deadline. Penalizes overdue tasks.
@@ -66,7 +66,7 @@ $$P(\text{Completion}) = (R_{\text{progress}} \times 0.40) + (T_{\text{milestone
 *   **Update Recency ($15\%$):** Freshness index—stale goals that haven't been updated in $>14$ days are flagged as high risk.
 *   **Goal Priority ($10\%$):** Focus weight—high-impact/high-weightage goals receive higher priority attention.
 
-### 🔥 Employee Burnout Risk
+### Employee Burnout Risk
 Calculated dynamically based on active work allocations:
 *   **Goal Overload ($30\%$):** Too many simultaneous targets.
 *   **Progress Pressure ($25\%$):** Falling behind on high-priority goals.
@@ -76,7 +76,7 @@ Calculated dynamically based on active work allocations:
 
 ---
 
-## 🤖 Hybrid AI Connectivity & Privacy-First Design
+## Hybrid AI Connectivity and Privacy-First Design
 
 GoalForge AI implements a production-grade dual-AI orchestrator wrapper inside `backend/app/ai/gemini_client.py`:
 
@@ -87,14 +87,14 @@ GoalForge AI implements a production-grade dual-AI orchestrator wrapper inside `
 
 ---
 
-## 🐳 Docker Deployment & Network Tuning
+## Docker Deployment and Network Tuning
 
 The entire stack is containerized, utilizing custom network bridges and database configurations optimized for native operating systems.
 
-### 🔌 Anti-Port-Conflict DB Mapping
+### Anti-Port-Conflict DB Mapping
 Windows and macOS developers frequently run a local instance of PostgreSQL on the host port `5432`. To avoid container initialization crashes, GoalForge AI bridges the Docker Postgres instance to host port **`5433`**, while maintaining internal container-to-container queries on the default port `5432`.
 
-### 🌐 Cross-Namespace Ollama Communication (WSL2 Gateway)
+### Cross-Namespace Ollama Communication (WSL2 Gateway)
 When running Docker on Windows/macOS, `127.0.0.1` inside a container points to that specific container's namespace—making the native host's Ollama service unreachable. GoalForge AI overrides this by dynamically mapping a bridge gateway `host.docker.internal` within the backend service, instantly resolving host-based local models without manual configuration:
 
 ```yaml
@@ -107,7 +107,7 @@ backend:
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 *   **Node.js 18+** & **Python 3.11+**
@@ -167,17 +167,17 @@ python scripts/seed.py
 
 ---
 
-## 🔑 Demo Credentials
+## Demo Credentials
 
 | Role | Email | Password |
 |:---|:---|:---|
-| 🧑‍💻 **Employee** | `employee@goalforge.ai` | `password123` |
-| 🧑‍💼 **L1 Manager** | `manager@goalforge.ai` | `password123` |
-| 🛡️ **Administrator** | `admin@goalforge.ai` | `password123` |
+| **Employee** | `employee@goalforge.ai` | `password123` |
+| **L1 Manager** | `manager@goalforge.ai` | `password123` |
+| **Administrator** | `admin@goalforge.ai` | `password123` |
 
 ---
 
-## 📂 Project Blueprint
+## Project Blueprint
 
 ```
 GoalForge-Ai/
@@ -192,5 +192,14 @@ GoalForge-Ai/
 │   │   └── main.py      # App initializers and static asset drivers
 │   └── Dockerfile       # Backend optimized build config
 ├── frontend/
+│   ├── src/
+│   │   ├── app/         # Next.js App Router UI pages
+│   │   ├── components/  # Floating copilot chat drawer & dashboard tables
+│   │   └── services/    # Browser API proxy controllers
+│   └── Dockerfile       # Next.js multi-stage build configuration
+```
 
-Built for hackathon demonstration and enterprise performance evaluation purposes.
+---
+
+## License
+Created for advanced enterprise OKR evaluation, hackathon submissions, and software portfolio demonstration. Proprietary license. Built by GoalForge Devs.
