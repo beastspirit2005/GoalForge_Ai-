@@ -4,9 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import require_role
 from app.core.database import get_db
 from app.models.user import User
-from app.schemas.auth_schema import UserResponse, UserUpdate
+from app.schemas.auth_schema import UserResponse, UserUpdate, RegisterRequest
 from app.services.audit_service import get_audit_logs, log_action
-from app.services.auth_service import get_all_users, update_user
+from app.services.auth_service import get_all_users, update_user, register_user
 from app.services.goal_service import get_all_goals, get_goal_by_id, unlock_goal
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -30,6 +30,27 @@ async def list_users(
         }
         for u in users
     ]
+
+
+@router.post("/register")
+async def register_admin_user(
+    data: RegisterRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("admin")),
+):
+    user = await register_user(db, data)
+    await log_action(
+        db, user_id=current_user.id, action="user_created",
+        entity_type="user", entity_id=user.id,
+        new_value={"name": user.name, "email": user.email, "role": user.role},
+    )
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "role": user.role,
+        "department": user.department,
+    }
 
 
 @router.put("/users/{user_id}")

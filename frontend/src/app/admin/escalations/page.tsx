@@ -6,6 +6,8 @@ import DashboardLayout from "@/components/layout/DashboardLayout"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { addLocalNotification } from "@/lib/local-notifications"
+import { addLocalAuditLog } from "@/lib/local-audit-logs"
+import { apiFetch } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type EscalationStatus = "Open" | "Acknowledged" | "Resolved"
@@ -21,6 +23,8 @@ type Escalation = {
   owner: string
   updated: string
   note: string
+  adminRemarks?: string
+  resolutionNote?: string
 }
 
 const initialEscalations: Escalation[] = [
@@ -79,8 +83,20 @@ export default function AdminEscalationsPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [message, setMessage] = useState("")
   const [mounted, setMounted] = useState(false)
+  const [adminRemarksInput, setAdminRemarksInput] = useState("")
+  const [resolutionNoteInput, setResolutionNoteInput] = useState("")
 
   const selectedEscalation = escalations.find((item) => item.id === selectedId) ?? null
+
+  useEffect(() => {
+    if (selectedEscalation) {
+      setAdminRemarksInput(selectedEscalation.adminRemarks || "")
+      setResolutionNoteInput(selectedEscalation.resolutionNote || "")
+    } else {
+      setAdminRemarksInput("")
+      setResolutionNoteInput("")
+    }
+  }, [selectedId, selectedEscalation])
 
   const loadEscalations = () => {
     try {
@@ -157,7 +173,7 @@ export default function AdminEscalationsPage() {
     setMessage("Review panel opened.")
   }
 
-  const updateSelectedStatus = (status: EscalationStatus) => {
+  const updateSelectedStatus = async (status: EscalationStatus) => {
     if (!selectedEscalation) {
       return
     }
@@ -175,11 +191,27 @@ export default function AdminEscalationsPage() {
         ? {
             ...item,
             status,
-            updated: timestamp
+            updated: timestamp,
+            adminRemarks: adminRemarksInput,
+            resolutionNote: status === "Resolved" ? resolutionNoteInput : item.resolutionNote
           }
         : item
     )
     saveEscalations(next)
+    
+    try {
+      await apiFetch(`/escalations/${selectedEscalation.id}`, {
+        method: "PUT",
+        body: {
+          status: status.toLowerCase(),
+          admin_remarks: adminRemarksInput,
+          resolution_note: status === "Resolved" ? resolutionNoteInput : undefined
+        }
+      })
+    } catch (e) {
+      console.warn("Failed to update escalation via API (mock mode fallback)", e)
+    }
+
     setMessage(`Escalation marked as ${status.toLowerCase()}.`)
 
     // Notify the employee!
@@ -190,12 +222,26 @@ export default function AdminEscalationsPage() {
         type: "info",
         recipientRole: "employee"
       })
+      addLocalAuditLog({
+        user: "Admin",
+        action: "escalation_acknowledged",
+        entity: "escalation",
+        entityId: selectedEscalation.id,
+        detail: `Acknowledged escalation for "${selectedEscalation.goal}". Remarks: ${adminRemarksInput || "None"}`
+      })
     } else if (status === "Resolved") {
       addLocalNotification({
         title: "Escalation Resolved",
         message: `Your issue is solved. Escalation for "${selectedEscalation.goal}" has been marked as Resolved by Admin on ${timestamp}.`,
         type: "success",
         recipientRole: "employee"
+      })
+      addLocalAuditLog({
+        user: "Admin",
+        action: "escalation_resolved",
+        entity: "escalation",
+        entityId: selectedEscalation.id,
+        detail: `Resolved escalation for "${selectedEscalation.goal}". Note: ${resolutionNoteInput}`
       })
     }
   }
@@ -315,9 +361,37 @@ export default function AdminEscalationsPage() {
                   {selectedEscalation.employee} / {selectedEscalation.department} / Owner: {selectedEscalation.owner}
                 </p>
                 <p className="mt-3 text-sm text-foreground">{selectedEscalation.note}</p>
+                {selectedEscalation.adminRemarks && (
+                  <div className="mt-4 rounded-md bg-[var(--gf-indigo)]/5 p-3 border border-[var(--gf-indigo)]/10">
+                    <p className="text-xs font-semibold text-[var(--gf-indigo)] mb-1">Admin Remarks</p>
+                    <p className="text-sm text-foreground">{selectedEscalation.adminRemarks}</p>
+                  </div>
+                )}
+                {selectedEscalation.resolutionNote && (
+                  <div className="mt-2 rounded-md bg-emerald-500/5 p-3 border border-emerald-500/10">
+                    <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-1">Resolution Note</p>
+                    <p className="text-sm text-foreground">{selectedEscalation.resolutionNote}</p>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-2">
+                <textarea
+                  className="w-full rounded-md border border-slate-200 dark:border-white/[0.08] bg-transparent p-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--gf-indigo)]"
+                  placeholder="Admin remarks..."
+                  rows={3}
+                  value={adminRemarksInput}
+                  onChange={(e) => setAdminRemarksInput(e.target.value)}
+                />
+                {selectedEscalation.status !== "Resolved" && (
+                  <input
+                    className="w-full rounded-md border border-slate-200 dark:border-white/[0.08] bg-transparent p-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--gf-indigo)]"
+                    placeholder="Resolution note (if resolving)..."
+                    value={resolutionNoteInput}
+                    onChange={(e) => setResolutionNoteInput(e.target.value)}
+                  />
+                )}
+
                 <Button
                   variant="outline"
                   className="justify-start"

@@ -12,6 +12,9 @@ type LocalGoalInput = {
   target: string
   deadline: string
   plan: GeneratePlanResponse
+  ownerName?: string
+  ownerDept?: string
+  managerName?: string
 }
 
 function formatDateLabel(date: string) {
@@ -58,8 +61,8 @@ export function addLocalDemoGoal(input: LocalGoalInput) {
   const nextGoal: Goal = {
     id,
     title: input.title,
-    owner: "Aarav Mehta",
-    department: "People Ops",
+    owner: input.ownerName || "Aarav Mehta",
+    department: input.ownerDept || "People Ops",
     progress: 0,
     deadline: formatDateLabel(input.deadline),
     status: "Pending Approval",
@@ -82,7 +85,7 @@ export function addLocalDemoGoal(input: LocalGoalInput) {
     const currentQueue = rawQueue ? JSON.parse(rawQueue) : managerQueue
     const newQueueItem = {
       goalId: id,
-      employee: "Aarav Mehta",
+      employee: input.ownerName || "Aarav Mehta",
       request: `Approve new goal: ${input.title}`,
       impact: `${input.plan.risk} Risk. Target: ${input.target}`,
       status: "Pending"
@@ -91,7 +94,7 @@ export function addLocalDemoGoal(input: LocalGoalInput) {
     
     addLocalNotification({
       title: "Goal Created - Attention Required",
-      message: `Aarav Mehta has created a new goal: "${input.title}"`,
+      message: `${input.ownerName || "Aarav Mehta"} has created a new goal: "${input.title}"`,
       type: "warning",
       recipientRole: "manager"
     })

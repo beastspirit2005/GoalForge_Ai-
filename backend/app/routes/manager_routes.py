@@ -59,21 +59,38 @@ async def approve(
         raise HTTPException(status_code=404, detail="Goal not found")
 
     if data.action == "approve":
+        is_edited = (data.weightage is not None and data.weightage != goal.weightage) or \
+                    (data.target is not None and data.target != goal.target)
+        
         goal = await approve_goal(db, goal, weightage=data.weightage, target=data.target)
+        
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        if is_edited:
+            msg = f"Your goal '{goal.title}' has been approved with edits by your manager on {timestamp}."
+            action_type = "goal_approved_after_edit"
+        else:
+            msg = f"Your goal '{goal.title}' has been approved on {timestamp}."
+            action_type = "goal_approved"
+            
         await create_notification(
             db, user_id=goal.user_id, title="Goal Approved",
-            message=f"Your goal '{goal.title}' has been approved.", notif_type="goal_approved",
+            message=msg, notif_type=action_type,
         )
     elif data.action == "reject":
         goal = await reject_goal(db, goal)
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         await create_notification(
             db, user_id=goal.user_id, title="Goal Rejected",
-            message=f"Your goal '{goal.title}' was rejected. Comment: {data.comment or 'N/A'}",
+            message=f"Your goal '{goal.title}' was rejected on {timestamp}. Comment: {data.comment or 'N/A'}",
             notif_type="goal_rejected",
         )
+        action_type = "goal_rejected"
 
     await log_action(
-        db, user_id=current_user.id, action=f"goal_{data.action}d",
+        db, user_id=current_user.id, action=action_type,
         entity_type="goal", entity_id=goal.id,
     )
     return {"status": goal.status, "message": f"Goal {data.action}d successfully"}
