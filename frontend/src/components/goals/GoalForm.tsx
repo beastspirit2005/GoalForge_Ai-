@@ -77,8 +77,8 @@ export default function GoalForm() {
       addLocalDemoGoal({
         ...form,
         plan: activePlan,
-        ownerName: user?.name,
-        ownerDept: user?.department,
+        ownerName: user?.name || undefined,
+        ownerDept: user?.department || undefined,
       })
 
       // 2. Asynchronously sync to backend database if a session token is active
