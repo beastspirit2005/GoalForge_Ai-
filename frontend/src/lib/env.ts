@@ -2,7 +2,9 @@
 export function isDemoAuthAllowed(): boolean {
   if (process.env.NEXT_PUBLIC_ALLOW_DEMO_AUTH === "true") return true
   if (process.env.NEXT_PUBLIC_ALLOW_DEMO_AUTH === "false") return false
-  return process.env.NODE_ENV === "development"
+  
+  // By default, allow demo auth if running locally OR if deployed to Vercel (since Vercel deployments typically lack the backend Postgres DB)
+  return process.env.NODE_ENV === "development" || isVercelDeployment()
 }
 
 export function isVercelDeployment(): boolean {
