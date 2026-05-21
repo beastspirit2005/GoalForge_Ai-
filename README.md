@@ -44,11 +44,13 @@ graph TD
 
 GoalForge AI is packed with non-trivial engineering solutions designed to impress hiring managers and solve genuine corporate needs:
 
+*   **Comprehensive Admin User Management**: Full CRUD capabilities for administrators, featuring an inline edit dialog to securely modify employee roles, departments, names, and active statuses with real-time audit logging and state hydration.
+*   **5-Column Categorized Governance Audit Logs**: Replaces standard flat-list logging with a sleek, CSS-Grid 5-column layout separating events into User Accounts, Goal Creation, Goal Rejections, Goal Approvals, and Escalations. Features global search and date-filtering across all categories simultaneously.
 *   **Strict Role-Based Security Isolation**: Fully hardened React route guards and backend middleware pathways. L1 Managers and Administrators are strictly isolated from employee consoles, automatically hiding and blocking access to sensitive API endpoints.
 *   **Algorithmic Heuristics Engine**: Replaces slow, resource-heavy neural networks with an optimized, pure-mathematics predictive engine that calculates completion probability and employee burnout risk in microseconds (see [Prediction Engine](#prediction-heuristics)).
-*   **Interactive In-Line Approvals**: Allows managers to tweak goal descriptions, weights, and impact scores directly inside their approval table via a glassmorphic state, maintaining team momentum and reducing audit back-and-forth.
-*   **Employee-to-Manager Routing**: Goal creations immediately format and inject pending items into the respective manager's queue with active real-time notification triggers.
-*   **Employee-to-Admin Escalation Pipe**: Rejected or modified goals can be instantly escalated to the Admin console via a compliant glassmorphic pipeline that updates audit databases and logs history records.
+*   **Dynamic Context & Goal Mappings**: Goals, approvals, and escalations dynamically bind to the active session's user token and manager ID context, entirely replacing static mock data rendering.
+*   **PostgreSQL Sequence Synchronization**: Automated table sequence resetting to safely accommodate pre-seeded demo data without triggering auto-increment ID collisions during new user registrations.
+*   **Interactive In-Line Approvals & Escalation Pipes**: Allows managers to tweak goal descriptions directly inside their approval table. Rejected or modified goals can be instantly escalated to the Admin console via a compliant glassmorphic pipeline.
 *   **Role-Aware AI Copilot Chat Drawer**: A persistent, floating dashboard assistant providing context-aware goal refinement. Supports multi-provider toggles and user-scoped data privacy switches.
 
 ---
