@@ -15,6 +15,7 @@ import { managerQueue } from "@/lib/demo-data"
 import { generateGoalPlan, createLocalGoalPlan, type GeneratePlanResponse } from "@/services/ai.service"
 import { createGoal, generateGoalPlan as generateStoredGoalPlan } from "@/services/goal.service"
 import { getStoredToken } from "@/services/auth.service"
+import { useAuth } from "@/hooks/useAuth"
 
 const generatedMilestones = [
   { title: "Clarify measurable outcome and success metric", due: "Week 1" },
@@ -26,6 +27,7 @@ const generatedMilestones = [
 
 export default function GoalForm() {
   const router = useRouter()
+  const { user } = useAuth()
   const isSavingRef = useRef(false)
   const [generated, setGenerated] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -75,6 +77,8 @@ export default function GoalForm() {
       addLocalDemoGoal({
         ...form,
         plan: activePlan,
+        ownerName: user?.name,
+        ownerDept: user?.department,
       })
 
       // 2. Asynchronously sync to backend database if a session token is active

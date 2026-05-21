@@ -147,3 +147,39 @@ async def acknowledge_escalation(db: AsyncSession, escalation_id: int) -> dict |
     await db.refresh(esc)
 
     return {"id": esc.id, "status": esc.status}
+
+
+async def update_escalation(
+    db: AsyncSession,
+    escalation_id: int,
+    status: str | None = None,
+    admin_remarks: str | None = None,
+    resolution_note: str | None = None,
+) -> dict | None:
+    """Update an escalation (used by admin)."""
+    result = await db.execute(
+        select(Escalation).where(Escalation.id == escalation_id)
+    )
+    esc = result.scalar_one_or_none()
+    if not esc:
+        return None
+
+    if status is not None:
+        esc.status = status
+        if status == "resolved" and not esc.resolved_at:
+            esc.resolved_at = datetime.now(timezone.utc)
+    if admin_remarks is not None:
+        esc.admin_remarks = admin_remarks
+    if resolution_note is not None:
+        esc.resolution_note = resolution_note
+
+    await db.flush()
+    await db.refresh(esc)
+
+    return {
+        "id": esc.id,
+        "status": esc.status,
+        "admin_remarks": esc.admin_remarks,
+        "resolution_note": esc.resolution_note,
+    }
+

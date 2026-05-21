@@ -62,6 +62,24 @@ export default function GoalCard({ goal }: Props) {
     if (!reason.trim()) return
 
     try {
+      // Find the manager's name from the local users store, or default to Priya Nair (demo data manager)
+      let managerName = "Priya Nair"
+      try {
+        const storedUsers = window.localStorage.getItem("goalforge.admin.users")
+        const currentUser = window.localStorage.getItem("goalforge.auth.token") 
+          ? JSON.parse(window.localStorage.getItem("goalforge.auth.user") || "{}") 
+          : null
+          
+        if (storedUsers && currentUser?.manager_id) {
+          const usersList = JSON.parse(storedUsers)
+          const manager = usersList.find((u: any) => u.id === currentUser.manager_id)
+          if (manager) {
+            managerName = manager.name
+          }
+        }
+      } catch (e) {
+        console.error("Could not resolve manager name", e)
+      }
       // 1. Get and update goals
       const storedGoals = window.localStorage.getItem("goalforge.demo.goals")
       if (storedGoals) {
@@ -86,7 +104,7 @@ export default function GoalCard({ goal }: Props) {
         risk: goal.risk || "High",
         status: "Open",
         progress: goal.progress || 0,
-        owner: "Priya Nair",
+        owner: managerName,
         updated: new Date().toLocaleString("en-GB", {
           day: "2-digit",
           month: "short",
@@ -117,7 +135,7 @@ export default function GoalCard({ goal }: Props) {
       // 4. Log to audit trail
       addLocalAuditLog({
         user: goal.owner || "Aarav Mehta",
-        action: "goal_updated",
+        action: "escalation_created",
         entity: "escalation",
         entityId: goal.id,
         detail: `Escalated goal "${goal.title}" to Admin. Reason: ${reason}`

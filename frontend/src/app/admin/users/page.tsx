@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import DashboardLayout from "@/components/layout/DashboardLayout"
+import { apiFetch } from "@/lib/api"
+import { getStoredToken } from "@/services/auth.service"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -48,8 +50,17 @@ export default function UsersPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [newName, setNewName] = useState("")
   const [newEmail, setNewEmail] = useState("")
+  const [newPassword, setNewPassword] = useState("")
   const [newRole, setNewRole] = useState("employee")
   const [newDept, setNewDept] = useState("")
+
+  // Edit Form state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingUserId, setEditingUserId] = useState<number | null>(null)
+  const [editName, setEditName] = useState("")
+  const [editRole, setEditRole] = useState("employee")
+  const [editDept, setEditDept] = useState("")
+  const [editActive, setEditActive] = useState(true)
 
   useEffect(() => {
     setIsMounted(true)
@@ -64,29 +75,96 @@ export default function UsersPage() {
     window.localStorage.setItem("goalforge.admin.users", JSON.stringify(newUsers))
   }
 
-  const handleAddUser = () => {
-    if (!newName || !newEmail) return
-    const newUser = {
-      id: Date.now(),
-      name: newName,
-      email: newEmail,
-      role: newRole,
-      department: newDept || "Unassigned",
-      active: true
+  const handleAddUser = async () => {
+    if (!newName || !newEmail || !newPassword) return
+    
+    try {
+      const token = getStoredToken()
+      const createdUser = await apiFetch<any>("/admin/register", {
+        method: "POST",
+        token,
+        body: {
+          name: newName,
+          email: newEmail,
+          password: newPassword,
+          role: newRole,
+          department: newDept || "Unassigned"
+        }
+      })
+      
+      const newUser = {
+        id: createdUser.id,
+        name: createdUser.name,
+        email: createdUser.email,
+        role: createdUser.role,
+        department: createdUser.department,
+        active: true
+      }
+      saveUsers([...users, newUser])
+      addLocalAuditLog({
+        user: "Admin",
+        action: "user_created",
+        entity: "user",
+        entityId: newEmail,
+        detail: `Created new ${newRole} account for ${newName} via API`
+      })
+      setIsDialogOpen(false)
+      setNewName("")
+      setNewEmail("")
+      setNewPassword("")
+      setNewRole("employee")
+      setNewDept("")
+    } catch (err) {
+      console.error("Failed to register user via API:", err)
+      alert(err instanceof Error ? err.message : "Failed to register user")
     }
-    saveUsers([...users, newUser])
-    addLocalAuditLog({
-      user: "Admin",
-      action: "user_created",
-      entity: "user",
-      entityId: newEmail,
-      detail: `Created new ${newRole} account for ${newName}`
-    })
-    setIsDialogOpen(false)
-    setNewName("")
-    setNewEmail("")
-    setNewRole("employee")
-    setNewDept("")
+  }
+
+  const openEditDialog = (user: any) => {
+    setEditingUserId(user.id)
+    setEditName(user.name)
+    setEditRole(user.role)
+    setEditDept(user.department)
+    setEditActive(user.active ?? user.is_active ?? true)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleEditUser = async () => {
+    if (!editingUserId || !editName) return
+    
+    try {
+      const token = getStoredToken()
+      await apiFetch<any>(`/admin/users/${editingUserId}`, {
+        method: "PUT",
+        token,
+        body: {
+          name: editName,
+          role: editRole,
+          department: editDept,
+          is_active: editActive
+        }
+      })
+      
+      const updatedUsers = users.map(u => {
+        if (u.id === editingUserId) {
+          return { ...u, name: editName, role: editRole, department: editDept, active: editActive, is_active: editActive }
+        }
+        return u
+      })
+      
+      saveUsers(updatedUsers)
+      addLocalAuditLog({
+        user: "Admin",
+        action: "user_updated",
+        entity: "user",
+        entityId: editingUserId.toString(),
+        detail: `Updated profile for ${editName}`
+      })
+      setIsEditDialogOpen(false)
+    } catch (err) {
+      console.error("Failed to edit user via API:", err)
+      alert(err instanceof Error ? err.message : "Failed to edit user")
+    }
   }
 
   const handleDeleteUser = (id: number, name: string) => {
@@ -148,6 +226,16 @@ export default function UsersPage() {
                   />
                 </div>
                 <div className="grid gap-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-white/70">Password</label>
+                  <Input 
+                    value={newPassword} 
+                    onChange={(e) => setNewPassword(e.target.value)} 
+                    type="password"
+                    placeholder="password123" 
+                    className="border-slate-200 dark:border-white/[0.08] bg-transparent dark:text-white"
+                  />
+                </div>
+                <div className="grid gap-2">
                   <label className="text-sm font-medium text-slate-700 dark:text-white/70">Platform Role</label>
                   <select 
                     value={newRole}
@@ -176,6 +264,59 @@ export default function UsersPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="sm:max-w-[425px] border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#0f0f13]">
+              <DialogHeader>
+                <DialogTitle className="text-slate-900 dark:text-white">Edit User Profile</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-white/70">Full Name</label>
+                  <Input 
+                    value={editName} 
+                    onChange={(e) => setEditName(e.target.value)} 
+                    className="border-slate-200 dark:border-white/[0.08] bg-transparent dark:text-white"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-white/70">Platform Role</label>
+                  <select 
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--gf-indigo)]"
+                  >
+                    <option value="employee" className="dark:bg-[#0f0f13]">Employee (Standard)</option>
+                    <option value="manager" className="dark:bg-[#0f0f13]">Manager (Elevated)</option>
+                    <option value="admin" className="dark:bg-[#0f0f13]">Admin (Full Access)</option>
+                  </select>
+                </div>
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-white/70">Department</label>
+                  <Input 
+                    value={editDept} 
+                    onChange={(e) => setEditDept(e.target.value)} 
+                    className="border-slate-200 dark:border-white/[0.08] bg-transparent dark:text-white"
+                  />
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <input 
+                    type="checkbox" 
+                    id="editActive" 
+                    checked={editActive} 
+                    onChange={(e) => setEditActive(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-[var(--gf-indigo)] focus:ring-[var(--gf-indigo)]"
+                  />
+                  <label htmlFor="editActive" className="text-sm font-medium text-slate-700 dark:text-white/70">Account Active</label>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={handleEditUser} className="bg-[var(--gf-indigo)] hover:bg-[var(--gf-indigo)]/90 text-white">
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <Card className="glass-card rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-sm">
@@ -193,7 +334,7 @@ export default function UsersPage() {
               </TableHeader>
               <TableBody>
                 {users.map((user) => (
-                  <TableRow key={user.id} className="border-b border-slate-100 dark:border-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/[0.02]">
+                  <TableRow key={user.email} className="border-b border-slate-100 dark:border-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/[0.02]">
                     <TableCell className="font-medium text-slate-900 dark:text-white">{user.name}</TableCell>
                     <TableCell className="text-slate-500 dark:text-white/60">{user.email}</TableCell>
                     <TableCell>
@@ -209,7 +350,12 @@ export default function UsersPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="outline" size="sm" className="h-8 border-slate-200 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-white/80">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 border-slate-200 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-white/80"
+                          onClick={() => openEditDialog(user)}
+                        >
                           Edit
                         </Button>
                         <Button 
