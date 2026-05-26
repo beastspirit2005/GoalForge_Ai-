@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { CalendarDays, UserRound, AlertTriangle, ShieldAlert } from "lucide-react"
 import GoalStatusBadge from "@/components/goals/GoalStatusBadge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -55,6 +55,24 @@ const initialEscalations = [
 export default function GoalCard({ goal }: Props) {
   const [showModal, setShowModal] = useState(false)
   const [reason, setReason] = useState("")
+  const [localEscalations, setLocalEscalations] = useState<any[]>([])
+
+  useEffect(() => {
+    const loadGoalEscalations = () => {
+      try {
+        const stored = window.localStorage.getItem("goalforge.demo.escalations")
+        const currentEsc = stored ? JSON.parse(stored) : initialEscalations
+        const matched = currentEsc.filter((esc: any) => esc.goal === goal.title)
+        setLocalEscalations(matched)
+      } catch (e) {
+        console.error("Failed to load goal escalations in GoalCard", e)
+      }
+    }
+    
+    loadGoalEscalations()
+    window.addEventListener("escalations-updated", loadGoalEscalations)
+    return () => window.removeEventListener("escalations-updated", loadGoalEscalations)
+  }, [goal.title])
 
   const canEscalate = goal.status === "Rejected" || goal.status === "Approved after Editing"
 
@@ -185,6 +203,47 @@ export default function GoalCard({ goal }: Props) {
               Due {goal.deadline}
             </span>
           </div>
+
+          {localEscalations.length > 0 && (
+            <div className="mt-4 space-y-2 border-t border-slate-100 dark:border-white/[0.06] pt-3">
+              {localEscalations.map((esc) => (
+                <div key={esc.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.01] p-3 border border-slate-100 dark:border-white/[0.04] text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">Escalation Status:</span>
+                    {esc.status === "Resolved" ? (
+                      <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 font-bold uppercase text-[9px] border border-emerald-500/20">
+                        Resolved
+                      </span>
+                    ) : esc.status === "Acknowledged" ? (
+                      <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 dark:text-amber-400 font-bold uppercase text-[9px] border border-amber-500/20">
+                        Acknowledged
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded bg-rose-500/10 text-rose-500 dark:text-rose-400 font-bold uppercase text-[9px] border border-rose-500/20">
+                        Open
+                      </span>
+                    )}
+                  </div>
+                  {esc.note && (
+                    <p className="mt-1.5 text-slate-500 dark:text-slate-400 italic">
+                      &ldquo;{esc.note}&rdquo;
+                    </p>
+                  )}
+                  {esc.adminRemarks && (
+                    <div className="mt-2 text-slate-600 dark:text-slate-300">
+                      <span className="font-semibold">Admin Remarks:</span> {esc.adminRemarks}
+                    </div>
+                  )}
+                  {esc.resolutionNote && (
+                    <div className="mt-2 bg-emerald-500/5 dark:bg-emerald-500/10 p-2.5 rounded border border-emerald-500/10 text-slate-700 dark:text-slate-200">
+                      <p className="font-semibold text-emerald-600 dark:text-emerald-400 mb-0.5">Admin Solution:</p>
+                      <p className="leading-relaxed">{esc.resolutionNote}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {canEscalate && (

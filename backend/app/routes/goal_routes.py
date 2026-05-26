@@ -63,6 +63,20 @@ def _goal_to_response(goal, owner_name: str | None = None, department: str | Non
             }
             for m in (goal.milestones or [])
         ],
+        "escalations": [
+            {
+                "id": e.id,
+                "goal_id": e.goal_id,
+                "reason": e.reason,
+                "severity": e.severity,
+                "status": e.status,
+                "admin_remarks": e.admin_remarks,
+                "resolution_note": e.resolution_note,
+                "created_at": str(e.created_at) if e.created_at else None,
+                "resolved_at": str(e.resolved_at) if e.resolved_at else None,
+            }
+            for e in (goal.escalations or [])
+        ] if hasattr(goal, "escalations") and goal.escalations else [],
     }
 
 

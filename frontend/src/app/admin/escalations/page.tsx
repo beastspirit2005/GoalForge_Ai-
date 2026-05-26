@@ -230,6 +230,24 @@ export default function AdminEscalationsPage() {
         detail: `Acknowledged escalation for "${selectedEscalation.goal}". Remarks: ${adminRemarksInput || "None"}`
       })
     } else if (status === "Resolved") {
+      // Update goal status in local storage if present
+      try {
+        const storedGoals = window.localStorage.getItem("goalforge.demo.goals")
+        if (storedGoals) {
+          const parsed = JSON.parse(storedGoals)
+          const nextGoals = parsed.map((g: any) => {
+            if (g.title === selectedEscalation.goal) {
+              return { ...g, status: "Approved" }
+            }
+            return g
+          })
+          window.localStorage.setItem("goalforge.demo.goals", JSON.stringify(nextGoals))
+          window.dispatchEvent(new Event("local-goals-updated"))
+        }
+      } catch (e) {
+        console.error("Failed to update goal on escalation resolution", e)
+      }
+
       addLocalNotification({
         title: "Escalation Resolved",
         message: `Your issue is solved. Escalation for "${selectedEscalation.goal}" has been marked as Resolved by Admin on ${timestamp}.`,
