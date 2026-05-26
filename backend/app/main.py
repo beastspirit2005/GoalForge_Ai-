@@ -20,6 +20,10 @@ from app.routes.prediction_routes import router as prediction_router
 from app.routes.recognition_routes import router as recognition_router
 
 
+from app.middleware.trace import TraceMiddleware
+from app.middleware.metrics import MetricsMiddleware
+from app.middleware.rate_limit import RateLimitMiddleware
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Create DB tables on startup."""
@@ -34,6 +38,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Register Tracing, Metrics, and Rate Limiting middlewares
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(MetricsMiddleware)
+app.add_middleware(TraceMiddleware)
 
 # Strip /api prefix when routed through Vercel's proxy
 @app.middleware("http")
@@ -62,8 +70,38 @@ app.mount("/uploads", StaticFiles(directory=str(_uploads_dir)), name="uploads")
 
 
 @app.get("/health")
-def health():
-    return {"status": "ok", "service": "goalforge-api"}
+async def health():
+    # Database ping check
+    db_status = "healthy"
+    try:
+        from app.core.database import async_session
+        from sqlalchemy import text
+        async with async_session() as session:
+            await session.execute(text("SELECT 1"))
+    except Exception as e:
+        db_status = f"unhealthy: {str(e)}"
+        
+    # Memory RSS footprints check
+    try:
+        import psutil
+        process = psutil.Process()
+        memory_usage_mb = process.memory_info().rss / (1024 * 1024)
+    except Exception:
+        memory_usage_mb = "N/A"
+
+    return {
+        "status": "ok" if "unhealthy" not in db_status else "error",
+        "service": "goalforge-api",
+        "database": db_status,
+        "memory_usage_mb": memory_usage_mb
+    }
+
+
+@app.get("/metrics")
+def metrics():
+    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+    from fastapi import Response
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.get("/")

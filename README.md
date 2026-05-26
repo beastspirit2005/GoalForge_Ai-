@@ -42,8 +42,15 @@ graph TD
 
 ## What is New and Enterprise-Ready
 
-GoalForge AI is packed with non-trivial engineering solutions designed to impress hiring managers and solve genuine corporate needs:
+GoalForge AI is packed with non-trivial, production-grade engineering solutions designed to impress hiring managers and solve genuine corporate needs:
 
+*   **XSS-Safe Secure httpOnly Cookie API Proxy**: Replaced insecure browser `localStorage` API key storage with an `httpOnly` secure Next.js API proxy. Custom Gemini keys reside strictly in secure server-side cookies, making key-theft XSS attacks impossible.
+*   **Mobile-Ready Client-Side AI Fallback**: Refactored the AI Chat fallback coach to execute 100% client-side in the browser. Guarantees coaching support operates instantly, even when WSL2/Docker networks are completely offline or unreachable on mobile devices.
+*   **Enterprise Observability & Prometheus Telemetry**: Mounted `/health` (active DB ping & RSS memory self-checks) and Prometheus `/metrics` endpoints. Integrated `python-json-logger` in Python and `winston` in Next.js, streaming unified, structured JSON logs to stdout.
+*   **Request Tracing & Correlation**: Automatically traces the entire multi-AI fallback pipeline (Gemini API -> Local Ollama -> Rules fallback) using async `contextvars` to generate and propagate correlation `X-Trace-Id` headers across backend logs and network requests.
+*   **Sliding Window API Rate Limiter**: Configured backend sliding window limits (10 reqs/min for AI chat, 30 reqs/min for admin routes) per client IP, returning HTTP `429 Too Many Requests` on breach.
+*   **Immutable Prepend-Only Audit Log Guard**: Hardened local audit logs by recursively deep freezing returned in-memory records and enforcing strict prepend-only sequence checks on insertions, preventing deletion or alteration of historical logs.
+*   **CI Test Automation (Pytest & Vitest)**: Configured a full CI/CD pipeline using GitHub Actions, executing `pytest` (mocked endpoint coverage on Python core) and `vitest` (JSDom frontend isolation tests) alongside linting and Docker build checks.
 *   **Comprehensive Admin User Management**: Full CRUD capabilities for administrators, featuring an inline edit dialog to securely modify employee roles, departments, names, and active statuses with real-time audit logging and state hydration.
 *   **5-Column Categorized Governance Audit Logs**: Replaces standard flat-list logging with a sleek, CSS-Grid 5-column layout separating events into User Accounts, Goal Creation, Goal Rejections, Goal Approvals, and Escalations. Features global search and date-filtering across all categories simultaneously.
 *   **Strict Role-Based Security Isolation**: Fully hardened React route guards and backend middleware pathways. L1 Managers and Administrators are strictly isolated from employee consoles, automatically hiding and blocking access to sensitive API endpoints.

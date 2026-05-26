@@ -24,18 +24,7 @@ import { Input } from "@/components/ui/input"
 import { apiFetch } from "@/lib/api"
 import { getStoredToken } from "@/services/auth.service"
 import { useAuth } from "@/hooks/useAuth"
-import {
-  getGeminiKeyMode,
-  setGeminiKeyMode,
-  getCustomGeminiKey,
-  setCustomGeminiKey,
-  clearCustomGeminiKey,
-  resolveCustomGeminiKey,
-  syncGeminiKeyFromStorage,
-  GEMINI_KEY_CHANGED_EVENT,
-  type GeminiKeyMode,
-} from "@/lib/gemini-storage"
-import { geminiChatFromBrowser } from "@/lib/gemini-browser"
+import { GEMINI_KEY_CHANGED_EVENT, type GeminiKeyMode } from "@/lib/gemini-storage"
 import {
   type ChatMessage,
   type ChatSession,
@@ -68,6 +57,36 @@ const roleLabels: Record<AppRole, string> = {
   employee: "Employee",
   manager: "Manager",
   admin: "Admin",
+}
+
+const getClientFallbackAdvice = (query: string): { response: string; source: string } => {
+  const lowered = query.toLowerCase()
+  let response = ""
+  if (lowered.includes("risk") || lowered.includes("block")) {
+    response = 
+      "**Offline Fallback Advice (Risk & Blockers)**:\n\n" +
+      "- **Review High-Risk Work**: Identify goals with progress significantly behind schedule.\n" +
+      "- **Isolate Blockers**: Determine if the issue is resource constraints, technical hurdles, or third-party dependencies.\n" +
+      "- **Define a Next Action**: Outline one single, measurable task to execute by the end of this week to reduce risk.\n" +
+      "- **Update Manager & Log Check-ins**: Clear communications in check-ins prevent deadline surprises."
+  } else if (lowered.includes("summary") || lowered.includes("team")) {
+    response = 
+      "**Offline Fallback Advice (Team Performance)**:\n\n" +
+      "- **Compare Team Progress**: Benchmark active goal completion rates across team members.\n" +
+      "- **Track Check-in Streaks**: Celebrate team members with high check-in consistency.\n" +
+      "- **Address Critical Areas**: Focus immediate support on high-risk milestones.\n" +
+      "- **Routine Review**: Host quick Friday check-ins to unlock stuck milestones."
+  } else {
+    response = 
+      "**Offline Fallback Advice (Goal Execution)**:\n\n" +
+      "- **Milestone Strategy**: Always divide a target goal into 3 to 5 smaller, measurable milestones.\n" +
+      "- **UOM Metrics**: Focus on highly quantifiable targets (e.g. '$10K revenue' or '5 code reviews') rather than vague statements.\n" +
+      "- **Bi-weekly Check-ins**: Check-in twice a week with concise actual accomplishments to maintain strong momentum."
+  }
+  return {
+    response,
+    source: "fallback",
+  }
 }
 
 export function AiBuddyChat() {
@@ -131,13 +150,16 @@ export function AiBuddyChat() {
     if (savedProvider) setActiveProvider(savedProvider)
     const savedOllama = localStorage.getItem("aiBuddyOllamaModel")
     if (savedOllama) setSelectedOllamaModel(savedOllama)
-    setGeminiKeyModeState(getGeminiKeyMode())
-    setCustomKeyInput(getCustomGeminiKey())
+    const storedMode = localStorage.getItem("gf_gemini_key_mode")
+    setGeminiKeyModeState(storedMode === "custom" ? "custom" : "app")
+    const isSaved = localStorage.getItem("gf_gemini_custom_key_saved") === "true"
+    setCustomKeyInput(isSaved ? "••••••••••••••••••••" : "")
 
     const refreshGeminiKeyState = () => {
-      const { mode, key } = syncGeminiKeyFromStorage()
-      setGeminiKeyModeState(mode)
-      setCustomKeyInput(key)
+      const storedMode = localStorage.getItem("gf_gemini_key_mode")
+      setGeminiKeyModeState(storedMode === "custom" ? "custom" : "app")
+      const isSaved = localStorage.getItem("gf_gemini_custom_key_saved") === "true"
+      setCustomKeyInput(isSaved ? "••••••••••••••••••••" : "")
     }
 
     const handleStorageChange = () => refreshGeminiKeyState()
@@ -213,43 +235,17 @@ export function AiBuddyChat() {
     return res.context
   }
 
-  const runGeminiWithCustomKey = async (query: string, apiKey: string) => {
-    const context = await fetchCopilotContext()
-    try {
-      return await geminiChatFromBrowser(query, context, apiKey)
-    } catch {
-      // Browser CORS/network — proxy once through API without storing the key
-      const token = getStoredToken()
-      const proxied = await apiFetch<{ response: string; source: string }>("/ai/copilot", {
-        method: "POST",
-        token,
-        body: {
-          query,
-          context,
-          provider: "gemini",
-          api_key: apiKey,
-        },
-      })
-      return {
-        response: proxied.response,
-        source: "gemini (your key)",
-      }
-    }
-  }
-
   const selectCustomKeyMode = () => {
-    const draft = resolveCustomGeminiKey(customKeyInput)
-    if (draft) {
-      setCustomGeminiKey(draft)
-      setCustomKeyInput(draft)
-      setKeySaveMessage("Your key is saved in this browser.")
+    const isSaved = localStorage.getItem("gf_gemini_custom_key_saved") === "true"
+    if (isSaved) {
+      localStorage.setItem("gf_gemini_key_mode", "custom")
+      setGeminiKeyModeState("custom")
+      setKeySaveMessage("Your key is stored securely in this browser.")
     } else {
-      setGeminiKeyMode("custom")
+      localStorage.setItem("gf_gemini_key_mode", "custom")
       setGeminiKeyModeState("custom")
       setKeySaveMessage("Paste your key below, then click Save.")
-      return
     }
-    setGeminiKeyModeState("custom")
   }
 
   const runBackendCopilot = async (
@@ -323,25 +319,47 @@ export function AiBuddyChat() {
     }
   }
 
-  const handleSaveCustomKey = () => {
-    const key = resolveCustomGeminiKey(customKeyInput)
-    if (!key) {
+  const handleSaveCustomKey = async () => {
+    const key = customKeyInput.trim()
+    if (!key || key.startsWith("•••")) {
       setKeySaveMessage("Enter a valid Gemini API key first.")
       return
     }
-    setCustomGeminiKey(key)
-    setCustomKeyInput(key)
-    setGeminiKeyModeState("custom")
-    setKeySaveMessage("Key saved in this browser only.")
-    setTimeout(() => setKeySaveMessage(""), 3000)
+    try {
+      const res = await fetch("/api/ai/key", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apiKey: key }),
+      })
+      if (!res.ok) throw new Error("Failed to secure key on server.")
+      
+      localStorage.setItem("gf_gemini_key_mode", "custom")
+      localStorage.setItem("gf_gemini_custom_key_saved", "true")
+      setGeminiKeyModeState("custom")
+      setCustomKeyInput("••••••••••••••••••••")
+      setKeySaveMessage("Key stored securely in httpOnly cookie.")
+      setTimeout(() => setKeySaveMessage(""), 3000)
+      window.dispatchEvent(new Event(GEMINI_KEY_CHANGED_EVENT))
+    } catch (err: any) {
+      setKeySaveMessage(`Failed to save key: ${err.message}`)
+    }
   }
 
-  const handleUseAppKey = () => {
-    clearCustomGeminiKey()
-    setGeminiKeyModeState("app")
-    setCustomKeyInput("")
-    setKeySaveMessage("Using the app Gemini key.")
-    setTimeout(() => setKeySaveMessage(""), 3000)
+  const handleUseAppKey = async () => {
+    try {
+      const res = await fetch("/api/ai/key", { method: "DELETE" })
+      if (!res.ok) throw new Error("Failed to clear key on server.")
+
+      localStorage.setItem("gf_gemini_key_mode", "app")
+      localStorage.removeItem("gf_gemini_custom_key_saved")
+      setGeminiKeyModeState("app")
+      setCustomKeyInput("")
+      setKeySaveMessage("Using the app Gemini key.")
+      setTimeout(() => setKeySaveMessage(""), 3000)
+      window.dispatchEvent(new Event(GEMINI_KEY_CHANGED_EVENT))
+    } catch (err: any) {
+      setKeySaveMessage(`Failed to clear key: ${err.message}`)
+    }
   }
 
   const handleSend = async () => {
@@ -360,14 +378,8 @@ export function AiBuddyChat() {
     try {
       let res: { response: string; source: string }
 
-      if (activeProvider === "gemini" && geminiKeyMode === "custom") {
-        const customKey = resolveCustomGeminiKey(customKeyInput)
-        if (!customKey) {
-          throw new Error(
-            "My key mode is on but no key is saved. Paste your Gemini API key in settings and click Save."
-          )
-        }
-        res = await runGeminiWithCustomKey(userMessage, customKey)
+      if (activeProvider === "fallback") {
+        res = getClientFallbackAdvice(userMessage)
       } else {
         res = await runBackendCopilot(
           userMessage,
@@ -439,12 +451,8 @@ export function AiBuddyChat() {
     try {
       let res: { response: string; source: string }
 
-      if (newProvider === "gemini" && geminiKeyMode === "custom") {
-        const customKey = resolveCustomGeminiKey(customKeyInput)
-        if (!customKey) {
-          throw new Error("Save your Gemini API key before switching to My key mode.")
-        }
-        res = await runGeminiWithCustomKey(lastQuery, customKey)
+      if (newProvider === "fallback") {
+        res = getClientFallbackAdvice(lastQuery)
       } else {
         let localModel = selectedOllamaModel
         if (newProvider === "ollama" && !localModel && ollamaModels.length > 0) {
