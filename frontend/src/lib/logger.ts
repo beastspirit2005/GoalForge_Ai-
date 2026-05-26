@@ -16,6 +16,7 @@ let logger: {
 
 if (typeof window === "undefined") {
   // Node.js server context: Dynamically load Winston to avoid bundling issues in browsers
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const winston = require("winston");
   logger = winston.createLogger({
     level: "info",

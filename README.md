@@ -90,7 +90,7 @@ Calculated dynamically based on active work allocations:
 GoalForge AI implements a production-grade dual-AI orchestrator wrapper inside `backend/app/ai/gemini_client.py`:
 
 1.  **Cloud-based Cognitive Engine:** Utilizing **Google Gemini 2.0 Flash** for fast, complex milestones. 
-    *   *Privacy Protocol:* API keys are injected at the browser layer and stored locally in `localStorage` rather than database tables. They are passed securely in API headers, ensuring your personal SaaS tokens never persist on foreign servers.
+    *   *Privacy Protocol:* API keys are stored in secure `httpOnly` cookies and proxied via Next.js server-side API routes. This prevents XSS attacks from stealing keys while ensuring personal SaaS tokens never persist in database tables.
 2.  **Sovereign Local-First Engine:** Powered by **Ollama** running locally on the user's host machine. Supports lightweight edge models (`gemma2:2b`, `llama3`, `mistral`).
     *   *Failover System:* If no API key is provided and Ollama is offline, the backend transparently triggers a local rules-based fallback AI to ensure continuous service.
 
