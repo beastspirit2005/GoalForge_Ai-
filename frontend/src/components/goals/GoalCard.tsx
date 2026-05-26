@@ -62,7 +62,12 @@ export default function GoalCard({ goal }: Props) {
       try {
         const stored = window.localStorage.getItem("goalforge.demo.escalations")
         const currentEsc = stored ? JSON.parse(stored) : initialEscalations
-        const matched = currentEsc.filter((esc: any) => esc.goal === goal.title)
+        const matched = currentEsc.filter((esc: any) => {
+          if (esc.goalId && esc.goalId === goal.id) {
+            return true
+          }
+          return esc.goal === goal.title && esc.employee === goal.owner
+        })
         setLocalEscalations(matched)
       } catch (e) {
         console.error("Failed to load goal escalations in GoalCard", e)
@@ -72,7 +77,7 @@ export default function GoalCard({ goal }: Props) {
     loadGoalEscalations()
     window.addEventListener("escalations-updated", loadGoalEscalations)
     return () => window.removeEventListener("escalations-updated", loadGoalEscalations)
-  }, [goal.title])
+  }, [goal.title, goal.id, goal.owner])
 
   const canEscalate = goal.status === "Rejected" || goal.status === "Approved after Editing"
 
@@ -116,6 +121,7 @@ export default function GoalCard({ goal }: Props) {
       const currentEsc = storedEsc ? JSON.parse(storedEsc) : initialEscalations
       const newEsc = {
         id: Date.now(),
+        goalId: goal.id,
         employee: goal.owner || "Aarav Mehta",
         goal: goal.title,
         department: goal.department || "People Ops",
