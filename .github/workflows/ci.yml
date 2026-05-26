@@ -52,7 +52,19 @@ jobs:
 
       - name: Verify APP_ENV is not production in seed scripts
         run: |
-          grep -r "reset_sequences" backend/ | grep -v "APP_ENV" && exit 1 || echo "Gate check passed"
+          python - <<'PY'
+          from pathlib import Path
+          violations = []
+          for path in Path("backend").rglob("*.py"):
+              text = path.read_text(encoding="utf-8")
+              if "reset_sequences" in text and "APP_ENV" not in text:
+                  violations.append(str(path))
+          if violations:
+              print("reset_sequences references without APP_ENV guard:")
+              print("\n".join(violations))
+              raise SystemExit(1)
+          print("Gate check passed")
+          PY
 
       - name: Run Pytest Coverage
         env:
