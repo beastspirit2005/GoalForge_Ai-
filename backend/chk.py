@@ -1,12 +1,22 @@
 import asyncio
-from app.core.database import async_session
-from app.models.user import User
-from sqlalchemy import select
+import traceback
+import os
 
-async def chk():
-    async with async_session() as db:
-        users = (await db.execute(select(User))).scalars().all()
-        for u in users:
-            print(u.email, u.phone_number)
+# Set environment
+os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 
-asyncio.run(chk())
+from app.core.database import create_tables
+from tests.integration.test_goal_flow import test_integration_goal_lifecycle_flow
+
+async def run():
+    print("Initializing tables...")
+    await create_tables()
+    print("Running integration test...")
+    try:
+        await test_integration_goal_lifecycle_flow()
+        print("Success!")
+    except Exception as e:
+        print("Failed with exception:")
+        traceback.print_exc()
+
+asyncio.run(run())

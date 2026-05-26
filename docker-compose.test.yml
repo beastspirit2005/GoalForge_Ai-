@@ -1,0 +1,43 @@
+services:
+  db_test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: goalforge_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+
+  backend_test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db_test:5432/goalforge_test
+      SECRET_KEY: test-secret-key-for-integration-tests
+    command: >
+      sh -c "
+      echo 'Waiting for test database...' &&
+      python -c \"
+      import asyncio, asyncpg
+      async def wait_db():
+          for _ in range(30):
+              try:
+                  conn = await asyncpg.connect('postgresql://postgres:postgres@db_test:5432/goalforge_test')
+                  await conn.close()
+                  print('Database is ready!')
+                  return
+              except Exception as e:
+                  print('Waiting for db...', e)
+                  await asyncio.sleep(1)
+          raise RuntimeError('DB not ready in time')
+      asyncio.run(wait_db())
+      \" &&
+      echo 'Running Integration Tests...' &&
+      python -m pytest tests/integration/
+      "
+    depends_on:
+      - db_test

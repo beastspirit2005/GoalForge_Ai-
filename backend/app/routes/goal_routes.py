@@ -88,6 +88,8 @@ async def create(
 ):
     goal = await create_goal(db, current_user, data)
     await log_action(db, user_id=current_user.id, action="goal_created", entity_type="goal", entity_id=goal.id)
+    # Eagerly load relationships to avoid lazy loading issues
+    goal = await get_goal_by_id(db, goal.id)
     return _goal_to_response(goal, current_user.name, current_user.department)
 
 
@@ -172,6 +174,8 @@ async def update(
         db, user_id=current_user.id, action="goal_updated", entity_type="goal", entity_id=goal.id,
         old_value={"status": old_status}, new_value=data.model_dump(exclude_unset=True),
     )
+    # Eagerly load relationships to avoid lazy loading issues
+    goal = await get_goal_by_id(db, goal.id)
     return _goal_to_response(goal)
 
 
@@ -201,6 +205,8 @@ async def submit(
         raise HTTPException(status_code=404, detail="Goal not found")
     goal = await submit_goal(db, goal)
     await log_action(db, user_id=current_user.id, action="goal_submitted", entity_type="goal", entity_id=goal.id)
+    # Eagerly load relationships to avoid lazy loading issues
+    goal = await get_goal_by_id(db, goal.id)
     return _goal_to_response(goal)
 
 

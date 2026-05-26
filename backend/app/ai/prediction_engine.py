@@ -31,6 +31,107 @@ def _days_between(date_str: str | None) -> int | None:
     return None
 
 
+def normalize_progress_rate(actual: float, expected: float, is_overdue: bool) -> float:
+    """Returns float in [0, 1]. Penalizes overdue tasks."""
+    if expected == 0:
+        return 0.0
+    ratio = actual / expected
+    if is_overdue:
+        ratio *= 0.6  # 40% penalty for overdue
+    return max(0.0, min(1.0, ratio))
+
+
+def normalize_workload_pressure(goal_count: int) -> float:
+    """Returns float in [0, 1]. Degrades linearly after 6 goals."""
+    if goal_count <= 6:
+        return 1.0
+    # Each goal beyond 6 reduces score by 0.1, floored at 0
+    return max(0.0, 1.0 - (goal_count - 6) * 0.1)
+
+
+def normalize_recency(days_since_update: int) -> float:
+    """Returns float in [0, 1]. Stale after 14 days."""
+    if days_since_update <= 14:
+        return 1.0
+    return max(0.0, 1.0 - (days_since_update - 14) / 30)
+
+
+def normalize_goal_priority(weightage: float) -> float:
+    """Returns float in [0, 1]. Higher weightage maps to higher focus/priority."""
+    return max(0.0, min(1.0, weightage * 0.04))
+
+
+def compute_completion_probability(
+    progress_rate: float,
+    milestone_trajectory: float,
+    workload_pressure: float,
+    update_recency: float,
+    goal_priority: float,
+) -> float:
+    score = (
+        progress_rate       * 0.40 +
+        milestone_trajectory * 0.20 +
+        workload_pressure   * 0.15 +
+        update_recency      * 0.15 +
+        goal_priority       * 0.10
+    )
+    return round(max(0.0, min(1.0, score)), 4)  # Hard clamp
+
+
+# Burnout risk gradient helper functions
+def compute_goal_overload(goal_count: int) -> float:
+    """
+    Smooth linear/sigmoid gradient for goal overload.
+    <= 2 goals: minimal overload (0.1)
+    >= 8 goals: max overload (1.0)
+    """
+    if goal_count <= 2:
+        return 0.1
+    if goal_count >= 8:
+        return 1.0
+    return round(0.1 + (goal_count - 2) * 0.15, 4)  # Linear ramp from 0.1 to 1.0
+
+
+def compute_progress_pressure(avg_progress: float) -> float:
+    """
+    Smooth gradient for progress pressure.
+    High progress (80%+) -> low pressure (0.1)
+    Low progress (20%-) -> high pressure (0.9)
+    """
+    if avg_progress >= 80.0:
+        return 0.1
+    if avg_progress <= 20.0:
+        return 0.9
+    return round(0.9 - (avg_progress - 20.0) * (0.8 / 60.0), 4)
+
+
+def compute_weightage_burden(total_weightage: float) -> float:
+    """
+    Smooth gradient instead of binary threshold.
+    Starts penalizing at 80, maxes out around 140.
+    Returns float in [0, 1].
+    """
+    if total_weightage <= 80:
+        return 0.0
+    if total_weightage >= 140:
+        return 1.0
+    return round((total_weightage - 80) / 60.0, 4)  # Linear ramp between 80–140
+
+
+def compute_checkin_exhaustion(updates_last_7_days: float) -> float:
+    """
+    Daily updates (7+ in a week) indicate stress or micromanagement.
+    """
+    return round(min(1.0, max(0.0, updates_last_7_days / 7.0)), 4)
+
+
+def compute_risk_accumulation(high_risk_goals: int) -> float:
+    """
+    Smooth accumulation based on number of high-risk goals.
+    """
+    return round(min(1.0, high_risk_goals * 0.25), 4)
+
+
 def predict_completion_probability(
     progress: float,
     deadline_str: str | None,
@@ -52,52 +153,27 @@ def predict_completion_probability(
     days_left = _days_between(deadline_str)
 
     # ── Factor 1: Progress rate (40%) ──
+    is_overdue = days_left is not None and days_left <= 0
     if days_left is not None and days_left > 0:
-        # Expected progress = (time elapsed / total time) * 100
-        # We approximate: if progress >= expected, high probability
-        expected = 100 - (days_left / max(days_left + 30, 1) * 100)  # rough estimate
-        rate_score = min(100, (progress / max(expected, 1)) * 100)
-    elif days_left is not None and days_left <= 0:
-        # Overdue
-        rate_score = max(0, progress * 0.8)  # Penalize overdue
+        expected = 100.0 - (days_left / max(days_left + 30, 1) * 100.0)
     else:
-        rate_score = progress  # No deadline info
+        expected = 100.0
 
-    # ── Factor 2: Milestone trajectory (20%) ──
-    milestone_score = milestone_completion_rate
+    progress_rate = normalize_progress_rate(actual=progress, expected=expected, is_overdue=is_overdue)
+    milestone_trajectory = milestone_completion_rate / 100.0
+    workload_pressure = normalize_workload_pressure(goal_count)
+    update_recency = normalize_recency(days_since_last_update)
+    goal_priority = normalize_goal_priority(weightage)
 
-    # ── Factor 3: Workload pressure (15%) ──
-    if goal_count <= 3:
-        workload_score = 100  # Light load
-    elif goal_count <= 5:
-        workload_score = 80
-    elif goal_count <= 7:
-        workload_score = 55
-    else:
-        workload_score = 30  # Overloaded
-
-    # ── Factor 4: Update recency (15%) ──
-    if days_since_last_update <= 2:
-        recency_score = 100
-    elif days_since_last_update <= 7:
-        recency_score = 75
-    elif days_since_last_update <= 14:
-        recency_score = 45
-    else:
-        recency_score = 15  # Stale goal
-
-    # ── Factor 5: Weightage attention (10%) ──
-    weightage_score = min(100, weightage * 4)  # Higher weight = more likely focused
-
-    # ── Composite probability ──
-    probability = (
-        rate_score * 0.40
-        + milestone_score * 0.20
-        + workload_score * 0.15
-        + recency_score * 0.15
-        + weightage_score * 0.10
+    prob_fraction = compute_completion_probability(
+        progress_rate=progress_rate,
+        milestone_trajectory=milestone_trajectory,
+        workload_pressure=workload_pressure,
+        update_recency=update_recency,
+        goal_priority=goal_priority,
     )
-    probability = max(0, min(100, round(probability, 1)))
+
+    probability = round(prob_fraction * 100.0, 1)
 
     # Risk level
     if probability >= 75:
@@ -107,13 +183,12 @@ def predict_completion_probability(
     else:
         risk = "High"
 
-    # Factors breakdown
     factors = [
-        {"name": "Progress Rate", "score": round(rate_score, 1), "weight": "40%"},
-        {"name": "Milestone Trajectory", "score": round(milestone_score, 1), "weight": "20%"},
-        {"name": "Workload Balance", "score": round(workload_score, 1), "weight": "15%"},
-        {"name": "Update Recency", "score": round(recency_score, 1), "weight": "15%"},
-        {"name": "Goal Priority", "score": round(weightage_score, 1), "weight": "10%"},
+        {"name": "Progress Rate", "score": round(progress_rate * 100.0, 1), "weight": "40%"},
+        {"name": "Milestone Trajectory", "score": round(milestone_trajectory * 100.0, 1), "weight": "20%"},
+        {"name": "Workload Balance", "score": round(workload_pressure * 100.0, 1), "weight": "15%"},
+        {"name": "Update Recency", "score": round(update_recency * 100.0, 1), "weight": "15%"},
+        {"name": "Goal Priority", "score": round(goal_priority * 100.0, 1), "weight": "10%"},
     ]
 
     return {
@@ -133,7 +208,7 @@ def predict_burnout_risk(
     days_since_break: int = 0,
 ) -> dict[str, Any]:
     """
-    Predict burnout risk for an employee.
+    Predict burnout risk for an employee using smooth gradients.
 
     Factors:
     1. Goal overload (30%): > 6 goals is high pressure
@@ -142,51 +217,20 @@ def predict_burnout_risk(
     4. Check-in exhaustion (15%): very frequent updates = potential burnout
     5. Risk accumulation (15%): multiple high-risk goals compound stress
     """
-    # ── Factor 1: Goal overload (30%) ──
-    if goal_count <= 3:
-        overload = 10
-    elif goal_count <= 5:
-        overload = 30
-    elif goal_count <= 7:
-        overload = 60
-    else:
-        overload = 90
+    overload = compute_goal_overload(goal_count)
+    pressure = compute_progress_pressure(avg_progress)
+    burden = compute_weightage_burden(total_weightage)
+    exhaustion = compute_checkin_exhaustion(checkin_frequency)
+    risk_accum = compute_risk_accumulation(high_risk_goals)
 
-    # ── Factor 2: Progress pressure (25%) ──
-    if avg_progress >= 70:
-        pressure = 15  # On track, low stress
-    elif avg_progress >= 50:
-        pressure = 40
-    elif avg_progress >= 30:
-        pressure = 65
-    else:
-        pressure = 90  # Falling behind badly
-
-    # ── Factor 3: Weightage burden (15%) ──
-    burden = min(100, max(0, (total_weightage - 80) * 2))
-
-    # ── Factor 4: Check-in exhaustion (15%) ──
-    if checkin_frequency <= 2:
-        exhaustion = 10
-    elif checkin_frequency <= 5:
-        exhaustion = 30
-    elif checkin_frequency <= 10:
-        exhaustion = 60
-    else:
-        exhaustion = 85
-
-    # ── Factor 5: Risk accumulation (15%) ──
-    risk_accum = min(100, high_risk_goals * 30)
-
-    # ── Composite ──
-    burnout_score = (
+    burnout_fraction = (
         overload * 0.30
         + pressure * 0.25
         + burden * 0.15
         + exhaustion * 0.15
         + risk_accum * 0.15
     )
-    burnout_score = max(0, min(100, round(burnout_score, 1)))
+    burnout_score = round(max(0.0, min(1.0, burnout_fraction)) * 100.0, 1)
 
     if burnout_score >= 70:
         level = "High"
@@ -203,11 +247,11 @@ def predict_burnout_risk(
         "level": level,
         "recommendation": recommendation,
         "factors": {
-            "goal_overload": round(overload, 1),
-            "progress_pressure": round(pressure, 1),
-            "weightage_burden": round(burden, 1),
-            "update_exhaustion": round(exhaustion, 1),
-            "risk_accumulation": round(risk_accum, 1),
+            "goal_overload": round(overload * 100.0, 1),
+            "progress_pressure": round(pressure * 100.0, 1),
+            "weightage_burden": round(burden * 100.0, 1),
+            "update_exhaustion": round(exhaustion * 100.0, 1),
+            "risk_accumulation": round(risk_accum * 100.0, 1),
         },
     }
 

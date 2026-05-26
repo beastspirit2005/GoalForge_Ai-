@@ -17,6 +17,8 @@ class AuditLog(Base):
     old_value: Mapped[str | None] = mapped_column(Text, nullable=True)
     new_value: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    prev_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
+    entry_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     def __repr__(self) -> str:
         return f"<AuditLog {self.id} {self.action} {self.entity_type}:{self.entity_id}>"

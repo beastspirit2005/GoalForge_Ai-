@@ -50,6 +50,10 @@ jobs:
           pip install pytest pytest-cov pytest-asyncio httpx
         working-directory: ./backend
 
+      - name: Verify APP_ENV is not production in seed scripts
+        run: |
+          grep -r "reset_sequences" backend/ | grep -v "APP_ENV" && exit 1 || echo "Gate check passed"
+
       - name: Run Pytest Coverage
         env:
           DATABASE_URL: "sqlite+aiosqlite:///:memory:"
