@@ -8,7 +8,12 @@ def mock_get_current_user():
     # Return a dummy active User instance to satisfyDepends(get_current_user)
     return User(id=1, name="Test User", role="employee", email="employee@goalforge.ai")
 
-app.dependency_overrides[get_current_user] = mock_get_current_user
+@pytest.fixture(autouse=True)
+def setup_overrides():
+    app.dependency_overrides[get_current_user] = mock_get_current_user
+    yield
+    if get_current_user in app.dependency_overrides:
+        del app.dependency_overrides[get_current_user]
 
 client = TestClient(app)
 

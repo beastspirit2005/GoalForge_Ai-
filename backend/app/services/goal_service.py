@@ -9,6 +9,7 @@ from app.logic.validation_logic import validate_goal_count, validate_weightage
 from app.models.goal import Goal
 from app.models.role import GoalStatus
 from app.models.user import User
+from app.models.escalation import Escalation
 from app.schemas.goal_schema import GoalCreate, GoalUpdate
 
 
@@ -47,7 +48,7 @@ async def create_goal(db: AsyncSession, user: User, data: GoalCreate) -> Goal:
 async def get_user_goals(db: AsyncSession, user_id: int) -> list[Goal]:
     result = await db.execute(
         select(Goal)
-        .options(selectinload(Goal.milestones), selectinload("escalations"))
+        .options(selectinload(Goal.milestones), selectinload(Goal.escalations))
         .where(Goal.user_id == user_id)
         .order_by(Goal.created_at.desc())
     )
@@ -57,7 +58,7 @@ async def get_user_goals(db: AsyncSession, user_id: int) -> list[Goal]:
 async def get_goal_by_id(db: AsyncSession, goal_id: int) -> Goal | None:
     result = await db.execute(
         select(Goal)
-        .options(selectinload(Goal.milestones), selectinload("escalations"))
+        .options(selectinload(Goal.milestones), selectinload(Goal.escalations))
         .where(Goal.id == goal_id)
     )
     return result.scalar_one_or_none()
@@ -136,7 +137,7 @@ async def get_all_goals(db: AsyncSession) -> list[Goal]:
     """Admin: fetch all goals across the organization."""
     result = await db.execute(
         select(Goal)
-        .options(selectinload(Goal.milestones), selectinload("escalations"))
+        .options(selectinload(Goal.milestones), selectinload(Goal.escalations))
         .order_by(Goal.created_at.desc())
     )
     return list(result.scalars().all())
@@ -164,7 +165,7 @@ async def get_team_goals(db: AsyncSession, manager_id: int) -> list[Goal]:
 
     result = await db.execute(
         select(Goal)
-        .options(selectinload(Goal.milestones), selectinload("escalations"))
+        .options(selectinload(Goal.milestones), selectinload(Goal.escalations))
         .where(Goal.user_id.in_(team_ids))
     )
     return list(result.scalars().all())
