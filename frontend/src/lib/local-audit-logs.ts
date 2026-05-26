@@ -22,13 +22,27 @@ export const initialLogs: AuditLog[] = [
   { id: 7, user: "Kabir Singh", action: "goal_updated", entity: "goal", entityId: 124, date: "12 May 2026 09:50", detail: "Updated target from 25 to 35 opportunities" },
 ]
 
+// Deep freeze returned objects to enforce in-memory immutability on the client side
+function deepFreeze<T>(obj: T): T {
+  if (obj && typeof obj === "object") {
+    Object.freeze(obj)
+    Object.keys(obj).forEach((key) => {
+      deepFreeze((obj as any)[key])
+    })
+  }
+  return obj
+}
+
 export function getLocalAuditLogs(): AuditLog[] {
-  if (typeof window === "undefined") return initialLogs
+  if (typeof window === "undefined") return deepFreeze([...initialLogs])
   try {
     const raw = window.localStorage.getItem(LOCAL_AUDIT_LOGS_KEY)
-    if (raw) return JSON.parse(raw)
+    if (raw) {
+      const parsed: AuditLog[] = JSON.parse(raw)
+      return deepFreeze(parsed)
+    }
   } catch {}
-  return initialLogs
+  return deepFreeze([...initialLogs])
 }
 
 export function addLocalAuditLog(log: Omit<AuditLog, "id" | "date">) {
@@ -48,7 +62,28 @@ export function addLocalAuditLog(log: Omit<AuditLog, "id" | "date">) {
     date: dateStr,
   }
   
-  window.localStorage.setItem(LOCAL_AUDIT_LOGS_KEY, JSON.stringify([newLog, ...current]))
+  const nextLogs = [newLog, ...current]
   
+  // Hard verification: Enforce strict append-only sequence checks.
+  // The first element is the newly appended log; all subsequent historical logs must match current state exactly.
+  if (nextLogs.length !== current.length + 1) {
+    throw new Error("Audit log mutation verification failed: Invalid log sequence length.")
+  }
+  for (let i = 0; i < current.length; i++) {
+    const nextItem = nextLogs[i + 1]
+    const currItem = current[i]
+    if (
+      nextItem.id !== currItem.id ||
+      nextItem.user !== currItem.user ||
+      nextItem.action !== currItem.action ||
+      nextItem.entity !== currItem.entity ||
+      nextItem.entityId !== currItem.entityId ||
+      nextItem.detail !== currItem.detail
+    ) {
+      throw new Error("Audit log mutation verification failed: Historic audit record alteration or deletion detected!")
+    }
+  }
+  
+  window.localStorage.setItem(LOCAL_AUDIT_LOGS_KEY, JSON.stringify(nextLogs))
   window.dispatchEvent(new Event("audit-logs-updated"))
 }

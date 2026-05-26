@@ -163,6 +163,18 @@ async def call_ollama(prompt: str, model: str) -> str:
 
 async def ai_buddy_chat(query: str, context: str, provider: str = "gemini", model: str | None = None, api_key: str | None = None) -> dict:
     """Chat with Ai Buddy using the specified provider ('gemini' | 'ollama' | 'fallback')."""
+    from app.utils.logger import get_logger
+    from app.middleware.metrics import AI_FALLBACK_REQUESTS_TOTAL
+    import time
+    
+    logger = get_logger("ai_buddy_chat")
+    start_time = time.time()
+    
+    logger.info(
+        f"AI Buddy chat initiated for provider '{provider}'",
+        extra={"provider": provider}
+    )
+    
     if provider == "ollama":
         try:
             # If no model is explicitly passed, find the first available model
@@ -172,11 +184,24 @@ async def ai_buddy_chat(query: str, context: str, provider: str = "gemini", mode
             
             prompt = ai_buddy_prompt(query, context)
             response = await call_ollama(prompt, selected_model)
+            
+            execution_time_ms = int((time.time() - start_time) * 1000)
+            logger.info(
+                f"Ollama chat succeeded in {execution_time_ms}ms",
+                extra={"provider": f"ollama ({selected_model})", "execution_time_ms": execution_time_ms}
+            )
+            AI_FALLBACK_REQUESTS_TOTAL.labels(provider="ollama", source=f"ollama ({selected_model})").inc()
             return {
                 "response": response,
                 "source": f"ollama ({selected_model})"
             }
         except Exception as exc:
+            execution_time_ms = int((time.time() - start_time) * 1000)
+            logger.error(
+                f"Ollama chat failed: {str(exc)}",
+                extra={"provider": "ollama", "execution_time_ms": execution_time_ms}
+            )
+            AI_FALLBACK_REQUESTS_TOTAL.labels(provider="ollama", source="error").inc()
             return {
                 "response": (
                     f"Error connecting to local Ollama: {str(exc)}.\n\n"
@@ -213,6 +238,12 @@ async def ai_buddy_chat(query: str, context: str, provider: str = "gemini", mode
                 "- **UOM Metrics**: Focus on highly quantifiable targets (e.g. '$10K revenue' or '5 code reviews') rather than vague statements.\n"
                 "- **Bi-weekly Check-ins**: Check-in twice a week with concise actual accomplishments to maintain strong momentum."
             )
+        execution_time_ms = int((time.time() - start_time) * 1000)
+        logger.info(
+            f"Fallback advisor chat completed in {execution_time_ms}ms",
+            extra={"provider": "fallback", "execution_time_ms": execution_time_ms}
+        )
+        AI_FALLBACK_REQUESTS_TOTAL.labels(provider="fallback", source="fallback").inc()
         return {
             "response": response,
             "source": "fallback"
@@ -221,6 +252,12 @@ async def ai_buddy_chat(query: str, context: str, provider: str = "gemini", mode
     else:  # Default: gemini
         active_key = api_key or settings.GEMINI_API_KEY
         if not active_key:
+            execution_time_ms = int((time.time() - start_time) * 1000)
+            logger.warning(
+                "Gemini API key missing, recommending fallback",
+                extra={"provider": "gemini", "execution_time_ms": execution_time_ms}
+            )
+            AI_FALLBACK_REQUESTS_TOTAL.labels(provider="gemini", source="missing_key").inc()
             return {
                 "response": (
                     "**Gemini API Key Missing**: No API key was found in the configuration.\n\n"
@@ -239,11 +276,23 @@ async def ai_buddy_chat(query: str, context: str, provider: str = "gemini", mode
             gemini_model = genai.GenerativeModel("gemini-2.0-flash")
             response = await asyncio.to_thread(gemini_model.generate_content, prompt)
             
+            execution_time_ms = int((time.time() - start_time) * 1000)
+            logger.info(
+                f"Gemini API chat succeeded in {execution_time_ms}ms",
+                extra={"provider": "gemini", "execution_time_ms": execution_time_ms}
+            )
+            AI_FALLBACK_REQUESTS_TOTAL.labels(provider="gemini", source="gemini").inc()
             return {
                 "response": response.text.strip(),
                 "source": "gemini (your key)" if api_key else "gemini"
             }
         except Exception as exc:
+            execution_time_ms = int((time.time() - start_time) * 1000)
+            logger.error(
+                f"Gemini API request failed: {str(exc)}",
+                extra={"provider": "gemini", "execution_time_ms": execution_time_ms}
+            )
+            AI_FALLBACK_REQUESTS_TOTAL.labels(provider="gemini", source="error").inc()
             return {
                 "response": (
                     f"**Gemini API Request Failed**: {str(exc)}.\n\n"

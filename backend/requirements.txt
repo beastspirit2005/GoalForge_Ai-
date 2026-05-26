@@ -14,3 +14,5 @@ google-generativeai>=0.8.0
 httpx>=0.28.0
 python-dotenv>=1.0.0
 email-validator>=2.0.0
+python-json-logger>=2.0.7
+prometheus-client>=0.20.0
