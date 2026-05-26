@@ -52,7 +52,7 @@ jobs:
 
       - name: Run Pytest Coverage
         env:
-          DATABASE_URL: sqlite+aiosqlite:///:memory:
+          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
         run: python -m pytest --cov=app tests/
         working-directory: ./backend
 
