@@ -98,6 +98,8 @@ A powerful performance assistant built with privacy, flexibility, and reliabilit
 *   **Private Local Mode (Ollama):** Directly communicates from the browser to the user's local Ollama instance (typically using gemma2:2b). 
     > [!IMPORTANT]
     > **Chrome PNA Bypass:** To allow a production Vercel frontend (HTTPS) to securely access a local Ollama instance (HTTP) without triggering Chrome's strict Private Network Access (PNA) CORS preflight blocks, GoalForge AI streams payloads using text/plain formatting, allowing seamless browser-to-localhost connections!
+    *   **Anti-Spam Cooldown Rate-Limiter:** Enforces a strict 12-second client-side cooldown between consecutive requests (with an interactive, real-time UI countdown) to protect the local CPU/GPU from high-load spikes and concurrent execution freezes.
+    *   **Lightweight Resource Footprint:** Configures context limit (`num_ctx: 2048`) and token output generation boundaries (`num_predict: 250`) inside the Ollama prompt payload, keeping VRAM/RAM footprints ultra-lightweight for lower-spec everyday computers.
 *   **Rule-Based Fallback:** If both cloud and local AI systems are offline, a fallback heuristics engine steps in to provide deterministic advice so your work is never interrupted.
 
 ---
