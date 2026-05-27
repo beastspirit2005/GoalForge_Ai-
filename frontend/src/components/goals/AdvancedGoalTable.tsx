@@ -206,8 +206,8 @@ export default function AdvancedGoalTable({ goals, isManagerView = false }: Prop
 
   return (
     <div className="w-full">
-      <div className="rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-slate-950/40 overflow-hidden">
-        <Table>
+      <div className="rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-slate-950/40 overflow-x-auto">
+        <Table className="min-w-[800px]">
           <TableHeader className="bg-slate-50 dark:bg-slate-900/50">
             <TableRow className="border-slate-200 dark:border-white/[0.06]">
               <TableHead className="w-8"></TableHead>
@@ -311,7 +311,7 @@ export default function AdvancedGoalTable({ goals, isManagerView = false }: Prop
                           </div>
 
                           {/* Right Column: Escalations & Actions */}
-                          <div className="space-y-4 pt-4 lg:pt-0 border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-white/[0.06] lg:pl-8 lg:w-[380px] shrink-0">
+                          <div className="space-y-4 pt-4 lg:pt-0 border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-white/[0.06] lg:pl-8 lg:w-1/3 lg:min-w-[280px]">
                             <h4 className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
                               Escalation History
                               <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-xs text-slate-500">{escalations.length}</span>
