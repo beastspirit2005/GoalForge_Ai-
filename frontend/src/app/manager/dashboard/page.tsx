@@ -73,7 +73,7 @@ export default function ManagerDashboardPage() {
           </p>
           <div className="bg-slate-900/50 rounded-lg border border-white/[0.04]">
             <AdvancedGoalTable 
-              goals={goals.filter(g => g.status === "Approved" || g.status === "Rejected" || g.status === "Approved after Editing" || g.status === "Escalated" || g.status === "Needs Review" || g.status === "At Risk")} 
+              goals={goals.filter(g => g.status === "Approved" || g.status === "Rejected" || g.status === "Approved after Editing" || g.status === "Escalated")} 
               isManagerView={true} 
             />
           </div>
