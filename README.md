@@ -1,196 +1,283 @@
-# GoalForge AI
+# 🎯 GoalForge AI
 
-GoalForge AI is an OKR and performance management platform for teams. It helps employees create goals, managers review progress, and admins keep the organization running with users, audit logs, analytics, and AI-assisted insights.
+<p align="center">
+  <strong>The Ultimate Intelligent OKR & Performance Management Platform</strong>
+</p>
 
-The project uses a **Next.js** frontend, a **FastAPI** backend, **PostgreSQL** for data, and a hybrid AI setup that can use **Google Gemini**, **Ollama**, or a built-in rule-based fallback.
-
----
-
-## Features
-
-- **Role-based dashboards** for employees, managers, and admins.
-- **Goal and OKR tracking** with progress updates, milestones, priorities, and status changes.
-- **Manager approvals** for reviewing, editing, approving, rejecting, and escalating goals.
-- **Admin user management** for employees, departments, roles, and account status.
-- **Audit logs** that organize key actions such as account changes, goal creation, approvals, rejections, and escalations.
-- **AI copilot chat** for goal refinement, recommendations, coaching, and performance guidance.
-- **Hybrid AI support** with Gemini for cloud AI, Ollama for local AI, and a rules fallback when AI services are unavailable.
-- **Prediction heuristics** for goal completion probability and employee burnout risk.
-- **Security controls** including role isolation, API rate limiting, request tracing, and secure API key proxying.
-- **Observability** with health checks, metrics, structured logs, and trace IDs.
-- **Docker support** for running the frontend, backend, and database together.
-- **CI checks** with backend and frontend test workflows.
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js" alt="Next.js" />
+  <img src="https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Ollama-Local%20AI-orange?style=for-the-badge&logo=ollama" alt="Ollama" />
+  <img src="https://img.shields.io/badge/Docker-Supported-blue?style=for-the-badge&logo=docker" alt="Docker" />
+</p>
 
 ---
 
-## System Architecture
+## 🌟 Overview
+
+**GoalForge AI** is a state-of-the-art, secure, and highly scalable OKR (Objectives and Key Results) and Performance Management platform. Designed for modern corporate structures, it empowers employees to forge ambitious goals, L1 managers to seamlessly govern progress and approvals, and administrators to orchestrate user operations, view security audits, and glean system-wide insights.
+
+GoalForge AI stands out with its **Dual-Engine Hybrid AI System** (leveraging Google Gemini for high-fidelity SaaS-based reasoning and local **Ollama** for private, client-side, zero-cost inference) and its intelligent **Burnout & Goal Completion Prediction Heuristics**.
+
+---
+
+## 📸 System Architecture
+
+GoalForge AI's architecture is built on strict tier isolation and a hybrid AI layout. While the FastAPI backend securely handles business transactions, state persistence, and proxying cloud AI requests, **the Next.js Frontend communicates directly with your local Ollama engine** to deliver seamless local AI chats without loading backend infrastructure or exposing private data to external clouds.
 
 ```mermaid
 graph TD
-    %% User Tier
-    User([User Browser]) -->|Next.js App: Port 3000| Frontend[Next.js Frontend Container]
+    subgraph Client ["Client Web Browser (User Interface)"]
+        UI["Next.js Frontend (Vercel / Local Host)"]
+        Chat["AiBuddyChat Component"]
+    end
+
+    subgraph LocalMachine ["User's Local Machine"]
+        Ollama["Local Ollama Engine (Port 11434)"]
+    end
+
+    subgraph BackendServices ["Backend Infrastructure (Render / Local Host)"]
+        Backend["FastAPI Backend Server (Port 8000)"]
+        DB[("PostgreSQL Database (Port 5433)")]
+    end
+
+    subgraph CloudAPIs ["External SaaS Cloud"]
+        Gemini["Google Gemini API"]
+    end
+
+    %% Client Interactions
+    UI -->|Unified API Requests /api| Backend
+    Chat -->|Direct Local Post (CORS & PNA Bypass via text/plain)| Ollama
     
-    %% API Routing Tier
-    Frontend -->|Unified API Rewrite| Gateway{API gateway}
-    Gateway -->|Endpoints /api| Backend[FastAPI Backend Container: Port 8000]
+    %% Backend Connections
+    Backend -->|SQLAlchemy Async| DB
+    Backend -->|Secure API Key Proxying| Gemini
     
-    %% Database Tier
-    Backend -->|Asynchronous SQLAlchemy| DB[(PostgreSQL Database: Port 5433)]
+    %% Local docker orchestration
+    DockerCompose["Docker Compose Setup"] -.->|Orchestrates| Backend
+    DockerCompose -.->|Orchestrates| DB
+    DockerCompose -.->|Pre-pulls gemma2:2b| PullModel["ollama-pull-model Container"]
+    PullModel -.->|Seed Model| Ollama
+
+    %% Styles
+    classDef client fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
+    classDef local fill:#181825,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4;
+    classDef backend fill:#11111b,stroke:#cba6f7,stroke-width:2px,color:#cdd6f4;
+    classDef cloud fill:#313244,stroke:#f9e2af,stroke-width:2px,color:#cdd6f4;
     
-    %% Hybrid AI Tier
-    Backend -->|Client-Side Key Injection| Gemini[Google Gemini SaaS API]
-    Backend -->|Dynamic WSL2 Gateway Network| Ollama[Local Ollama AI Engine: Port 11434]
-    
-    %% Initializer Helper
-    DockerCompose[Docker Compose Environment] -->|Automated Entrypoint Script| PullModel[ollama-pull-model Container]
-    PullModel -->|Pre-pulls gemma2:2b| Ollama
-    
-    classDef containers fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
-    classDef databases fill:#1e1e2e,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4;
-    classDef external fill:#1e1e2e,stroke:#f9e2af,stroke-width:2px,color:#cdd6f4;
-    class Frontend,Backend,PullModel containers;
-    class DB databases;
-    class Gemini,Ollama external;
+    class UI,Chat client;
+    class Ollama,PullModel local;
+    class Backend,DB backend;
+    class Gemini cloud;
 ```
 
 ---
 
-## How It Works
+## ✨ Major Features Highlight
 
-Employees create goals and submit progress updates. Managers review goals, approve or reject them, track team progress, and use prediction views to spot risks early. Admins manage users, review audit logs, monitor escalations, and see organization-level analytics.
-
-The AI layer gives coaching and recommendations. It first tries the configured Gemini flow, can use Ollama for local/private AI, and falls back to deterministic rules so the app still responds when external AI is unavailable.
-
-The prediction engine uses lightweight heuristics instead of a heavy ML model. It combines progress, milestones, workload, update freshness, priority, and risk signals to estimate completion probability and burnout risk quickly.
-
----
-
-## AI and Privacy
-
-- Gemini keys are handled through secure server-side API routes instead of being stored directly in the browser.
-- Ollama can run locally for private/offline AI workflows. The frontend integrates directly with your local Ollama API from the browser. To allow the web app (hosted on Vercel or locally) to communicate with your local Ollama instance, you must configure Ollama to accept CORS requests by setting the environment variable (e.g., `OLLAMA_ORIGINS="*"`).
-- If Gemini and Ollama are unavailable, the app still provides rule-based coaching.
-- Backend routes include rate limits, trace IDs, role checks, and audit logging for sensitive actions.
+### 1. 👥 Multi-Role Interactive Dashboards
+Role-based dashboards create dedicated, personalized interfaces with specific workflows tailored to individual permissions:
+*   **Employee Workspace:** Draft, edit, and track personal goals, log progress milestones, check prediction metrics, and chat with the AI Coach.
+*   **Manager Portal:** Review team-wide goals, issue approvals or rejections, escalate objectives, and analyze individual workload profiles.
+*   **Admin Console:** Maintain directory control over employees, assign roles (Admin, L1 Manager, Employee), enable/disable accounts, and review system metrics.
 
 ---
 
-## Docker Notes
-
-The Docker setup maps PostgreSQL to host port **5433** to avoid conflicts with local PostgreSQL installations that commonly use port **5432**.
-
-For local Ollama access from Docker, the backend uses `host.docker.internal`:
-
-```yaml
-backend:
-  environment:
-    OLLAMA_HOST: http://host.docker.internal:11434
-  extra_hosts:
-    - "host.docker.internal:host-gateway"
-```
+### 2. 🎯 Complete OKR & Goal Lifecycle Governance
+Manage key results and objectives dynamically:
+*   **Comprehensive Goal Metrics:** Define start/end dates, priorities (High, Medium, Low), statuses (Draft, Pending Approval, Approved, Rejected, Escalated), and alignment weight.
+*   **Interactive Milestones:** Break down goals into modular milestones that automatically calculate progress weights as they are ticked off.
+*   **Approval Pipeline:** A rigid workflow ensuring employees submit goals to their designated manager, keeping expectations aligned.
 
 ---
 
-## Quick Start
+### 3. 🧠 Smart Dual-Engine Hybrid AI Coach
+A powerful performance assistant built with privacy, flexibility, and reliability in mind:
+*   **Cloud Mode (Google Gemini):** Uses secure backend-to-SaaS communication to refine goals, create action plans, and coach employees.
+*   **Private Local Mode (Ollama):** Directly communicates from the browser to the user's local Ollama instance (typically using `gemma2:2b`). 
+    > [!IMPORTANT]
+    > **Chrome PNA Bypass:** To allow a production Vercel frontend (HTTPS) to securely access a local Ollama instance (HTTP) without triggering Chrome's strict Private Network Access (PNA) CORS preflight blocks, GoalForge AI streams payloads using `text/plain` formatting, allowing seamless browser-to-localhost connections!
+*   **Rule-Based Fallback:** If both cloud and local AI systems are offline, a fallback heuristics engine steps in to provide deterministic advice so your work is never interrupted.
+
+---
+
+### 4. 📈 Smart Heuristics & Predictive Insights
+GoalForge AI goes beyond static status indicators to provide proactive performance metrics:
+*   **Completion Probability Index:** Evaluates update frequency, milestone density, workload distribution, and goal deadlines to calculate the likelihood of timely completion.
+*   **Burnout Risk Detection:** Scans over-allocation, overdue milestones, and high priority concentrations to alert managers before team members burn out.
+
+---
+
+### 5. 🛡️ Enterprise Security, Audits & Observability
+Engineered to adhere to high-grade corporate security compliance:
+*   **Rigid Role Isolation:** Route guards and dependency injection in the backend verify JSON Web Tokens (JWT) and evaluate exact role access.
+*   **Comprehensive Audit Logs:** Chronological record of critical operations—account creations, status changes, approvals, rejections, and escalations—providing clear, immutable accountability.
+*   **Production Observability:** Active request tracing (`X-Trace-ID`), server-side rate limits, database pools, and continuous system health checks.
+
+---
+
+## 🛠️ Technology Stack
+
+### Frontend
+*   **Framework:** Next.js 14 (App Router)
+*   **Styling:** Modern Tailwind CSS with deep glassmorphic visuals
+*   **State Management & Utilities:** React Hooks, Axios, Lucide Icons, Mermaid.js
+
+### Backend
+*   **Framework:** FastAPI (Python 3.11+)
+*   **Database ORM:** SQLAlchemy (Asynchronous execution with `asyncpg`)
+*   **Security:** JOSE (JWT authentication), passlib (bcrypt hashing), CORS Middleware
+
+### Infrastructure
+*   **Database:** PostgreSQL 16
+*   **Orchestration:** Multi-stage Docker Compose
+*   **Production Hosting:** Next.js (Vercel), FastAPI (Render), PostgreSQL (Supabase / Render Managed)
+
+---
+
+## 🚀 Quick Start Guide
 
 ### Prerequisites
+Make sure you have the following installed on your machine:
+*   [Node.js (v18+)](https://nodejs.org/)
+*   [Python (3.11+)](https://www.python.org/)
+*   [PostgreSQL (v16+)](https://www.postgresql.org/) (Or Docker)
+*   [Ollama](https://ollama.com/) *(Optional, for local private AI capability)*
 
-- Node.js 18+
-- Python 3.11+
-- PostgreSQL 16+ or Docker
-- Ollama, optional for local AI
+---
 
-### Clone
-
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/beastspirit2005/GoalForge_Ai-.git
 cd GoalForge-Ai
 ```
 
-### Run with Docker
+---
 
+### 2. Running with Docker (Recommended)
+You can start the entire stack (Frontend, Backend, Database, and an automated helper container that pre-pulls the Ollama models) with a single command:
 ```bash
-docker compose up -d
+docker compose up --build -d
 ```
-
-This starts the app stack and uses the Docker configuration for the frontend, backend, database, and optional Ollama model setup.
-
-### Run Locally
-
-Create the database:
-
-```bash
-createdb goalforge
-```
-
-Start the backend:
-
-```bash
-cd backend
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
-```
-
-Start the frontend:
-
-```bash
-cd ../frontend
-npm install
-npm run dev -- --port 3000
-```
-
-Seed demo data:
-
-```bash
-cd ../backend
-python scripts/seed.py
-```
+*   The frontend will be available at [http://localhost:3000](http://localhost:3000)
+*   The backend API will run at [http://localhost:8000](http://localhost:8000)
+*   PostgreSQL is mapped to port **5433** on your host to avoid conflicts with existing database instances.
 
 ---
 
-## Demo Credentials
+### 3. Manual Local Installation
+If you prefer running the components natively on your system:
 
-| Role | Email | Password |
-|:---|:---|:---|
-| Employee | `employee@goalforge.ai` | `password123` |
-| L1 Manager | `manager@goalforge.ai` | `password123` |
-| Administrator | `admin@goalforge.ai` | `password123` |
+#### A. Setup the Database
+1. Open your PostgreSQL terminal and create the database:
+   ```sql
+   CREATE DATABASE goalforge;
+   ```
+
+#### B. Launch the Backend API
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Create and activate a Python virtual environment:
+   ```bash
+   python -m venv venv
+   # On Windows (PowerShell):
+   venv\Scripts\Activate.ps1
+   # On Linux/macOS:
+   source venv/bin/activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Run database seed script (adds standard roles, users, and starter goals):
+   ```bash
+   python scripts/seed.py
+   ```
+5. Start the FastAPI development server:
+   ```bash
+   uvicorn app.main:app --reload --port 8000
+   ```
+
+#### C. Launch the Next.js Frontend
+1. Open a new terminal and navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Run the development server:
+   ```bash
+   npm run dev -- --port 3000
+   ```
+4. Access the web interface at [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## Project Structure
+## 🔑 Demo Access Credentials
+
+Get started instantly using our pre-seeded simulation profiles:
+
+| System Role | Username / Email | Password | Access Capabilities |
+| :--- | :--- | :--- | :--- |
+| **Administrator** | `admin@goalforge.ai` | `password123` | Control User Accounts, Audit Trails, Operations |
+| **L1 Manager** | `manager@goalforge.ai` | `password123` | Goal Approvals, Team Statistics, Risk Analytics |
+| **Employee** | `employee@goalforge.ai` | `password123` | Personal Goal Creation, Milestone Logging, AI Chats |
+
+---
+
+## 🔒 Ollama Local AI CORS Configuration
+
+To let the browser frontend make local inference calls directly to your machine's Ollama server (avoiding proxy latencies), you must allow CORS origins in Ollama.
+
+### Configuration Guide
+*   **Windows:**
+    1. Close Ollama from the System Tray.
+    2. Open PowerShell and run:
+       ```powershell
+       [System.Environment]::SetEnvironmentVariable('OLLAMA_ORIGINS', '*', 'User')
+       ```
+    3. Launch Ollama again.
+*   **macOS / Linux:**
+    Run Ollama with the environment variable set:
+    ```bash
+    OLLAMA_ORIGINS="*" ollama serve
+    ```
+
+---
+
+## 📂 Project Directory Structure
 
 ```text
 GoalForge-Ai/
-|-- docker-compose.yml
-|-- vercel.json
-|-- backend/
-|   |-- app/
-|   |   |-- ai/          # AI clients, recommendations, and prediction heuristics
-|   |   |-- core/        # Auth, config, database setup, and security
-|   |   |-- middleware/  # Metrics, tracing, rate limits, and role checks
-|   |   |-- models/      # SQLAlchemy models
-|   |   |-- routes/      # FastAPI routes
-|   |   |-- services/    # Business logic services
-|   |   `-- main.py      # FastAPI app entry point
-|   `-- Dockerfile
-|-- frontend/
-|   |-- src/
-|   |   |-- app/         # Next.js App Router pages
-|   |   |-- components/  # Dashboards, goals, approvals, AI chat, and UI
-|   |   |-- hooks/       # Frontend hooks
-|   |   |-- lib/         # API helpers, local data, logging, and utilities
-|   |   |-- services/    # Frontend service wrappers
-|   |   `-- types/       # Shared TypeScript types
-|   `-- Dockerfile
-|-- database/
-|-- docs/
-`-- scripts/
+├── docker-compose.yml       # Production/Local docker multi-container spec
+├── vercel.json              # Vercel Serverless & rewrite routing controls
+├── backend/
+│   ├── app/
+│   │   ├── ai/              # AI Clients (Gemini & Fallbacks) & Burnout Heuristics
+│   │   ├── core/            # Database Session, Config, JWT Security, & Hashing
+│   │   ├── middleware/      # Rate Limits, Execution Logging, & Custom Header Tracing
+│   │   ├── models/          # SQLAlchemy Database Schemas
+│   │   ├── routes/          # API Handlers (Users, Goals, Audits, Analytics)
+│   │   └── main.py          # FastAPI Main Engine Initialization
+│   ├── scripts/             # Seeding tools & utilities
+│   └── Dockerfile
+├── frontend/
+│   ├── src/
+│   │   ├── app/             # Next.js App Router (Page views & Layouts)
+│   │   ├── components/      # Role Dashboards, Goal Management, AiBuddyChat
+│   │   ├── lib/             # API Connectors, Local State, browser logs
+│   │   └── services/        # Next.js API Wrappers
+│   └── Dockerfile
+└── scripts/                 # System stability check and setup automations
 ```
 
 ---
 
-## License
+## 📝 License & Contact
 
-Created for OKR management, AI-assisted performance insights, hackathon submissions, and software portfolio demonstration. Proprietary license. Built by GoalForge Devs.
+GoalForge AI is built for professional OKR tracking, advanced interactive dashboards, and modern cloud deployment demonstration. All Rights Reserved. Built by GoalForge Devs.
