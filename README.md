@@ -68,7 +68,7 @@ The prediction engine uses lightweight heuristics instead of a heavy ML model. I
 ## AI and Privacy
 
 - Gemini keys are handled through secure server-side API routes instead of being stored directly in the browser.
-- Ollama can run locally for private/offline AI workflows.
+- Ollama can run locally for private/offline AI workflows. The frontend integrates directly with your local Ollama API from the browser. To allow the web app (hosted on Vercel or locally) to communicate with your local Ollama instance, you must configure Ollama to accept CORS requests by setting the environment variable (e.g., `OLLAMA_ORIGINS="*"`).
 - If Gemini and Ollama are unavailable, the app still provides rule-based coaching.
 - Backend routes include rate limits, trace IDs, role checks, and audit logging for sensitive actions.
 
