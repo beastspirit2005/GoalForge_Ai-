@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import DashboardLayout from "@/components/layout/DashboardLayout"
-import GoalCard from "@/components/goals/GoalCard"
+import AdvancedGoalTable from "@/components/goals/AdvancedGoalTable"
 import { Button } from "@/components/ui/button"
 import { demoGoals, type Goal } from "@/lib/demo-data"
 import { getLocalDemoGoals } from "@/lib/local-demo-goals"
@@ -37,10 +37,8 @@ export default function GoalsPage() {
             <Link href="/employee/goals/create">Create goal</Link>
           </Button>
         </div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {goals.map((goal) => (
-            <GoalCard key={goal.id} goal={goal} />
-          ))}
+        <div className="mt-8">
+          <AdvancedGoalTable goals={goals} />
         </div>
       </div>
     </DashboardLayout>

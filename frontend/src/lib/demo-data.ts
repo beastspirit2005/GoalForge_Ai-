@@ -29,6 +29,7 @@ export type Goal = {
     due: string
     done: boolean
   }[]
+  createdAt?: string
 }
 
 export const demoGoals: Goal[] = [
@@ -50,6 +51,7 @@ export const demoGoals: Goal[] = [
       { title: "Pilot with 6 new hires", due: "10 Jun", done: false },
       { title: "Measure ramp-time delta", due: "21 Jun", done: false },
     ],
+    createdAt: "15 May 2026, 09:00",
   },
   {
     id: "GF-117",
@@ -69,6 +71,7 @@ export const demoGoals: Goal[] = [
       { title: "Run two planning calibration sessions", due: "20 Jun", done: false },
       { title: "Publish predictability report", due: "08 Jul", done: false },
     ],
+    createdAt: "16 May 2026, 11:30",
   },
   {
     id: "GF-124",
@@ -88,6 +91,7 @@ export const demoGoals: Goal[] = [
       { title: "Book 18 discovery calls", due: "14 Jun", done: false },
       { title: "Convert 9 opportunities", due: "27 Jun", done: false },
     ],
+    createdAt: "17 May 2026, 14:15",
   },
 ]
 

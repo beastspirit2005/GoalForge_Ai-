@@ -74,6 +74,13 @@ export function addLocalDemoGoal(input: LocalGoalInput) {
       due: index === input.plan.milestones.length - 1 ? "Final week" : `Week ${index + 1}`,
       done: false,
     })),
+    createdAt: new Date().toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }),
   }
 
   window.localStorage.setItem(LOCAL_GOALS_KEY, JSON.stringify([nextGoal, ...current]))
