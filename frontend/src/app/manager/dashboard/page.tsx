@@ -44,7 +44,7 @@ export default function ManagerDashboardPage() {
           </div>
         </div>
 
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <section className="flex flex-col gap-6">
           <div className="glass-card rounded-xl p-5 flex flex-col overflow-hidden">
             <h2 className="mb-4 text-base font-semibold text-white/80">Team goals</h2>
             <div className="bg-slate-900/50 rounded-lg border border-white/[0.04] flex-1">
