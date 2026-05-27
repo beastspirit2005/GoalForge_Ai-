@@ -277,9 +277,9 @@ export default function AdvancedGoalTable({ goals, isManagerView = false }: Prop
                   {isExpanded && (
                     <TableRow className="border-slate-200 dark:border-white/[0.06] bg-slate-50/30 dark:bg-slate-900/20 hover:bg-slate-50/30 dark:hover:bg-slate-900/20">
                       <TableCell colSpan={8} className="p-0 border-b-0">
-                        <div className="px-10 py-6 grid gap-6 md:grid-cols-[1fr_350px]">
+                        <div className="px-4 md:px-10 py-6 flex flex-col lg:flex-row gap-6 lg:gap-8">
                           {/* Left Column: Details */}
-                          <div className="space-y-4">
+                          <div className="space-y-4 flex-1">
                             <div>
                               <h4 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Target</h4>
                               <p className="text-sm text-slate-800 dark:text-slate-200">{goal.target}</p>
@@ -311,7 +311,7 @@ export default function AdvancedGoalTable({ goals, isManagerView = false }: Prop
                           </div>
 
                           {/* Right Column: Escalations & Actions */}
-                          <div className="space-y-4 border-l border-slate-200 dark:border-white/[0.06] pl-6">
+                          <div className="space-y-4 pt-4 lg:pt-0 border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-white/[0.06] lg:pl-8 lg:w-[380px] shrink-0">
                             <h4 className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
                               Escalation History
                               <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-xs text-slate-500">{escalations.length}</span>
