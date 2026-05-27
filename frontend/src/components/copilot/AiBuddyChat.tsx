@@ -192,21 +192,20 @@ export function AiBuddyChat() {
 
   useEffect(() => {
     const fetchModels = async () => {
-      // Only fetch models if backend is available
       try {
-        const token = getStoredToken()
-        if (!token) return // Skip if not logged in
-        
-        const res = await apiFetch<{ models: string[] }>("/ai/models", { token })
-        if (res.models?.length) {
-          setOllamaModels(res.models)
-          if (!localStorage.getItem("aiBuddyOllamaModel")) {
-            setSelectedOllamaModel(res.models[0])
+        const res = await fetch("http://localhost:11434/api/tags")
+        if (res.ok) {
+          const data = await res.json()
+          const models = data.models?.map((m: any) => m.name) || []
+          if (models.length > 0) {
+            setOllamaModels(models)
+            if (!localStorage.getItem("aiBuddyOllamaModel")) {
+              setSelectedOllamaModel(models[0])
+            }
           }
         }
       } catch {
-        // Silently fail - Ollama is optional
-        console.log('[AI Buddy] Backend not available, Ollama models not loaded')
+        console.log('[AI Buddy] Local Ollama not available')
       }
     }
     fetchModels()
@@ -380,11 +379,27 @@ export function AiBuddyChat() {
 
       if (activeProvider === "fallback") {
         res = getClientFallbackAdvice(userMessage)
+      } else if (activeProvider === "ollama") {
+        const context = await fetchCopilotContext()
+        const prompt = `You are 'Ai Buddy', an intelligent enterprise performance coach.\nYour job is to assist employees or managers with their goals, priorities, and performance.\n\nContext about the user's current state (goals, milestones, checkins, etc):\n${context}\n\nUser Query:\n${userMessage}\n\nRespond in a helpful, conversational, and professional tone. Keep it concise, actionable, and formatted in Markdown. Focus entirely on the user's performance and the provided context. If they ask a general question, guide it back to their goals.`
+        
+        const directRes = await fetch("http://localhost:11434/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: selectedOllamaModel || ollamaModels[0] || "llama3",
+            prompt: prompt,
+            stream: false,
+          }),
+        })
+        if (!directRes.ok) throw new Error("Local Ollama is not responding")
+        const data = await directRes.json()
+        res = { response: data.response, source: `ollama (${selectedOllamaModel || "llama3"})` }
       } else {
         res = await runBackendCopilot(
           userMessage,
           activeProvider,
-          activeProvider === "ollama" ? selectedOllamaModel : undefined
+          undefined
         )
       }
 
@@ -394,29 +409,6 @@ export function AiBuddyChat() {
       )
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error"
-      if (activeProvider === "ollama" && selectedOllamaModel) {
-        try {
-          const directRes = await fetch("http://localhost:11434/api/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              model: selectedOllamaModel,
-              prompt: userMessage,
-              stream: false,
-            }),
-          })
-          if (directRes.ok) {
-            const data = await directRes.json()
-            applyMessages(
-              [...withUser, { role: "assistant", content: data.response, source: "ollama" }],
-              title
-            )
-            return
-          }
-        } catch {
-          /* fall through */
-        }
-      }
       applyMessages(
         [
           ...withUser,
@@ -453,16 +445,32 @@ export function AiBuddyChat() {
 
       if (newProvider === "fallback") {
         res = getClientFallbackAdvice(lastQuery)
-      } else {
+      } else if (newProvider === "ollama") {
         let localModel = selectedOllamaModel
-        if (newProvider === "ollama" && !localModel && ollamaModels.length > 0) {
+        if (!localModel && ollamaModels.length > 0) {
           localModel = ollamaModels[0]
           setSelectedOllamaModel(localModel)
         }
+        const context = await fetchCopilotContext()
+        const prompt = `You are 'Ai Buddy', an intelligent enterprise performance coach.\nYour job is to assist employees or managers with their goals, priorities, and performance.\n\nContext about the user's current state (goals, milestones, checkins, etc):\n${context}\n\nUser Query:\n${lastQuery}\n\nRespond in a helpful, conversational, and professional tone. Keep it concise, actionable, and formatted in Markdown. Focus entirely on the user's performance and the provided context. If they ask a general question, guide it back to their goals.`
+        
+        const directRes = await fetch("http://localhost:11434/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: localModel || "llama3",
+            prompt: prompt,
+            stream: false,
+          }),
+        })
+        if (!directRes.ok) throw new Error("Local Ollama is not responding")
+        const data = await directRes.json()
+        res = { response: data.response, source: `ollama (${localModel || "llama3"})` }
+      } else {
         res = await runBackendCopilot(
           lastQuery,
           newProvider,
-          newProvider === "ollama" ? localModel : undefined
+          undefined
         )
       }
       applyMessages([...messages, { role: "assistant", content: res.response, source: res.source }])
