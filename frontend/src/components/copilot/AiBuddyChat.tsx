@@ -91,6 +91,25 @@ const getClientFallbackAdvice = (query: string): { response: string; source: str
 
 const OLLAMA_COOLDOWN_MS = 12000 // 12 seconds cooldown to prevent CPU/GPU overload
 
+const getOllamaCooldownStatus = (
+  lastOllamaTime: number
+): { isCooldown: boolean; waitSec: number; now: number } => {
+  const now = Date.now()
+  const timePassed = now - lastOllamaTime
+  if (timePassed < OLLAMA_COOLDOWN_MS) {
+    return {
+      isCooldown: true,
+      waitSec: Math.ceil((OLLAMA_COOLDOWN_MS - timePassed) / 1000),
+      now,
+    }
+  }
+  return {
+    isCooldown: false,
+    waitSec: 0,
+    now,
+  }
+}
+
 export function AiBuddyChat() {
   const { user } = useAuth()
   const accountRole = user ? ("role" in user ? user.role : "employee") : "employee"
@@ -398,13 +417,11 @@ export function AiBuddyChat() {
       if (activeProvider === "fallback") {
         res = getClientFallbackAdvice(userMessage)
       } else if (activeProvider === "ollama") {
-        const now = Date.now()
-        const timePassed = now - lastOllamaTimeRef.current
-        if (timePassed < OLLAMA_COOLDOWN_MS) {
-          const waitSec = Math.ceil((OLLAMA_COOLDOWN_MS - timePassed) / 1000)
-          setOllamaCooldownRemaining(waitSec)
+        const cooldownStatus = getOllamaCooldownStatus(lastOllamaTimeRef.current)
+        if (cooldownStatus.isCooldown) {
+          setOllamaCooldownRemaining(cooldownStatus.waitSec)
           res = {
-            response: `Cooldown active: Please wait **${waitSec} seconds** before sending another message to your local offline model. This protective limit prevents high CPU/GPU load on your machine.`,
+            response: `Cooldown active: Please wait **${cooldownStatus.waitSec} seconds** before sending another message to your local offline model. This protective limit prevents high CPU/GPU load on your machine.`,
             source: "system-cooldown"
           }
           applyMessages(
@@ -415,7 +432,7 @@ export function AiBuddyChat() {
           return
         }
         
-        lastOllamaTimeRef.current = now
+        lastOllamaTimeRef.current = cooldownStatus.now
         setOllamaCooldownRemaining(Math.ceil(OLLAMA_COOLDOWN_MS / 1000))
 
         const context = await fetchCopilotContext()
@@ -488,16 +505,14 @@ export function AiBuddyChat() {
       if (newProvider === "fallback") {
         res = getClientFallbackAdvice(lastQuery)
       } else if (newProvider === "ollama") {
-        const now = Date.now()
-        const timePassed = now - lastOllamaTimeRef.current
-        if (timePassed < OLLAMA_COOLDOWN_MS) {
-          const waitSec = Math.ceil((OLLAMA_COOLDOWN_MS - timePassed) / 1000)
-          setOllamaCooldownRemaining(waitSec)
+        const cooldownStatus = getOllamaCooldownStatus(lastOllamaTimeRef.current)
+        if (cooldownStatus.isCooldown) {
+          setOllamaCooldownRemaining(cooldownStatus.waitSec)
           applyMessages([
             ...messages,
             {
               role: "assistant",
-              content: `Ollama Cooldown Active: Please wait **${waitSec} seconds** before switching providers again to protect your local PC from heavy processor load.`,
+              content: `Ollama Cooldown Active: Please wait **${cooldownStatus.waitSec} seconds** before switching providers again to protect your local PC from heavy processor load.`,
               source: `system-cooldown`,
             },
           ])
@@ -505,7 +520,7 @@ export function AiBuddyChat() {
           return
         }
 
-        lastOllamaTimeRef.current = now
+        lastOllamaTimeRef.current = cooldownStatus.now
         setOllamaCooldownRemaining(Math.ceil(OLLAMA_COOLDOWN_MS / 1000))
 
         let localModel = selectedOllamaModel
