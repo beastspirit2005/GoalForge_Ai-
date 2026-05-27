@@ -67,7 +67,7 @@ export default function ManagerDashboardPage() {
             <h2>Goal Governance & Escalations</h2>
           </div>
           <p className="text-sm text-white/50 mb-6">
-            Track goals you've approved, rejected, or edited, along with employee escalations and admin resolutions.
+            Track goals you&apos;ve approved, rejected, or edited, along with employee escalations and admin resolutions.
           </p>
           <div className="bg-slate-900/50 rounded-lg overflow-hidden border border-white/[0.04]">
             <AdvancedGoalTable 

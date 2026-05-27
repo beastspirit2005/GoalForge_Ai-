@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { CalendarDays, UserRound, AlertTriangle, ShieldAlert, ChevronDown, ChevronUp } from "lucide-react"
 import GoalStatusBadge from "@/components/goals/GoalStatusBadge"
 import {
@@ -339,7 +339,7 @@ export default function AdvancedGoalTable({ goals, isManagerView = false }: Prop
                                     </div>
                                     {esc.note && (
                                       <p className="text-xs text-slate-600 dark:text-slate-300 italic mb-2">
-                                        "{esc.note}"
+                                        &quot;{esc.note}&quot;
                                       </p>
                                     )}
                                     {esc.adminRemarks && (
