@@ -229,9 +229,14 @@ export function AiBuddyChat() {
       return contextCacheRef.current[cacheKey]
     }
     const token = getStoredToken()
-    const res = await apiFetch<{ context: string }>("/ai/copilot-context", { token })
-    contextCacheRef.current[cacheKey] = res.context
-    return res.context
+    try {
+      const res = await apiFetch<{ context: string }>("/ai/copilot-context", { token })
+      contextCacheRef.current[cacheKey] = res.context
+      return res.context
+    } catch (e) {
+      console.warn("Failed to fetch copilot context", e)
+      return "Context unavailable."
+    }
   }
 
   const selectCustomKeyMode = () => {
@@ -385,7 +390,7 @@ export function AiBuddyChat() {
         
         const directRes = await fetch("http://localhost:11434/api/generate", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({
             model: selectedOllamaModel || ollamaModels[0] || "llama3",
             prompt: prompt,
@@ -456,7 +461,7 @@ export function AiBuddyChat() {
         
         const directRes = await fetch("http://localhost:11434/api/generate", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({
             model: localModel || "llama3",
             prompt: prompt,
