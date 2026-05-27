@@ -1,7 +1,7 @@
-# 🎯 GoalForge AI
+# GoalForge AI
 
 <p align="center">
-  <strong>The Ultimate Intelligent OKR & Performance Management Platform</strong>
+  <strong>The Ultimate Intelligent OKR and Performance Management Platform</strong>
 </p>
 
 <p align="center">
@@ -14,51 +14,51 @@
 
 ---
 
-## 🌟 Overview
+## Overview
 
-**GoalForge AI** is a state-of-the-art, secure, and highly scalable OKR (Objectives and Key Results) and Performance Management platform. Designed for modern corporate structures, it empowers employees to forge ambitious goals, L1 managers to seamlessly govern progress and approvals, and administrators to orchestrate user operations, view security audits, and glean system-wide insights.
+GoalForge AI is a state-of-the-art, secure, and highly scalable OKR (Objectives and Key Results) and Performance Management platform. Designed for modern corporate structures, it empowers employees to forge ambitious goals, L1 managers to seamlessly govern progress and approvals, and administrators to orchestrate user operations, view security audits, and glean system-wide insights.
 
-GoalForge AI stands out with its **Dual-Engine Hybrid AI System** (leveraging Google Gemini for high-fidelity SaaS-based reasoning and local **Ollama** for private, client-side, zero-cost inference) and its intelligent **Burnout & Goal Completion Prediction Heuristics**.
+GoalForge AI stands out with its Dual-Engine Hybrid AI System (leveraging Google Gemini for high-fidelity SaaS-based reasoning and local Ollama for private, client-side, zero-cost inference) and its intelligent Burnout and Goal Completion Prediction Heuristics.
 
 ---
 
-## 📸 System Architecture
+## System Architecture
 
-GoalForge AI's architecture is built on strict tier isolation and a hybrid AI layout. While the FastAPI backend securely handles business transactions, state persistence, and proxying cloud AI requests, **the Next.js Frontend communicates directly with your local Ollama engine** to deliver seamless local AI chats without loading backend infrastructure or exposing private data to external clouds.
+GoalForge AI's architecture is built on strict tier isolation and a hybrid AI layout. While the FastAPI backend securely handles business transactions, state persistence, and proxying cloud AI requests, the Next.js Frontend communicates directly with your local Ollama engine to deliver seamless local AI chats without loading backend infrastructure or exposing private data to external clouds.
 
 ```mermaid
 graph TD
-    subgraph Client ["Client Web Browser (User Interface)"]
-        UI["Next.js Frontend (Vercel / Local Host)"]
-        Chat["AiBuddyChat Component"]
+    subgraph Client_Browser [Client Web Browser]
+        UI[Next.js Frontend - Vercel / Local]
+        Chat[AiBuddyChat Component]
     end
 
-    subgraph LocalMachine ["User's Local Machine"]
-        Ollama["Local Ollama Engine (Port 11434)"]
+    subgraph Local_Machine [User Local Machine]
+        Ollama[Local Ollama Engine - Port 11434]
     end
 
-    subgraph BackendServices ["Backend Infrastructure (Render / Local Host)"]
-        Backend["FastAPI Backend Server (Port 8000)"]
-        DB[("PostgreSQL Database (Port 5433)")]
+    subgraph Backend_Services [Backend Infrastructure]
+        Backend[FastAPI Backend Server - Port 8000]
+        DB[(PostgreSQL Database - Port 5433)]
     end
 
-    subgraph CloudAPIs ["External SaaS Cloud"]
-        Gemini["Google Gemini API"]
+    subgraph Cloud_APIs [External SaaS Cloud]
+        Gemini[Google Gemini API]
     end
 
     %% Client Interactions
-    UI -->|Unified API Requests /api| Backend
-    Chat -->|Direct Local Post (CORS & PNA Bypass via text/plain)| Ollama
+    UI --> Backend
+    Chat --> Ollama
     
     %% Backend Connections
-    Backend -->|SQLAlchemy Async| DB
-    Backend -->|Secure API Key Proxying| Gemini
+    Backend --> DB
+    Backend --> Gemini
     
     %% Local docker orchestration
-    DockerCompose["Docker Compose Setup"] -.->|Orchestrates| Backend
-    DockerCompose -.->|Orchestrates| DB
-    DockerCompose -.->|Pre-pulls gemma2:2b| PullModel["ollama-pull-model Container"]
-    PullModel -.->|Seed Model| Ollama
+    DockerCompose[Docker Compose Setup] -.-> Backend
+    DockerCompose -.-> DB
+    DockerCompose -.-> PullModel[ollama-pull-model Container]
+    PullModel -.-> Ollama
 
     %% Styles
     classDef client fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
@@ -74,9 +74,9 @@ graph TD
 
 ---
 
-## ✨ Major Features Highlight
+## Major Features Highlight
 
-### 1. 👥 Multi-Role Interactive Dashboards
+### 1. Multi-Role Interactive Dashboards
 Role-based dashboards create dedicated, personalized interfaces with specific workflows tailored to individual permissions:
 *   **Employee Workspace:** Draft, edit, and track personal goals, log progress milestones, check prediction metrics, and chat with the AI Coach.
 *   **Manager Portal:** Review team-wide goals, issue approvals or rejections, escalate objectives, and analyze individual workload profiles.
@@ -84,7 +84,7 @@ Role-based dashboards create dedicated, personalized interfaces with specific wo
 
 ---
 
-### 2. 🎯 Complete OKR & Goal Lifecycle Governance
+### 2. Complete OKR and Goal Lifecycle Governance
 Manage key results and objectives dynamically:
 *   **Comprehensive Goal Metrics:** Define start/end dates, priorities (High, Medium, Low), statuses (Draft, Pending Approval, Approved, Rejected, Escalated), and alignment weight.
 *   **Interactive Milestones:** Break down goals into modular milestones that automatically calculate progress weights as they are ticked off.
@@ -92,41 +92,41 @@ Manage key results and objectives dynamically:
 
 ---
 
-### 3. 🧠 Smart Dual-Engine Hybrid AI Coach
+### 3. Smart Dual-Engine Hybrid AI Coach
 A powerful performance assistant built with privacy, flexibility, and reliability in mind:
 *   **Cloud Mode (Google Gemini):** Uses secure backend-to-SaaS communication to refine goals, create action plans, and coach employees.
-*   **Private Local Mode (Ollama):** Directly communicates from the browser to the user's local Ollama instance (typically using `gemma2:2b`). 
+*   **Private Local Mode (Ollama):** Directly communicates from the browser to the user's local Ollama instance (typically using gemma2:2b). 
     > [!IMPORTANT]
-    > **Chrome PNA Bypass:** To allow a production Vercel frontend (HTTPS) to securely access a local Ollama instance (HTTP) without triggering Chrome's strict Private Network Access (PNA) CORS preflight blocks, GoalForge AI streams payloads using `text/plain` formatting, allowing seamless browser-to-localhost connections!
+    > **Chrome PNA Bypass:** To allow a production Vercel frontend (HTTPS) to securely access a local Ollama instance (HTTP) without triggering Chrome's strict Private Network Access (PNA) CORS preflight blocks, GoalForge AI streams payloads using text/plain formatting, allowing seamless browser-to-localhost connections!
 *   **Rule-Based Fallback:** If both cloud and local AI systems are offline, a fallback heuristics engine steps in to provide deterministic advice so your work is never interrupted.
 
 ---
 
-### 4. 📈 Smart Heuristics & Predictive Insights
+### 4. Smart Heuristics and Predictive Insights
 GoalForge AI goes beyond static status indicators to provide proactive performance metrics:
 *   **Completion Probability Index:** Evaluates update frequency, milestone density, workload distribution, and goal deadlines to calculate the likelihood of timely completion.
 *   **Burnout Risk Detection:** Scans over-allocation, overdue milestones, and high priority concentrations to alert managers before team members burn out.
 
 ---
 
-### 5. 🛡️ Enterprise Security, Audits & Observability
+### 5. Enterprise Security, Audits and Observability
 Engineered to adhere to high-grade corporate security compliance:
 *   **Rigid Role Isolation:** Route guards and dependency injection in the backend verify JSON Web Tokens (JWT) and evaluate exact role access.
 *   **Comprehensive Audit Logs:** Chronological record of critical operations—account creations, status changes, approvals, rejections, and escalations—providing clear, immutable accountability.
-*   **Production Observability:** Active request tracing (`X-Trace-ID`), server-side rate limits, database pools, and continuous system health checks.
+*   **Production Observability:** Active request tracing (X-Trace-ID), server-side rate limits, database pools, and continuous system health checks.
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Frontend
 *   **Framework:** Next.js 14 (App Router)
-*   **Styling:** Modern Tailwind CSS with deep glassmorphic visuals
-*   **State Management & Utilities:** React Hooks, Axios, Lucide Icons, Mermaid.js
+*   **Styling:** Modern CSS with deep glassmorphic visuals
+*   **State Management and Utilities:** React Hooks, Axios, Lucide Icons, Mermaid.js
 
 ### Backend
 *   **Framework:** FastAPI (Python 3.11+)
-*   **Database ORM:** SQLAlchemy (Asynchronous execution with `asyncpg`)
+*   **Database ORM:** SQLAlchemy (Asynchronous execution with asyncpg)
 *   **Security:** JOSE (JWT authentication), passlib (bcrypt hashing), CORS Middleware
 
 ### Infrastructure
@@ -136,14 +136,14 @@ Engineered to adhere to high-grade corporate security compliance:
 
 ---
 
-## 🚀 Quick Start Guide
+## Quick Start Guide
 
 ### Prerequisites
 Make sure you have the following installed on your machine:
-*   [Node.js (v18+)](https://nodejs.org/)
-*   [Python (3.11+)](https://www.python.org/)
-*   [PostgreSQL (v16+)](https://www.postgresql.org/) (Or Docker)
-*   [Ollama](https://ollama.com/) *(Optional, for local private AI capability)*
+*   Node.js (v18+)
+*   Python (3.11+)
+*   PostgreSQL (v16+) (Or Docker)
+*   Ollama (Optional, for local private AI capability)
 
 ---
 
@@ -160,9 +160,9 @@ You can start the entire stack (Frontend, Backend, Database, and an automated he
 ```bash
 docker compose up --build -d
 ```
-*   The frontend will be available at [http://localhost:3000](http://localhost:3000)
-*   The backend API will run at [http://localhost:8000](http://localhost:8000)
-*   PostgreSQL is mapped to port **5433** on your host to avoid conflicts with existing database instances.
+*   The frontend will be available at http://localhost:3000
+*   The backend API will run at http://localhost:8000
+*   PostgreSQL is mapped to port 5433 on your host to avoid conflicts with existing database instances.
 
 ---
 
@@ -214,11 +214,11 @@ If you prefer running the components natively on your system:
    ```bash
    npm run dev -- --port 3000
    ```
-4. Access the web interface at [http://localhost:3000](http://localhost:3000)
+4. Access the web interface at http://localhost:3000
 
 ---
 
-## 🔑 Demo Access Credentials
+## Demo Access Credentials
 
 Get started instantly using our pre-seeded simulation profiles:
 
@@ -230,7 +230,7 @@ Get started instantly using our pre-seeded simulation profiles:
 
 ---
 
-## 🔒 Ollama Local AI CORS Configuration
+## Ollama Local AI CORS Configuration
 
 To let the browser frontend make local inference calls directly to your machine's Ollama server (avoiding proxy latencies), you must allow CORS origins in Ollama.
 
@@ -250,7 +250,7 @@ To let the browser frontend make local inference calls directly to your machine'
 
 ---
 
-## 📂 Project Directory Structure
+## Project Directory Structure
 
 ```text
 GoalForge-Ai/
@@ -278,6 +278,6 @@ GoalForge-Ai/
 
 ---
 
-## 📝 License & Contact
+## License and Contact
 
 GoalForge AI is built for professional OKR tracking, advanced interactive dashboards, and modern cloud deployment demonstration. All Rights Reserved. Built by GoalForge Devs.
