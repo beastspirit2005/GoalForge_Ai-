@@ -89,6 +89,8 @@ const getClientFallbackAdvice = (query: string): { response: string; source: str
   }
 }
 
+const OLLAMA_COOLDOWN_MS = 12000 // 12 seconds cooldown to prevent CPU/GPU overload
+
 export function AiBuddyChat() {
   const { user } = useAuth()
   const accountRole = user ? ("role" in user ? user.role : "employee") : "employee"
@@ -107,6 +109,9 @@ export function AiBuddyChat() {
   const [activeProvider, setActiveProvider] = useState<"gemini" | "ollama" | "fallback">("gemini")
   const [ollamaModels, setOllamaModels] = useState<string[]>([])
   const [selectedOllamaModel, setSelectedOllamaModel] = useState("")
+
+  const [ollamaCooldownRemaining, setOllamaCooldownRemaining] = useState(0)
+  const lastOllamaTimeRef = useRef<number>(0)
 
   const [geminiKeyMode, setGeminiKeyModeState] = useState<GeminiKeyMode>("app")
   const [customKeyInput, setCustomKeyInput] = useState("")
@@ -222,6 +227,14 @@ export function AiBuddyChat() {
   useEffect(() => {
     if (selectedOllamaModel) localStorage.setItem("aiBuddyOllamaModel", selectedOllamaModel)
   }, [selectedOllamaModel])
+
+  useEffect(() => {
+    if (ollamaCooldownRemaining <= 0) return
+    const timer = setInterval(() => {
+      setOllamaCooldownRemaining((prev) => prev - 1)
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [ollamaCooldownRemaining])
 
   const fetchCopilotContext = async (): Promise<string> => {
     const cacheKey = `${email}_${accountRole}`
@@ -385,6 +398,26 @@ export function AiBuddyChat() {
       if (activeProvider === "fallback") {
         res = getClientFallbackAdvice(userMessage)
       } else if (activeProvider === "ollama") {
+        const now = Date.now()
+        const timePassed = now - lastOllamaTimeRef.current
+        if (timePassed < OLLAMA_COOLDOWN_MS) {
+          const waitSec = Math.ceil((OLLAMA_COOLDOWN_MS - timePassed) / 1000)
+          setOllamaCooldownRemaining(waitSec)
+          res = {
+            response: `Cooldown active: Please wait **${waitSec} seconds** before sending another message to your local offline model. This protective limit prevents high CPU/GPU load on your machine.`,
+            source: "system-cooldown"
+          }
+          applyMessages(
+            [...withUser, { role: "assistant", content: res.response, source: res.source }],
+            title
+          )
+          setIsLoading(false)
+          return
+        }
+        
+        lastOllamaTimeRef.current = now
+        setOllamaCooldownRemaining(Math.ceil(OLLAMA_COOLDOWN_MS / 1000))
+
         const context = await fetchCopilotContext()
         const prompt = `You are 'Ai Buddy', an intelligent enterprise performance coach.\nYour job is to assist employees or managers with their goals, priorities, and performance.\n\nContext about the user's current state (goals, milestones, checkins, etc):\n${context}\n\nUser Query:\n${userMessage}\n\nRespond in a helpful, conversational, and professional tone. Keep it concise, actionable, and formatted in Markdown. Focus entirely on the user's performance and the provided context. If they ask a general question, guide it back to their goals.`
         
@@ -395,6 +428,10 @@ export function AiBuddyChat() {
             model: selectedOllamaModel || ollamaModels[0] || "llama3",
             prompt: prompt,
             stream: false,
+            options: {
+              num_predict: 250, // Limit generated tokens
+              num_ctx: 2048,    // Restrict context window size to save RAM/VRAM
+            }
           }),
         })
         if (!directRes.ok) throw new Error("Local Ollama is not responding")
@@ -451,6 +488,26 @@ export function AiBuddyChat() {
       if (newProvider === "fallback") {
         res = getClientFallbackAdvice(lastQuery)
       } else if (newProvider === "ollama") {
+        const now = Date.now()
+        const timePassed = now - lastOllamaTimeRef.current
+        if (timePassed < OLLAMA_COOLDOWN_MS) {
+          const waitSec = Math.ceil((OLLAMA_COOLDOWN_MS - timePassed) / 1000)
+          setOllamaCooldownRemaining(waitSec)
+          applyMessages([
+            ...messages,
+            {
+              role: "assistant",
+              content: `Ollama Cooldown Active: Please wait **${waitSec} seconds** before switching providers again to protect your local PC from heavy processor load.`,
+              source: `system-cooldown`,
+            },
+          ])
+          setIsLoading(false)
+          return
+        }
+
+        lastOllamaTimeRef.current = now
+        setOllamaCooldownRemaining(Math.ceil(OLLAMA_COOLDOWN_MS / 1000))
+
         let localModel = selectedOllamaModel
         if (!localModel && ollamaModels.length > 0) {
           localModel = ollamaModels[0]
@@ -466,6 +523,10 @@ export function AiBuddyChat() {
             model: localModel || "llama3",
             prompt: prompt,
             stream: false,
+            options: {
+              num_predict: 250, // Limit maximum returned tokens
+              num_ctx: 2048,    // Limit context window size to save RAM/VRAM
+            }
           }),
         })
         if (!directRes.ok) throw new Error("Local Ollama is not responding")
@@ -948,17 +1009,19 @@ export function AiBuddyChat() {
                     placeholder={
                       !isViewingOwnRole
                         ? "Switch to your role to chat…"
-                        : activeProvider === "ollama"
-                          ? `Ask via ${selectedOllamaModel || "Ollama"}…`
-                          : "Ask Ai Buddy…"
+                        : ollamaCooldownRemaining > 0 && activeProvider === "ollama"
+                          ? `Local PC cooling down (${ollamaCooldownRemaining}s)…`
+                          : activeProvider === "ollama"
+                            ? `Ask via ${selectedOllamaModel || "Ollama"}…`
+                            : "Ask Ai Buddy…"
                     }
                     className="h-10 flex-1 rounded-xl border-slate-800 bg-[#090d16] text-white placeholder:text-slate-500"
-                    disabled={isLoading || !isViewingOwnRole}
+                    disabled={isLoading || !isViewingOwnRole || (ollamaCooldownRemaining > 0 && activeProvider === "ollama")}
                   />
                   <Button
                     type="submit"
                     size="icon"
-                    disabled={!input.trim() || isLoading || !isViewingOwnRole}
+                    disabled={!input.trim() || isLoading || !isViewingOwnRole || (ollamaCooldownRemaining > 0 && activeProvider === "ollama")}
                     className="h-10 w-10 shrink-0 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500"
                   >
                     <Send className="h-4 w-4" />
