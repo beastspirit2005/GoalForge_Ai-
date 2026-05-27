@@ -45,9 +45,11 @@ export default function ManagerDashboardPage() {
         </div>
 
         <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-          <div className="glass-card rounded-xl p-5">
+          <div className="glass-card rounded-xl p-5 flex flex-col overflow-hidden">
             <h2 className="mb-4 text-base font-semibold text-white/80">Team goals</h2>
-            <GoalTable goals={goals} />
+            <div className="bg-slate-900/50 rounded-lg border border-white/[0.04] flex-1">
+              <AdvancedGoalTable goals={goals} isManagerView={true} />
+            </div>
           </div>
 
           <div className="glass-card rounded-xl p-5">
@@ -69,7 +71,7 @@ export default function ManagerDashboardPage() {
           <p className="text-sm text-white/50 mb-6">
             Track goals you&apos;ve approved, rejected, or edited, along with employee escalations and admin resolutions.
           </p>
-          <div className="bg-slate-900/50 rounded-lg overflow-hidden border border-white/[0.04]">
+          <div className="bg-slate-900/50 rounded-lg border border-white/[0.04]">
             <AdvancedGoalTable 
               goals={goals.filter(g => g.status === "Approved" || g.status === "Rejected" || g.status === "Approved after Editing" || g.status === "Escalated" || g.status === "Needs Review" || g.status === "At Risk")} 
               isManagerView={true} 
