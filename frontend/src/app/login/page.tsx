@@ -90,9 +90,15 @@ export default function LoginPage() {
       const path = await loginWithApi(email, password)
       router.push(path)
     } catch (err: any) {
+      const isNetworkError = 
+        !err?.message || 
+        err.message.includes("Failed to fetch") || 
+        err.message.includes("Request timed out") || 
+        err.message.includes("Network Error")
+
       if (err?.message?.includes("pending admin approval")) {
         setError(err.message)
-      } else if (isDemoAuthAllowed()) {
+      } else if (isDemoAuthAllowed() && isNetworkError) {
         console.warn("API login failed, falling back to mock:", err)
         let role: DemoRole = "employee"
         const lowerEmail = email.toLowerCase()
@@ -129,9 +135,15 @@ export default function LoginPage() {
       const path = await loginWithOtp(otpEmail, otpCode)
       router.push(path)
     } catch (err: any) {
+      const isNetworkError = 
+        !err?.message || 
+        err.message.includes("Failed to fetch") || 
+        err.message.includes("Request timed out") || 
+        err.message.includes("Network Error")
+
       if (err?.message?.includes("pending admin approval")) {
         setError(err.message)
-      } else if (isDemoAuthAllowed()) {
+      } else if (isDemoAuthAllowed() && isNetworkError) {
         console.warn("API OTP verification failed, falling back to mock:", err)
         router.push(login("employee"))
       } else {
