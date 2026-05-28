@@ -15,11 +15,11 @@ class LoginRequest(BaseModel):
 
 
 class OTPRequest(BaseModel):
-    phone_number: str
+    email: EmailStr
 
 
 class OTPVerify(BaseModel):
-    phone_number: str
+    email: EmailStr
     otp_code: str
 
 
@@ -36,7 +36,10 @@ class UserResponse(BaseModel):
     department: str | None
     manager_id: int | None
     is_active: bool
+    is_approved: bool
     profile_picture_url: str | None = None
+    google_id: str | None = None
+    microsoft_id: str | None = None
 
     class Config:
         from_attributes = True
@@ -48,4 +51,8 @@ class UserUpdate(BaseModel):
     role: str | None = None
     manager_id: int | None = None
     is_active: bool | None = None
+    is_approved: bool | None = None
     profile_picture_url: str | None = None
+    google_id: str | None = None
+    microsoft_id: str | None = None
+

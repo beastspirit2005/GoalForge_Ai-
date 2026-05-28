@@ -91,13 +91,13 @@ async def upload_avatar(
 
 @router.post("/request-otp", status_code=status.HTTP_200_OK)
 async def request_otp(data: OTPRequest, db: AsyncSession = Depends(get_db)):
-    await generate_and_send_otp(db, data.phone_number)
+    await generate_and_send_otp(db, data.email)
     return {"message": "OTP sent successfully"}
 
 
 @router.post("/verify-otp", response_model=TokenResponse)
 async def verify_otp(data: OTPVerify, db: AsyncSession = Depends(get_db)):
-    user = await verify_otp_and_login(db, data.phone_number, data.otp_code)
+    user = await verify_otp_and_login(db, data.email, data.otp_code)
     token = create_token_for_user(user)
     return TokenResponse(access_token=token)
 

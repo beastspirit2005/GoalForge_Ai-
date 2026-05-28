@@ -34,9 +34,18 @@ class Settings(BaseSettings):
     APP_NAME: str = "GoalForge AI"
     DEBUG: bool = True
 
+    # SMTP Configurations
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = ""
+    SMTP_FROM_NAME: str = "GoalForge AI"
+
     class Config:
         env_file = (".env", "../.env")
         extra = "ignore"
+
 
     @model_validator(mode="after")
     def normalize_db_urls(self):

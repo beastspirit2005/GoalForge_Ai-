@@ -27,6 +27,7 @@ async def list_users(
             "department": u.department,
             "manager_id": u.manager_id,
             "is_active": u.is_active,
+            "is_approved": u.is_approved,
         }
         for u in users
     ]
@@ -73,6 +74,36 @@ async def edit_user(
         new_value=data.model_dump(exclude_unset=True),
     )
     return {"id": user.id, "name": user.name, "role": user.role, "is_active": user.is_active}
+
+
+@router.post("/users/{user_id}/approve")
+async def approve_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("admin")),
+):
+    from sqlalchemy import select
+    from app.services.email_service import send_approval_email
+    import asyncio
+    
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.is_approved = True
+    await db.commit()
+    await db.refresh(user)
+    
+    await log_action(
+        db, user_id=current_user.id, action="user_approved",
+        entity_type="user", entity_id=user.id,
+    )
+    
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(None, send_approval_email, user.email, user.name, user.role)
+
+    return {"id": user.id, "is_approved": user.is_approved, "message": "User approved successfully"}
 
 
 @router.post("/goals/{goal_id}/unlock")

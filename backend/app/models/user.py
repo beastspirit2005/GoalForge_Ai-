@@ -19,10 +19,14 @@ class User(Base):
     department: Mapped[str | None] = mapped_column(String(120), nullable=True)
     manager_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_approved: Mapped[bool] = mapped_column(Boolean, default=False)
     otp_code: Mapped[str | None] = mapped_column(String(6), nullable=True)
     otp_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    google_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+    microsoft_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
     profile_picture_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
 
     # Relationships
     goals = relationship("Goal", back_populates="owner", foreign_keys="Goal.user_id")

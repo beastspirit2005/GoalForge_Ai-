@@ -44,10 +44,10 @@ export default function LoginPage() {
   const router = useRouter()
   const { login, loginWithApi, requestOtpCode, loginWithOtp } = useAuth()
 
-  const [authMode, setAuthMode] = useState<"PASSWORD" | "OTP_PHONE" | "OTP_CODE">("PASSWORD")
+  const [authMode, setAuthMode] = useState<"PASSWORD" | "OTP_EMAIL" | "OTP_CODE">("PASSWORD")
   const [email, setEmail] = useState("employee@goalforge.ai")
   const [password, setPassword] = useState("password123")
-  const [phoneNumber, setPhoneNumber] = useState("+1234567890")
+  const [otpEmail, setOtpEmail] = useState("")
   const [otpCode, setOtpCode] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -64,8 +64,10 @@ export default function LoginPage() {
       }
       const path = await loginWithApi(emailMap[role], "password123")
       router.push(path)
-    } catch (err: unknown) {
-      if (isDemoAuthAllowed()) {
+    } catch (err: any) {
+      if (err?.message?.includes("pending admin approval")) {
+        setError(err.message)
+      } else if (isDemoAuthAllowed()) {
         console.warn(`API login failed for role ${role}, falling back to mock:`, err)
         router.push(login(role))
       } else {
@@ -86,8 +88,10 @@ export default function LoginPage() {
     try {
       const path = await loginWithApi(email, password)
       router.push(path)
-    } catch (err: unknown) {
-      if (isDemoAuthAllowed()) {
+    } catch (err: any) {
+      if (err?.message?.includes("pending admin approval")) {
+        setError(err.message)
+      } else if (isDemoAuthAllowed()) {
         console.warn("API login failed, falling back to mock:", err)
         let role: DemoRole = "employee"
         const lowerEmail = email.toLowerCase()
@@ -107,8 +111,8 @@ export default function LoginPage() {
     setError("")
     setSuccessMsg("")
     try {
-      await requestOtpCode(phoneNumber)
-      setSuccessMsg("OTP sent! Check console.")
+      await requestOtpCode(otpEmail)
+      setSuccessMsg("OTP sent to your email! Check your inbox.")
       setAuthMode("OTP_CODE")
     } catch (err: any) {
       setError(err?.message || "Failed to send OTP.")
@@ -121,10 +125,12 @@ export default function LoginPage() {
     setLoading(true)
     setError("")
     try {
-      const path = await loginWithOtp(phoneNumber, otpCode)
+      const path = await loginWithOtp(otpEmail, otpCode)
       router.push(path)
-    } catch (err: unknown) {
-      if (isDemoAuthAllowed()) {
+    } catch (err: any) {
+      if (err?.message?.includes("pending admin approval")) {
+        setError(err.message)
+      } else if (isDemoAuthAllowed()) {
         console.warn("API OTP verification failed, falling back to mock:", err)
         router.push(login("employee"))
       } else {
@@ -187,27 +193,28 @@ export default function LoginPage() {
                   <Button
                     variant="link"
                     className="h-8 w-full text-[12px] text-slate-400 hover:text-slate-600 font-semibold"
-                    onClick={() => { setAuthMode("OTP_PHONE"); setError("") }}
+                    onClick={() => { setAuthMode("OTP_EMAIL"); setError("") }}
                   >
-                    Login via OTP instead
+                    Login via Email OTP instead
                   </Button>
                 </>
               )}
 
-              {authMode === "OTP_PHONE" && (
+              {authMode === "OTP_EMAIL" && (
                 <>
-                  <p className="text-[12px] text-slate-550 font-medium">Enter your phone number to receive a one-time code.</p>
+                  <p className="text-[12px] text-slate-550 font-medium">Enter your registered email to receive a one-time login code.</p>
                   <Input
                     className="h-10 rounded-lg border-slate-200 bg-white text-[13px] text-slate-800 placeholder:text-slate-400 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 focus-visible:ring-2"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="Phone Number"
+                    value={otpEmail}
+                    onChange={(e) => setOtpEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    type="email"
                   />
                   {error && <p className="text-[12px] text-rose-600 font-medium">{error}</p>}
                   <Button
                     className="h-10 w-full rounded-lg bg-indigo-600 hover:bg-indigo-500 text-[13px] font-semibold text-white shadow-md shadow-indigo-600/10 transition-all"
                     onClick={handleRequestOtp}
-                    disabled={loading || !phoneNumber}
+                    disabled={loading || !otpEmail}
                   >
                     {loading ? "Sending..." : "Send OTP"}
                   </Button>
@@ -242,7 +249,7 @@ export default function LoginPage() {
                   <Button
                     variant="link"
                     className="h-8 w-full text-[12px] text-slate-400 hover:text-slate-600 font-semibold"
-                    onClick={() => { setAuthMode("OTP_PHONE"); setOtpCode(""); setError(""); setSuccessMsg("") }}
+                    onClick={() => { setAuthMode("OTP_EMAIL"); setOtpCode(""); setError(""); setSuccessMsg("") }}
                   >
                     Resend OTP
                   </Button>

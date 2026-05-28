@@ -68,13 +68,21 @@ export default function Home() {
               </h1>
             </div>
           </div>
-          <Button
-            asChild
-            variant="ghost"
-            className="h-8.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 text-xs font-semibold px-4 transition-all shadow-sm"
-          >
-            <Link href="/login">Sign In</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              asChild
+              variant="ghost"
+              className="h-8.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 text-xs font-semibold px-4 transition-all shadow-sm"
+            >
+              <Link href="/login">Sign In</Link>
+            </Button>
+            <Button
+              asChild
+              className="h-8.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 transition-all shadow-sm shadow-indigo-600/10"
+            >
+              <Link href="/signup">Sign Up</Link>
+            </Button>
+          </div>
         </nav>
 
         {/* Hero Area */}

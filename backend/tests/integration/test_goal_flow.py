@@ -19,9 +19,9 @@ async def test_integration_goal_lifecycle_flow():
     async with async_session() as db:
         # Create manager
         manager = User(
-            id=2,
-            name="Priya Nair",
-            email="manager@goalforge.ai",
+            id=902,
+            name="Test Priya Nair",
+            email="test_manager_902@goalforge.ai",
             password_hash="$2b$12$zA76FnlxRcjUJX1De7Qh8.8T2s/A83X8KM91K0Xf/RPoR66TH84Jy",
             role="manager",
             department="Engineering",
@@ -29,23 +29,23 @@ async def test_integration_goal_lifecycle_flow():
         )
         # Create employee
         employee = User(
-            id=1,
-            name="Aarav Mehta",
-            email="employee@goalforge.ai",
+            id=901,
+            name="Test Aarav Mehta",
+            email="test_employee_901@goalforge.ai",
             password_hash="$2b$12$zA76FnlxRcjUJX1De7Qh8.8T2s/A83X8KM91K0Xf/RPoR66TH84Jy",
             role="employee",
             department="People Ops",
-            manager_id=2,
+            manager_id=902,
             is_active=True
         )
-        db.add(manager)
-        db.add(employee)
+        await db.merge(manager)
+        await db.merge(employee)
         await db.commit()
 
     # 2. Simulate the Employee: Override get_current_user dependency
     employee_instance = None
     async with async_session() as db:
-        res = await db.execute(select(User).where(User.id == 1))
+        res = await db.execute(select(User).where(User.id == 901))
         employee_instance = res.scalar_one()
     
     app.dependency_overrides[get_current_user] = lambda: employee_instance
@@ -76,7 +76,7 @@ async def test_integration_goal_lifecycle_flow():
     # 5. Simulate the Manager: Override get_current_user dependency
     manager_instance = None
     async with async_session() as db:
-        res = await db.execute(select(User).where(User.id == 2))
+        res = await db.execute(select(User).where(User.id == 902))
         manager_instance = res.scalar_one()
 
     app.dependency_overrides[get_current_user] = lambda: manager_instance
