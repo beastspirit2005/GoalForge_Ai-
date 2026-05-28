@@ -103,7 +103,7 @@ export default function SignupPage() {
             Create your account
           </h1>
           <p className="mt-2 text-[13px] leading-6 text-slate-500 font-medium">
-            Join your team's GoalForge workspace.
+            Join your team&apos;s GoalForge workspace.
           </p>
 
           {success ? (
