@@ -128,7 +128,23 @@ async def db_migrate():
             ))
             columns = [row[0] for row in result.fetchall()]
             
-        return {"status": "migration successful", "columns": columns}
+            # Diagnostic: check existing users and sequence value
+            users_res = await db.execute(text("SELECT id, email FROM users ORDER BY id;"))
+            users_list = [{"id": r[0], "email": r[1]} for r in users_res.fetchall()]
+            
+            seq_res = await db.execute(text("SELECT nextval(pg_get_serial_sequence('users', 'id'));"))
+            next_val = seq_res.scalar()
+            
+            # Since nextval advances the sequence, set it back to what it was
+            await db.execute(text(f"SELECT setval(pg_get_serial_sequence('users', 'id'), {next_val - 1}, true);"))
+            await db.commit()
+            
+        return {
+            "status": "migration successful",
+            "columns": columns,
+            "existing_users": users_list,
+            "next_sequence_value": next_val
+        }
     except Exception as e:
         import traceback
         return {"status": "error", "detail": str(e), "traceback": traceback.format_exc()}
