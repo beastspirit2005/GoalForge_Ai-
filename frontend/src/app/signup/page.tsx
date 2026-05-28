@@ -77,7 +77,7 @@ export default function SignupPage() {
       <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-100">
         <div className="flex flex-col justify-center bg-slate-50/50 p-8">
           <Link href="/" className="group transition-opacity hover:opacity-90">
-            <BrandLogo />
+            <BrandLogo size="lg" />
           </Link>
           <h1 className="mt-6 text-3xl font-extrabold leading-tight tracking-tight text-slate-900">
             Create your account
