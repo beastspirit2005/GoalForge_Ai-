@@ -113,7 +113,9 @@ GoalForge AI goes beyond static status indicators to provide proactive performan
 
 ### 5. Enterprise Security, Audits and Observability
 Engineered to adhere to high-grade corporate security compliance:
+*   **Secure Email OTP Authentication:** Features passwordless login fallback and account verification via Brevo SMTP, ensuring reliable, fast, and secure delivery of one-time passwords directly to employee inboxes.
 *   **Rigid Role Isolation:** Route guards and dependency injection in the backend verify JSON Web Tokens (JWT) and evaluate exact role access.
+*   **New User Approval Workflow:** Self-registered accounts require an explicit Admin or Manager approval before gaining system access, preventing unauthorized data exposure.
 *   **Comprehensive Audit Logs:** Chronological record of critical operations—account creations, status changes, approvals, rejections, and escalations—providing clear, immutable accountability.
 *   **Production Observability:** Active request tracing (X-Trace-ID), server-side rate limits, database pools, and continuous system health checks.
 
@@ -135,6 +137,7 @@ Engineered to adhere to high-grade corporate security compliance:
 *   **Database:** PostgreSQL 16
 *   **Orchestration:** Multi-stage Docker Compose
 *   **Production Hosting:** Next.js (Vercel), FastAPI (Render), PostgreSQL (Supabase / Render Managed)
+*   **DevOps Automations:** Custom Python subprocess wrappers (`add_envs.py`) for dynamic, real-time Vercel Environment injection and local system stability checks.
 
 ---
 
