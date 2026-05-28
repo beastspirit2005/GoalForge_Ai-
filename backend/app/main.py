@@ -97,35 +97,76 @@ async def health():
     }
 
 
-@app.get("/seed")
-async def run_seed():
-    from app.schemas.auth_schema import RegisterRequest
-    from app.services.auth_service import register_user
+@app.get("/db-migrate")
+async def db_migrate():
+    """Run raw SQL to add any missing columns to the users table."""
     from app.core.database import async_session
     from sqlalchemy import text
     
     try:
         async with async_session() as db:
-            # 1. Manually add missing columns via raw SQL using IF NOT EXISTS
             await db.execute(text("""
                 ALTER TABLE users 
                 ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE,
                 ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE,
                 ADD COLUMN IF NOT EXISTS otp_code VARCHAR,
-                ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMP WITH TIME ZONE;
+                ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMP WITH TIME ZONE,
+                ADD COLUMN IF NOT EXISTS phone_number VARCHAR,
+                ADD COLUMN IF NOT EXISTS google_id VARCHAR,
+                ADD COLUMN IF NOT EXISTS microsoft_id VARCHAR,
+                ADD COLUMN IF NOT EXISTS profile_picture_url VARCHAR;
             """))
             await db.commit()
+            
+            # Verify columns exist
+            result = await db.execute(text(
+                "SELECT column_name FROM information_schema.columns WHERE table_name = 'users' ORDER BY ordinal_position;"
+            ))
+            columns = [row[0] for row in result.fetchall()]
+            
+        return {"status": "migration successful", "columns": columns}
+    except Exception as e:
+        import traceback
+        return {"status": "error", "detail": str(e), "traceback": traceback.format_exc()}
 
-            # 2. Seed Admin & Manager
-            admin = await register_user(db, RegisterRequest(name='Admin', email='admin@goalforge.ai', password='password123', role='admin', department='HQ'))
-            manager = await register_user(db, RegisterRequest(name='Manager', email='manager@goalforge.ai', password='password123', role='manager', department='Sales'))
+
+@app.get("/seed")
+async def run_seed():
+    """Run migrations first, then seed admin/manager in a fresh session."""
+    from app.core.database import async_session
+    from sqlalchemy import text
+    
+    try:
+        # Step 1: Migrate in its own session
+        async with async_session() as db:
+            await db.execute(text("""
+                ALTER TABLE users 
+                ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE,
+                ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS otp_code VARCHAR,
+                ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMP WITH TIME ZONE,
+                ADD COLUMN IF NOT EXISTS phone_number VARCHAR,
+                ADD COLUMN IF NOT EXISTS google_id VARCHAR,
+                ADD COLUMN IF NOT EXISTS microsoft_id VARCHAR,
+                ADD COLUMN IF NOT EXISTS profile_picture_url VARCHAR;
+            """))
+            await db.commit()
+        
+        # Step 2: Seed in a completely fresh session
+        from app.schemas.auth_schema import RegisterRequest
+        from app.services.auth_service import register_user
+        
+        async with async_session() as db2:
+            admin = await register_user(db2, RegisterRequest(name='Admin', email='admin@goalforge.ai', password='password123', role='admin', department='HQ'))
+            manager = await register_user(db2, RegisterRequest(name='Manager', email='manager@goalforge.ai', password='password123', role='manager', department='Sales'))
             admin.is_approved = True
             manager.is_approved = True
-            await db.commit()
+            await db2.commit()
             
         return {"status": "migrations and seed successful"}
     except Exception as e:
-        return {"status": "error", "detail": str(e)}
+        import traceback
+        return {"status": "error", "detail": str(e), "traceback": traceback.format_exc()}
 
 @app.get("/metrics")
 def metrics():
