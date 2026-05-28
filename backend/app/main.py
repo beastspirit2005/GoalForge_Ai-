@@ -106,23 +106,14 @@ async def run_seed():
     
     try:
         async with async_session() as db:
-            # 1. Manually add missing columns via raw SQL (ignoring errors if they already exist)
-            try:
-                await db.execute(text("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE;"))
-            except Exception:
-                pass
-            try:
-                await db.execute(text("ALTER TABLE users ADD COLUMN is_approved BOOLEAN DEFAULT FALSE;"))
-            except Exception:
-                pass
-            try:
-                await db.execute(text("ALTER TABLE users ADD COLUMN otp_code VARCHAR;"))
-            except Exception:
-                pass
-            try:
-                await db.execute(text("ALTER TABLE users ADD COLUMN otp_expires_at TIMESTAMP WITH TIME ZONE;"))
-            except Exception:
-                pass
+            # 1. Manually add missing columns via raw SQL using IF NOT EXISTS
+            await db.execute(text("""
+                ALTER TABLE users 
+                ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE,
+                ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS otp_code VARCHAR,
+                ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMP WITH TIME ZONE;
+            """))
             await db.commit()
 
             # 2. Seed Admin & Manager
