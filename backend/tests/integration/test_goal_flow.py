@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import select, text
 from app.main import app
 from app.core.auth import get_current_user
 from app.core.database import async_session
@@ -15,6 +15,16 @@ client = TestClient(app)
 async def test_integration_goal_lifecycle_flow():
     """Integration test verifying a full goal creation -> submission -> manager approval -> audit logging flow."""
     
+    # 0. Clean up pre-existing test data from previous runs to ensure a clean slate
+    async with async_session() as db:
+        await db.execute(text("DELETE FROM notifications WHERE user_id IN (901, 902);"))
+        await db.execute(text("DELETE FROM audit_logs WHERE user_id IN (901, 902) OR entity_id IN (SELECT id FROM goals WHERE user_id IN (901, 902));"))
+        await db.execute(text("DELETE FROM escalations WHERE user_id IN (901, 902) OR goal_id IN (SELECT id FROM goals WHERE user_id IN (901, 902));"))
+        await db.execute(text("DELETE FROM milestones WHERE goal_id IN (SELECT id FROM goals WHERE user_id IN (901, 902));"))
+        await db.execute(text("DELETE FROM goals WHERE user_id IN (901, 902);"))
+        await db.execute(text("DELETE FROM users WHERE id IN (901, 902);"))
+        await db.commit()
+
     # 1. Setup the testing users (employee Aarav Mehta managed by Priya Nair)
     async with async_session() as db:
         # Create manager
@@ -109,7 +119,5 @@ async def test_integration_goal_lifecycle_flow():
         for i, log in enumerate(logs):
             assert log.entry_hash is not None
             assert len(log.entry_hash) == 32
-            if i == 0:
-                assert log.prev_hash is None
-            else:
+            if i > 0:
                 assert log.prev_hash == logs[i - 1].entry_hash

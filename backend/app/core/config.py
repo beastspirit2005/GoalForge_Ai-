@@ -49,15 +49,24 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def normalize_db_urls(self):
-        self.DATABASE_URL = _normalize_async_db_url(self.DATABASE_URL.strip())
-        self.DATABASE_URL_SYNC = self.DATABASE_URL_SYNC.strip()
+        db_url = (self.DATABASE_URL or "").strip()
+        if not db_url:
+            db_url = "sqlite+aiosqlite:///./goalforge.db"
+        self.DATABASE_URL = _normalize_async_db_url(db_url)
+        
+        db_sync = (self.DATABASE_URL_SYNC or "").strip()
+        if not db_sync:
+            db_sync = "sqlite:///./goalforge.db"
+        self.DATABASE_URL_SYNC = db_sync
+        
         if self.DATABASE_URL.startswith("postgresql+asyncpg://"):
             self.DATABASE_URL_SYNC = self.DATABASE_URL.replace(
                 "postgresql+asyncpg://", "postgresql://", 1
             )
-        self.SECRET_KEY = self.SECRET_KEY.strip()
-        self.GEMINI_API_KEY = self.GEMINI_API_KEY.strip()
-        self.CORS_ORIGINS = self.CORS_ORIGINS.strip()
+            
+        self.SECRET_KEY = (self.SECRET_KEY or "").strip()
+        self.GEMINI_API_KEY = (self.GEMINI_API_KEY or "").strip()
+        self.CORS_ORIGINS = (self.CORS_ORIGINS or "").strip()
         return self
 
     @property
