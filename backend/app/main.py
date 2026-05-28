@@ -116,10 +116,31 @@ async def db_migrate():
                 ADD COLUMN IF NOT EXISTS microsoft_id VARCHAR,
                 ADD COLUMN IF NOT EXISTS profile_picture_url VARCHAR;
             """))
-            # Fix the auto-increment sequence so new INSERTs don't collide with existing rows
-            await db.execute(text(
-                "SELECT setval(pg_get_serial_sequence('users', 'id'), COALESCE((SELECT MAX(id) FROM users), 0) + 1, false);"
-            ))
+            # Fix the auto-increment sequences for ALL tables in the database to prevent duplicate key violations
+            for table, col in [
+                ("users", "id"),
+                ("audit_logs", "id"),
+                ("goals", "id"),
+                ("checkins", "id"),
+                ("cycles", "id"),
+                ("escalations", "id"),
+                ("milestones", "id"),
+                ("notifications", "id"),
+                ("performance_scores", "id"),
+                ("recognitions", "id"),
+                ("shared_goals", "id"),
+            ]:
+                try:
+                    await db.execute(text(f"""
+                        SELECT setval(
+                            pg_get_serial_sequence('{table}', '{col}'), 
+                            COALESCE((SELECT MAX({col}) FROM {table}), 0) + 1, 
+                            false
+                        );
+                    """))
+                except Exception as seq_err:
+                    import logging
+                    logging.warning(f"Skipping sequence reset for {table}: {seq_err}")
             await db.commit()
             
             # Verify columns exist
@@ -154,9 +175,31 @@ async def run_seed():
                 ADD COLUMN IF NOT EXISTS microsoft_id VARCHAR,
                 ADD COLUMN IF NOT EXISTS profile_picture_url VARCHAR;
             """))
-            await db.execute(text(
-                "SELECT setval(pg_get_serial_sequence('users', 'id'), COALESCE((SELECT MAX(id) FROM users), 0) + 1, false);"
-            ))
+            # Fix the auto-increment sequences for ALL tables in the database to prevent duplicate key violations
+            for table, col in [
+                ("users", "id"),
+                ("audit_logs", "id"),
+                ("goals", "id"),
+                ("checkins", "id"),
+                ("cycles", "id"),
+                ("escalations", "id"),
+                ("milestones", "id"),
+                ("notifications", "id"),
+                ("performance_scores", "id"),
+                ("recognitions", "id"),
+                ("shared_goals", "id"),
+            ]:
+                try:
+                    await db.execute(text(f"""
+                        SELECT setval(
+                            pg_get_serial_sequence('{table}', '{col}'), 
+                            COALESCE((SELECT MAX({col}) FROM {table}), 0) + 1, 
+                            false
+                        );
+                    """))
+                except Exception as seq_err:
+                    import logging
+                    logging.warning(f"Skipping sequence reset for {table}: {seq_err}")
             await db.commit()
         
         # Step 2: Approve existing users or create new ones
