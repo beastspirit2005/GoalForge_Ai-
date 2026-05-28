@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { useAuth } from "@/hooks/useAuth"
 import { isDemoAuthAllowed } from "@/lib/env"
 import type { DemoRole } from "@/lib/mock-auth"
+import BrandLogo from "@/components/layout/BrandLogo"
 
 const roles = [
   {
@@ -151,13 +152,8 @@ export default function LoginPage() {
         <div className="grid h-full gap-0 lg:grid-cols-[0.9fr_1.2fr]">
           {/* Left Panel: Authentication Forms */}
           <div className="flex h-full flex-col justify-center rounded-t-2xl border-r border-slate-100 bg-slate-50/50 p-8 lg:rounded-none lg:rounded-l-2xl">
-            <Link href="/" className="inline-flex items-center gap-2 transition-opacity hover:opacity-80">
-              <div className="grid h-8 w-8 place-items-center rounded-lg bg-indigo-650/10 border border-indigo-500/20 text-indigo-600 shadow-sm">
-                <Zap className="h-4 w-4 fill-indigo-600/10" />
-              </div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-indigo-600">
-                GoalForge AI
-              </p>
+            <Link href="/" className="group transition-opacity hover:opacity-90">
+              <BrandLogo />
             </Link>
             <h1 className="mt-6 text-3xl font-extrabold leading-tight tracking-tight text-slate-900">
               Sign in to your workspace

@@ -12,6 +12,7 @@ import {
   BarChart3,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import BrandLogo from "@/components/layout/BrandLogo"
 
 const features = [
   {
@@ -58,15 +59,8 @@ export default function Home() {
       <div className="relative mx-auto max-w-7xl px-6 py-6 sm:px-8 lg:px-12 flex flex-col min-h-screen justify-between">
         {/* Navigation */}
         <nav className="flex items-center justify-between border-b border-slate-200/60 pb-5">
-          <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 place-items-center rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 shadow-sm">
-              <Zap className="h-4.5 w-4.5 fill-indigo-600/10" />
-            </div>
-            <div>
-              <h1 className="text-sm font-bold tracking-tight text-slate-900 flex items-center gap-1.5">
-                GoalForge <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 font-semibold">AI</span>
-              </h1>
-            </div>
+          <div className="group">
+            <BrandLogo />
           </div>
           <div className="flex items-center gap-2">
             <Button
