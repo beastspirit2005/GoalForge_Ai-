@@ -152,15 +152,28 @@ async def run_seed():
             """))
             await db.commit()
         
-        # Step 2: Seed in a completely fresh session
-        from app.schemas.auth_schema import RegisterRequest
-        from app.services.auth_service import register_user
+        # Step 2: Approve existing users or create new ones
+        from sqlalchemy import select
+        from app.models.user import User
+        from app.core.security import hash_password
         
         async with async_session() as db2:
-            admin = await register_user(db2, RegisterRequest(name='Admin', email='admin@goalforge.ai', password='password123', role='admin', department='HQ'))
-            manager = await register_user(db2, RegisterRequest(name='Manager', email='manager@goalforge.ai', password='password123', role='manager', department='Sales'))
-            admin.is_approved = True
-            manager.is_approved = True
+            for email, name, role, dept in [
+                ('admin@goalforge.ai', 'Admin', 'admin', 'HQ'),
+                ('manager@goalforge.ai', 'Manager', 'manager', 'Sales'),
+            ]:
+                result = await db2.execute(select(User).where(User.email == email))
+                user = result.scalar_one_or_none()
+                if user:
+                    user.is_approved = True
+                    user.is_active = True
+                else:
+                    user = User(
+                        name=name, email=email, role=role, department=dept,
+                        password_hash=hash_password('password123'),
+                        is_approved=True, is_active=True,
+                    )
+                    db2.add(user)
             await db2.commit()
             
         return {"status": "migrations and seed successful"}
