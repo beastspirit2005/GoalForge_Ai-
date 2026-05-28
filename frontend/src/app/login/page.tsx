@@ -153,7 +153,7 @@ export default function LoginPage() {
           {/* Left Panel: Authentication Forms */}
           <div className="flex h-full flex-col justify-center rounded-t-2xl border-r border-slate-100 bg-slate-50/50 p-8 lg:rounded-none lg:rounded-l-2xl">
             <Link href="/" className="group transition-opacity hover:opacity-90">
-              <BrandLogo />
+              <BrandLogo size="lg" />
             </Link>
             <h1 className="mt-6 text-3xl font-extrabold leading-tight tracking-tight text-slate-900">
               Sign in to your workspace

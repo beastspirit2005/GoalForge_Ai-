@@ -1,7 +1,5 @@
 "use client"
 
-import { Sparkles } from "lucide-react"
-
 type BrandLogoProps = {
   size?: "sm" | "md" | "lg"
   hideSubtitle?: boolean
@@ -11,59 +9,74 @@ export default function BrandLogo({ size = "md", hideSubtitle = false }: BrandLo
   const isSm = size === "sm"
   const isLg = size === "lg"
 
+  // Dynamic dimension presets
+  const containerClasses = isSm
+    ? "h-8 w-8 rounded-lg"
+    : isLg
+    ? "h-16 w-16 rounded-2xl"
+    : "h-10 w-10 rounded-xl" // md default
+
+  const textClass = isSm
+    ? "text-sm font-black tracking-tight"
+    : isLg
+    ? "text-3xl font-black tracking-tighter"
+    : "text-lg font-black tracking-tight"
+
+  const subtitleClass = isSm
+    ? "text-[8px] tracking-[0.15em]"
+    : isLg
+    ? "text-[11px] tracking-[0.25em]"
+    : "text-[9px] tracking-[0.2em]"
+
   return (
     <div className="flex items-center gap-3">
-      {/* Futuristic Glowing Icon Badge */}
-      <div className="relative flex items-center justify-center shrink-0">
-        {/* Layer 1: Radial Glow Background */}
-        <div className="absolute -inset-1.5 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 opacity-60 blur-md transition-all duration-500 group-hover:opacity-100 group-hover:blur-lg" />
-        
-        {/* Layer 2: Glowing rotating border accent */}
-        <div className="absolute inset-0 rounded-xl bg-gradient-to-tr from-indigo-500 via-fuchsia-500 to-pink-500 opacity-40 transition-all duration-700 ease-in-out group-hover:rotate-180" />
+      {/* ── Dynamic Cropped Icon Container ── */}
+      <div className="relative shrink-0 select-none">
+        {/* Ambient Neon Backlight Glow on hover */}
+        <div className={`absolute -inset-1 rounded-full bg-gradient-to-tr from-cyan-500 via-violet-600 to-amber-400 opacity-0 blur-md transition-all duration-500 group-hover:opacity-75 group-hover:blur-lg ${
+          isSm ? "scale-90" : isLg ? "scale-110" : "scale-100"
+        }`} />
 
-        {/* Layer 3: Glassmorphic Main Container */}
-        <div className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-slate-950/90 shadow-inner transition-transform duration-300 group-hover:scale-105 dark:border-white/10 dark:bg-slate-900/90">
+        {/* Outer Circular Ring Border */}
+        <div className={`relative overflow-hidden border border-white/10 bg-black/90 shadow-md shadow-black/40 transition-all duration-300 group-hover:border-cyan-400/50 group-hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] ${containerClasses}`}>
           
-          {/* Layer 4: Overlapping Geometric Forge Elements */}
-          <div className="relative h-6 w-6 flex items-center justify-center">
-            {/* Spinning background rings */}
-            <div className="absolute inset-0 rounded-full border border-dashed border-indigo-400/30 animate-spin" style={{ animationDuration: '10s' }} />
-            
-            {/* Sparkles of intelligence */}
-            <Sparkles className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 text-fuchsia-300 animate-pulse drop-shadow-[0_0_4px_rgba(240,70,250,0.8)]" />
-            
-            {/* Custom SVG Geometric Forge Polygon */}
-            <svg
-              className="h-5.5 w-5.5 text-white drop-shadow-[0_0_6px_rgba(99,102,241,0.8)] animate-pulse"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              {/* Futuristic hexagonal forge shape */}
-              <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" />
-              <circle cx="12" cy="12" r="3" className="fill-fuchsia-400/80 stroke-fuchsia-400" />
-              <line x1="12" y1="2" x2="12" y2="9" />
-              <line x1="12" y1="15" x2="12" y2="22" />
-            </svg>
-          </div>
+          {/* Cropped Logo Image (Focused exactly on the gorgeous target/flames icon) */}
+          <img
+            src="/logo.jpg"
+            alt="GoalForge AI Icon"
+            className="h-full w-full object-cover scale-[1.3] transition-transform duration-500 ease-out group-hover:scale-[1.42] group-hover:rotate-3"
+            style={{ 
+              objectPosition: "8% 50%" 
+            }}
+          />
+
+          {/* Holographic light reflection shine overlay */}
+          <div className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 group-hover:translate-x-[100%]" />
         </div>
+
+        {/* Cyber status beacon dot (tiny subtle glow in corner) */}
+        <span className={`absolute bottom-0 right-0 flex rounded-full bg-cyan-400 ring-1 ring-black ${
+          isSm ? "h-1.5 w-1.5" : isLg ? "h-3 w-3" : "h-2 w-2"
+        } animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]`} />
       </div>
 
-      {/* Brand Text Columns */}
-      <div className="flex flex-col justify-center">
+      {/* ── Typographic Branding ── */}
+      <div className="flex flex-col justify-center select-none">
         <div className="flex items-center gap-1.5">
-          <span className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 bg-clip-text text-base font-black tracking-tight text-transparent dark:from-white dark:via-slate-200 dark:to-indigo-100">
-            GoalForge
+          {/* Main Title "GOALFORGE" */}
+          <span className={`font-black tracking-wide leading-none transition-colors duration-300 ${textClass} bg-gradient-to-r from-slate-900 to-slate-800 bg-clip-text text-transparent dark:from-white dark:to-slate-200 group-hover:dark:text-cyan-100`}>
+            GOALFORGE
           </span>
-          <span className="rounded-md bg-gradient-to-r from-indigo-600 to-fuchsia-600 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-sm shadow-indigo-500/25">
+          
+          {/* "AI" Gradient Pill Text */}
+          <span className={`font-black leading-none ${textClass} bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 bg-clip-text text-transparent drop-shadow-[0_0_6px_rgba(6,182,212,0.3)]`}>
             AI
           </span>
         </div>
+        
+        {/* Brand Subtitle "Performance Intelligence" */}
         {!hideSubtitle && (
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-400/90 dark:text-white/40">
+          <p className={`mt-0.5 font-extrabold uppercase text-slate-400/90 dark:text-white/35 transition-colors duration-300 group-hover:dark:text-cyan-400/50 ${subtitleClass}`}>
             Performance Intelligence
           </p>
         )}
