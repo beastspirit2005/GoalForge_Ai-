@@ -99,19 +99,32 @@ async def health():
 
 @app.get("/seed")
 async def run_seed():
-    from app.core.database import create_tables, async_session
     from app.schemas.auth_schema import RegisterRequest
     from app.services.auth_service import register_user
+    from app.core.database import async_session
+    import alembic.config
+    import os
     
     try:
-        await create_tables()
+        # Run Alembic migrations programmatically
+        alembic_args = [
+            "--raiseerr",
+            "upgrade", "head",
+        ]
+        # Change directory to backend so alembic.ini is found
+        current_dir = os.getcwd()
+        if "backend" not in current_dir:
+            os.chdir("backend")
+            
+        alembic.config.main(argv=alembic_args)
+        
         async with async_session() as db:
             admin = await register_user(db, RegisterRequest(name='Admin', email='admin@goalforge.ai', password='password123', role='admin', department='HQ'))
             manager = await register_user(db, RegisterRequest(name='Manager', email='manager@goalforge.ai', password='password123', role='manager', department='Sales'))
             admin.is_approved = True
             manager.is_approved = True
             await db.commit()
-        return {"status": "seeded successfully"}
+        return {"status": "migrations and seed successful"}
     except Exception as e:
         return {"status": "error", "detail": str(e)}
 
