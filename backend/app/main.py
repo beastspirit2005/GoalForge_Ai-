@@ -116,6 +116,10 @@ async def db_migrate():
                 ADD COLUMN IF NOT EXISTS microsoft_id VARCHAR,
                 ADD COLUMN IF NOT EXISTS profile_picture_url VARCHAR;
             """))
+            # Fix the auto-increment sequence so new INSERTs don't collide with existing rows
+            await db.execute(text(
+                "SELECT setval(pg_get_serial_sequence('users', 'id'), COALESCE((SELECT MAX(id) FROM users), 0) + 1, false);"
+            ))
             await db.commit()
             
             # Verify columns exist
@@ -150,6 +154,9 @@ async def run_seed():
                 ADD COLUMN IF NOT EXISTS microsoft_id VARCHAR,
                 ADD COLUMN IF NOT EXISTS profile_picture_url VARCHAR;
             """))
+            await db.execute(text(
+                "SELECT setval(pg_get_serial_sequence('users', 'id'), COALESCE((SELECT MAX(id) FROM users), 0) + 1, false);"
+            ))
             await db.commit()
         
         # Step 2: Approve existing users or create new ones
