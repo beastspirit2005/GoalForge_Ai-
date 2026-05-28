@@ -97,6 +97,24 @@ async def health():
     }
 
 
+@app.get("/seed")
+async def run_seed():
+    from app.core.database import create_tables, async_session
+    from app.schemas.auth_schema import RegisterRequest
+    from app.services.auth_service import register_user
+    
+    try:
+        await create_tables()
+        async with async_session() as db:
+            admin = await register_user(db, RegisterRequest(name='Admin', email='admin@goalforge.ai', password='password123', role='admin', department='HQ'))
+            manager = await register_user(db, RegisterRequest(name='Manager', email='manager@goalforge.ai', password='password123', role='manager', department='Sales'))
+            admin.is_approved = True
+            manager.is_approved = True
+            await db.commit()
+        return {"status": "seeded successfully"}
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
+
 @app.get("/metrics")
 def metrics():
     from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
