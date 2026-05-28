@@ -102,32 +102,36 @@ async def run_seed():
     from app.schemas.auth_schema import RegisterRequest
     from app.services.auth_service import register_user
     from app.core.database import async_session
-    import alembic.config
-    import os
+    from sqlalchemy import text
     
     try:
-        # Run Alembic migrations programmatically
-        alembic_args = [
-            "--raiseerr",
-            "upgrade", "head",
-        ]
-        
-        # Check where alembic.ini is
-        if os.path.exists("alembic.ini"):
-            pass # We are in the right directory
-        elif os.path.exists("backend/alembic.ini"):
-            os.chdir("backend")
-        elif os.path.exists("../alembic.ini"):
-            os.chdir("..")
-            
-        alembic.config.main(argv=alembic_args)
-        
         async with async_session() as db:
+            # 1. Manually add missing columns via raw SQL (ignoring errors if they already exist)
+            try:
+                await db.execute(text("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE;"))
+            except Exception:
+                pass
+            try:
+                await db.execute(text("ALTER TABLE users ADD COLUMN is_approved BOOLEAN DEFAULT FALSE;"))
+            except Exception:
+                pass
+            try:
+                await db.execute(text("ALTER TABLE users ADD COLUMN otp_code VARCHAR;"))
+            except Exception:
+                pass
+            try:
+                await db.execute(text("ALTER TABLE users ADD COLUMN otp_expires_at TIMESTAMP WITH TIME ZONE;"))
+            except Exception:
+                pass
+            await db.commit()
+
+            # 2. Seed Admin & Manager
             admin = await register_user(db, RegisterRequest(name='Admin', email='admin@goalforge.ai', password='password123', role='admin', department='HQ'))
             manager = await register_user(db, RegisterRequest(name='Manager', email='manager@goalforge.ai', password='password123', role='manager', department='Sales'))
             admin.is_approved = True
             manager.is_approved = True
             await db.commit()
+            
         return {"status": "migrations and seed successful"}
     except Exception as e:
         return {"status": "error", "detail": str(e)}
