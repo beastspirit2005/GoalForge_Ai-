@@ -6,6 +6,7 @@ import Link from "next/link"
 import { BarChart3, BriefcaseBusiness, UserRound, Zap, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { apiFetch } from "@/lib/api"
 
 const roles = [
   {
@@ -53,27 +54,10 @@ export default function SignupPage() {
     setError("")
     
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001"
-      const res = await fetch(`${apiUrl}/auth/register`, {
+      await apiFetch("/auth/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role }),
+        body: { name, email, password, role },
       })
-
-      if (!res.ok) {
-        const data = await res.json()
-        let errorMessage = "Failed to register"
-        if (data.detail) {
-          if (typeof data.detail === 'string') {
-            errorMessage = data.detail
-          } else if (Array.isArray(data.detail)) {
-            errorMessage = data.detail.map((e: any) => e.msg).join(", ")
-          } else {
-            errorMessage = JSON.stringify(data.detail)
-          }
-        }
-        throw new Error(errorMessage)
-      }
       
       setSuccess(true)
     } catch (err: unknown) {
