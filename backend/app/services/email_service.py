@@ -21,6 +21,11 @@ def _get_smtp_config():
 
 
 def _send_email(to_email: str, subject: str, text: str, html: str):
+    # Skip actual email sending on Vercel to act as a pure mock/demo
+    if os.environ.get("VERCEL") is not None:
+        print(f"[DEMO MODE] Skipping smtplib SMTP email sending to {to_email} on Vercel.")
+        return
+
     cfg = _get_smtp_config()
     if not cfg["password"]:
         print("Warning: SMTP_PASSWORD is not set. Email not sent.")

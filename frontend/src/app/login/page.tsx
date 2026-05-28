@@ -111,8 +111,8 @@ export default function LoginPage() {
     setError("")
     setSuccessMsg("")
     try {
-      await requestOtpCode(otpEmail)
-      setSuccessMsg("OTP sent to your email! Check your inbox.")
+      const res = await requestOtpCode(otpEmail)
+      setSuccessMsg(res?.message || "OTP sent to your email! Check your inbox.")
       setAuthMode("OTP_CODE")
     } catch (err: any) {
       setError(err?.message || "Failed to send OTP.")

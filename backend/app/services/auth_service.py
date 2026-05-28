@@ -60,7 +60,7 @@ async def update_user(db: AsyncSession, user: User, **kwargs) -> User:
     return user
 
 
-async def generate_and_send_otp(db: AsyncSession, email: str) -> None:
+async def generate_and_send_otp(db: AsyncSession, email: str) -> str:
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
     if not user:
@@ -76,6 +76,8 @@ async def generate_and_send_otp(db: AsyncSession, email: str) -> None:
     # Send OTP via email
     from app.services.email_service import send_otp_email
     send_otp_email(email, user.name, code)
+    
+    return code
 
 
 async def verify_otp_and_login(db: AsyncSession, email: str, code: str) -> User:
