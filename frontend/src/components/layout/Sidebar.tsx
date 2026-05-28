@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
+import BrandLogo from "./BrandLogo"
 
 type NavLink = {
   title: string
@@ -85,15 +86,7 @@ export default function Sidebar({ onClose, isMobile }: SidebarProps = {}) {
       {/* ── Logo area ── */}
       <Link href="/" className="group block">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-300 group-hover:border-slate-300 dark:border-white/[0.08] dark:bg-white/[0.04] dark:backdrop-blur-lg dark:group-hover:border-white/[0.14] dark:group-hover:bg-white/[0.07]">
-          <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-[var(--gf-indigo)] to-[var(--gf-violet)] shadow-lg shadow-[var(--gf-indigo)]/20">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">GoalForge AI</p>
-              <p className="text-[11px] text-slate-500 dark:text-white/40">Performance Intelligence</p>
-            </div>
-          </div>
+          <BrandLogo />
         </div>
       </Link>
 
