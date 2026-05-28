@@ -111,10 +111,14 @@ async def run_seed():
             "--raiseerr",
             "upgrade", "head",
         ]
-        # Change directory to backend so alembic.ini is found
-        current_dir = os.getcwd()
-        if "backend" not in current_dir:
+        
+        # Check where alembic.ini is
+        if os.path.exists("alembic.ini"):
+            pass # We are in the right directory
+        elif os.path.exists("backend/alembic.ini"):
             os.chdir("backend")
+        elif os.path.exists("../alembic.ini"):
+            os.chdir("..")
             
         alembic.config.main(argv=alembic_args)
         
