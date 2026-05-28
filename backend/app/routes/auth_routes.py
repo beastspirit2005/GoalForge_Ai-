@@ -91,8 +91,18 @@ async def upload_avatar(
 
 @router.post("/request-otp", status_code=status.HTTP_200_OK)
 async def request_otp(data: OTPRequest, db: AsyncSession = Depends(get_db)):
-    await generate_and_send_otp(db, data.email)
-    return {"message": "OTP sent successfully"}
+    otp_code = await generate_and_send_otp(db, data.email)
+    
+    # Check if we are running in demo mode
+    is_vercel = os.environ.get("VERCEL") is not None
+    smtp_pass = os.environ.get("SMTP_PASSWORD")
+    
+    if is_vercel or not smtp_pass:
+        return {
+            "message": f"Demo Mode: Use code {otp_code} to log in. (Email sending skipped in production demo)"
+        }
+        
+    return {"message": "OTP sent successfully! Check your inbox."}
 
 
 @router.post("/verify-otp", response_model=TokenResponse)
