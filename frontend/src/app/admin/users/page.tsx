@@ -42,8 +42,19 @@ const roleColors: Record<string, string> = {
   admin: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400",
 }
 
+type User = {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  department: string;
+  active: boolean;
+  is_approved?: boolean;
+  is_active?: boolean;
+}
+
 export default function UsersPage() {
-  const [users, setUsers] = useState(defaultUsers)
+  const [users, setUsers] = useState<User[]>(defaultUsers)
   const [isMounted, setIsMounted] = useState(false)
   
   // Form state
@@ -64,10 +75,20 @@ export default function UsersPage() {
 
   useEffect(() => {
     setIsMounted(true)
-    const stored = window.localStorage.getItem("goalforge.admin.users")
-    if (stored) {
-      setUsers(JSON.parse(stored))
+    const fetchUsers = async () => {
+      try {
+        const token = getStoredToken()
+        const data = await apiFetch<any[]>("/admin/users", { token })
+        setUsers(data)
+      } catch (err) {
+        console.error("Failed to fetch users:", err)
+        const stored = window.localStorage.getItem("goalforge.admin.users")
+        if (stored) {
+          setUsers(JSON.parse(stored))
+        }
+      }
     }
+    fetchUsers()
   }, [])
 
   const saveUsers = (newUsers: typeof defaultUsers) => {
@@ -177,6 +198,28 @@ export default function UsersPage() {
         entityId: id.toString(),
         detail: `Deleted user account for ${name}`
       })
+    }
+  }
+
+  const handleApproveUser = async (id: number, name: string) => {
+    try {
+      const token = getStoredToken()
+      await apiFetch<any>(`/admin/users/${id}/approve`, {
+        method: "POST",
+        token,
+      })
+      setUsers(users.map(u => u.id === id ? { ...u, is_approved: true } : u))
+      addLocalAuditLog({
+        user: "Admin",
+        action: "user_approved",
+        entity: "user",
+        entityId: id.toString(),
+        detail: `Approved user account for ${name}`
+      })
+      alert(`User ${name} approved successfully!`)
+    } catch (err) {
+      console.error("Failed to approve user:", err)
+      alert(err instanceof Error ? err.message : "Failed to approve user")
     }
   }
 
@@ -323,11 +366,11 @@ export default function UsersPage() {
           <CardContent className="p-0 overflow-hidden rounded-xl">
             <Table>
               <TableHeader>
-                <TableRow className="border-b border-slate-200 dark:border-white/[0.08] hover:bg-transparent">
-                  <TableHead className="text-slate-500 dark:text-white/40">Name</TableHead>
-                  <TableHead className="text-slate-500 dark:text-white/40">Email</TableHead>
+                <TableRow className="hover:bg-transparent border-slate-200 dark:border-white/[0.08]">
+                  <TableHead className="w-[250px] text-slate-500 dark:text-white/40">User</TableHead>
                   <TableHead className="text-slate-500 dark:text-white/40">Role</TableHead>
                   <TableHead className="text-slate-500 dark:text-white/40">Department</TableHead>
+                  <TableHead className="text-slate-500 dark:text-white/40">Approval</TableHead>
                   <TableHead className="text-slate-500 dark:text-white/40">Status</TableHead>
                   <TableHead className="text-right text-slate-500 dark:text-white/40">Actions</TableHead>
                 </TableRow>
@@ -336,7 +379,6 @@ export default function UsersPage() {
                 {users.map((user) => (
                   <TableRow key={user.email} className="border-b border-slate-100 dark:border-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/[0.02]">
                     <TableCell className="font-medium text-slate-900 dark:text-white">{user.name}</TableCell>
-                    <TableCell className="text-slate-500 dark:text-white/60">{user.email}</TableCell>
                     <TableCell>
                       <Badge className={`text-xs border-0 ${roleColors[user.role] || roleColors.employee}`}>
                         {user.role}
@@ -344,12 +386,27 @@ export default function UsersPage() {
                     </TableCell>
                     <TableCell className="text-slate-700 dark:text-white/80">{user.department}</TableCell>
                     <TableCell>
-                      <Badge className={user.active ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-0"}>
-                        {user.active ? "Active" : "Inactive"}
+                      <Badge className={user.is_approved !== false ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-0"}>
+                        {user.is_approved !== false ? "Approved" : "Pending"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={(user.active ?? user.is_active ?? true) ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-0"}>
+                        {(user.active ?? user.is_active ?? true) ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {user.is_approved === false && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/40"
+                            onClick={() => handleApproveUser(user.id, user.name)}
+                          >
+                            Approve
+                          </Button>
+                        )}
                         <Button 
                           variant="outline" 
                           size="sm" 

@@ -45,17 +45,17 @@ export async function getCurrentUser(): Promise<User> {
   return apiFetch<User>("/auth/me", { token })
 }
 
-export async function requestOtp(phoneNumber: string): Promise<{ message: string }> {
+export async function requestOtp(email: string): Promise<{ message: string }> {
   return apiFetch<{ message: string }>("/auth/request-otp", {
     method: "POST",
-    body: { phone_number: phoneNumber },
+    body: { email },
   })
 }
 
-export async function verifyOtp(phoneNumber: string, otpCode: string): Promise<AuthResponse> {
+export async function verifyOtp(email: string, otpCode: string): Promise<AuthResponse> {
   const res = await apiFetch<AuthResponse>("/auth/verify-otp", {
     method: "POST",
-    body: { phone_number: phoneNumber, otp_code: otpCode },
+    body: { email, otp_code: otpCode },
   })
   storeToken(res.access_token)
   return res

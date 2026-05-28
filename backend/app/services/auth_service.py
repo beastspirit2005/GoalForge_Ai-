@@ -35,6 +35,9 @@ async def authenticate_user(db: AsyncSession, email: str, password: str) -> User
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
     if user and verify_password(password, user.password_hash):
+        if not user.is_approved:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account pending admin approval")
         return user
     return None
 
@@ -57,12 +60,12 @@ async def update_user(db: AsyncSession, user: User, **kwargs) -> User:
     return user
 
 
-async def generate_and_send_otp(db: AsyncSession, phone_number: str) -> None:
-    result = await db.execute(select(User).where(User.phone_number == phone_number))
+async def generate_and_send_otp(db: AsyncSession, email: str) -> None:
+    result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
     if not user:
         from fastapi import HTTPException, status
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found with this phone number")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found with this email")
     
     # Generate 6-digit code
     code = f"{random.randint(0, 999999):06d}"
@@ -70,17 +73,21 @@ async def generate_and_send_otp(db: AsyncSession, phone_number: str) -> None:
     user.otp_expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
     await db.commit()
     
-    # Simulate SMS sending
-    print(f"\n[SMS Mock] Sending OTP to {phone_number}: {code}\n")
+    # Send OTP via email
+    from app.services.email_service import send_otp_email
+    send_otp_email(email, user.name, code)
 
 
-async def verify_otp_and_login(db: AsyncSession, phone_number: str, code: str) -> User:
-    result = await db.execute(select(User).where(User.phone_number == phone_number))
+async def verify_otp_and_login(db: AsyncSession, email: str, code: str) -> User:
+    result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
     
     from fastapi import HTTPException, status
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        
+    if not user.is_approved:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account pending admin approval")
         
     if not user.otp_code or user.otp_code != code:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP code")

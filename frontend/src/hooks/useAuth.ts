@@ -73,12 +73,12 @@ export function useAuth() {
     return `/${u.role}/dashboard`
   }, [])
 
-  const requestOtpCode = useCallback(async (phoneNumber: string) => {
-    return requestOtp(phoneNumber)
+  const requestOtpCode = useCallback(async (email: string) => {
+    return requestOtp(email)
   }, [])
 
-  const loginWithOtp = useCallback(async (phoneNumber: string, code: string) => {
-    await verifyOtp(phoneNumber, code)
+  const loginWithOtp = useCallback(async (email: string, code: string) => {
+    await verifyOtp(email, code)
     const u = await getCurrentUser()
     setUser(u)
     setIsApiMode(true)
