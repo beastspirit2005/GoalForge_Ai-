@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     # Comma-separated browser origins for CORS (Vercel preview + production URLs)
     CORS_ORIGINS: str = ""
 
+    # Redis Configurations (Leave empty to use in-memory sliding window rate limiting)
+    REDIS_URL: str = ""
+
     # Base Application Config
     APP_NAME: str = "GoalForge AI"
     DEBUG: bool = True
@@ -67,6 +70,7 @@ class Settings(BaseSettings):
         self.SECRET_KEY = (self.SECRET_KEY or "").strip()
         self.GEMINI_API_KEY = (self.GEMINI_API_KEY or "").strip()
         self.CORS_ORIGINS = (self.CORS_ORIGINS or "").strip()
+        self.REDIS_URL = (self.REDIS_URL or "").strip()
         return self
 
     @property
