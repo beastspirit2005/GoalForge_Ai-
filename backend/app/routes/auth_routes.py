@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Request
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Request, Response
 import os
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,7 +33,7 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
+async def login(response: Response, data: LoginRequest, db: AsyncSession = Depends(get_db)):
     user = await authenticate_user(db, data.email, data.password)
     if not user:
         raise HTTPException(
@@ -41,6 +41,15 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
             detail="Invalid email or password",
         )
     token = create_token_for_user(user)
+    
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        max_age=60 * 60 * 24, # 24 hours
+    )
     return TokenResponse(access_token=token)
 
 
@@ -94,20 +103,46 @@ async def request_otp(data: OTPRequest, db: AsyncSession = Depends(get_db)):
     otp_code = await generate_and_send_otp(db, data.email)
     
     # Check if we are running in demo mode
-    is_vercel = os.environ.get("VERCEL") is not None
+    is_demo_mode = os.environ.get("DEMO_MODE", "false").lower() == "true"
     smtp_pass = os.environ.get("SMTP_PASSWORD")
     
-    if is_vercel or not smtp_pass:
+    if is_demo_mode:
         return {
             "message": f"Demo Mode: Use code {otp_code} to log in. (Email sending skipped in production demo)"
         }
+        
+    if not smtp_pass:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Mailing service (SMTP) is not configured on this server."
+        )
         
     return {"message": "OTP sent successfully! Check your inbox."}
 
 
 @router.post("/verify-otp", response_model=TokenResponse)
-async def verify_otp(data: OTPVerify, db: AsyncSession = Depends(get_db)):
+async def verify_otp(response: Response, data: OTPVerify, db: AsyncSession = Depends(get_db)):
     user = await verify_otp_and_login(db, data.email, data.otp_code)
     token = create_token_for_user(user)
+    
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        max_age=60 * 60 * 24, # 24 hours
+    )
     return TokenResponse(access_token=token)
+
+
+@router.post("/logout")
+async def logout(response: Response):
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=True,
+        samesite="strict",
+    )
+    return {"message": "Logged out successfully"}
 

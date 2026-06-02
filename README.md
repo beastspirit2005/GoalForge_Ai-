@@ -232,6 +232,36 @@ If you prefer running the components natively on your system:
 
 ---
 
+## Production vs. Demo Gating (DEMO_MODE)
+
+For security compliance, GoalForge AI restricts the exposure of One-Time Password (OTP) codes in API responses:
+
+* **Production Security**: By default, OTP codes are *never* returned in HTTP responses. Attempting to request an OTP when SMTP is unconfigured will result in an HTTP 500 error, enforcing secure transactional mail pathways in production.
+* **# DEMO-ONLY Bypass**: To run interactive preview deployments without email relays (such as Vercel previews), set the following environment variable in the backend:
+  ```env
+  DEMO_MODE=TRUE
+  ```
+  When active, the backend returns the generated OTP code directly in the response payload for easy copy-pasting.
+
+---
+
+## Docker Ollama Bridge Routing
+
+When running Next.js or FastAPI inside Docker containers, `localhost:11434` resolves internally within the container rather than to your host machine's Ollama instance. To bridge this routing gap:
+
+1. Configure the `OLLAMA_HOST` environment variable for your Next.js server container:
+   * **Windows/macOS (Docker Desktop)**:
+     ```env
+     OLLAMA_HOST=http://host.docker.internal:11434
+     ```
+   * **Linux**:
+     ```env
+     OLLAMA_HOST=http://172.17.0.1:11434
+     ```
+2. The frontend automatically routes query requests through the Next.js API proxy (`/api/ai/ollama`). If the proxy is unconfigured or unreachable, it gracefully falls back to client-side direct browser connection (`http://localhost:11434`).
+
+---
+
 ## Demo Access Credentials
 
 Get started instantly using our pre-seeded simulation profiles:

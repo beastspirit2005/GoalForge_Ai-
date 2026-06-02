@@ -12,6 +12,7 @@ import {
   storeToken,
   requestOtp,
   verifyOtp,
+  logoutUser,
 } from "@/services/auth.service"
 
 // Also keep the demo-mode auth for fallback
@@ -31,31 +32,23 @@ export function useAuth() {
   const [isApiMode, setIsApiMode] = useState(false)
 
   useEffect(() => {
-    // Try API auth first, fallback to demo
-    const token = getStoredToken()
-    if (token) {
-      getCurrentUser()
-        .then((u) => {
-          setUser(u)
-          setIsApiMode(true)
-          setReady(true)
-        })
-        .catch(() => {
-          clearToken()
-          if (isDemoAuthAllowed()) {
-            setUser(getDemoSession())
-          } else {
-            setUser(null)
-          }
-          setReady(true)
-        })
-    } else if (isDemoAuthAllowed()) {
-      setUser(getDemoSession())
-      setReady(true)
-    } else {
-      setUser(null)
-      setReady(true)
-    }
+    // Attempt to load current user via API. Since cookies are handled automatically by the browser,
+    // we fetch /me directly.
+    getCurrentUser()
+      .then((u) => {
+        setUser(u)
+        setIsApiMode(true)
+        setReady(true)
+      })
+      .catch(() => {
+        clearToken()
+        if (isDemoAuthAllowed()) {
+          setUser(getDemoSession())
+        } else {
+          setUser(null)
+        }
+        setReady(true)
+      })
   }, [])
 
   const login = useCallback((role: DemoRole) => {
@@ -86,8 +79,8 @@ export function useAuth() {
   }, [])
 
   const logout = useCallback(() => {
+    logoutUser().catch((err: any) => console.error("Logout request failed:", err))
     clearDemoSession()
-    clearToken()
     setUser(null)
     setIsApiMode(false)
   }, [])
