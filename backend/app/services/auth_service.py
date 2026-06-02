@@ -202,3 +202,29 @@ async def verify_otp_and_login(db: AsyncSession, email: str, code: str) -> User:
 
     return user
 
+
+async def change_user_password(
+    db: AsyncSession, user: User, current_password: str, new_password: str
+) -> User:
+    """Verify current password, hash and update with new password, and wipe OTP/lockout state."""
+    from fastapi import HTTPException, status
+    from app.core.security import verify_password, hash_password
+
+    if not verify_password(current_password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect current password.",
+        )
+
+    user.password_hash = hash_password(new_password)
+    user.otp_code = None
+    user.otp_expires_at = None
+    user.otp_failed_attempts = 0
+    user.otp_lockout_count = 0
+    user.otp_locked_until = None
+    
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+

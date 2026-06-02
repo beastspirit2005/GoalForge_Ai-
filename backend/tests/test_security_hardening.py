@@ -142,3 +142,95 @@ async def test_redis_rate_limiter_under_limit():
         fallback_registry={}
     )
     assert is_limited is False
+
+
+def test_rate_limiter_x_forwarded_for():
+    """Verify that RateLimitMiddleware extracts client IP from X-Forwarded-For header."""
+    from starlette.requests import Request
+    from starlette.types import Scope
+    from app.middleware.rate_limit import RateLimitMiddleware
+    
+    middleware = RateLimitMiddleware(None)
+    
+    # Mock ASGI scope
+    scope: Scope = {
+        "type": "http",
+        "method": "GET",
+        "path": "/ai/copilot",
+        "headers": [(b"x-forwarded-for", b"203.0.113.195, 70.41.3.18")],
+    }
+    req = Request(scope)
+    
+    # We can mock call_next
+    async def call_next(r):
+        return r
+        
+    # We want to check that it extracts client_ip as 203.0.113.195
+    extracted_ip = None
+    async def mock_is_rate_limited(client_ip, limit, window, endpoint_type, fallback_registry):
+        nonlocal extracted_ip
+        extracted_ip = client_ip
+        return False
+        
+    middleware._is_rate_limited = mock_is_rate_limited
+    
+    # Run dispatch
+    import asyncio
+    asyncio.run(middleware.dispatch(req, call_next))
+    
+    assert extracted_ip == "203.0.113.195"
+
+
+def test_change_password_success():
+    """Verify that password change works, hashes the new password, and resets OTP/lockout state."""
+    local_client = TestClient(app, base_url="https://testserver")
+    # 1. Log in to get authentication cookie
+    login_res = local_client.post("/auth/login", json={"email": "test_sec_emp@goalforge.ai", "password": "password123"})
+    assert login_res.status_code == 200
+    
+    # 2. Call change-password route
+    change_res = local_client.post(
+        "/auth/change-password",
+        json={"current_password": "password123", "new_password": "newpassword456"}
+    )
+    assert change_res.status_code == 200
+    
+    # 3. Try logging in with the old password (should fail)
+    old_login = local_client.post("/auth/login", json={"email": "test_sec_emp@goalforge.ai", "password": "password123"})
+    assert old_login.status_code == 401
+    
+    # 4. Try logging in with the new password (should succeed)
+    new_login = local_client.post("/auth/login", json={"email": "test_sec_emp@goalforge.ai", "password": "newpassword456"})
+    assert new_login.status_code == 200
+    
+    # 5. Verify Database User record directly to ensure all OTP/lockout fields are cleared
+    async def verify_db():
+        async with async_session() as db:
+            from sqlalchemy import select
+            result = await db.execute(select(User).where(User.email == "test_sec_emp@goalforge.ai"))
+            user = result.scalar_one()
+            assert user.otp_code is None
+            assert user.otp_expires_at is None
+            assert user.otp_failed_attempts == 0
+            assert user.otp_lockout_count == 0
+            assert user.otp_locked_until is None
+            
+    import asyncio
+    asyncio.run(verify_db())
+
+
+def test_change_password_incorrect_current():
+    """Verify that password change fails when current password is wrong."""
+    local_client = TestClient(app, base_url="https://testserver")
+    login_res = local_client.post("/auth/login", json={"email": "test_sec_emp@goalforge.ai", "password": "password123"})
+    assert login_res.status_code == 200
+    
+    change_res = local_client.post(
+        "/auth/change-password",
+        json={"current_password": "wrongpassword", "new_password": "newpassword456"}
+    )
+    assert change_res.status_code == 400
+    assert "Incorrect current password" in change_res.json()["detail"]
+
+
+

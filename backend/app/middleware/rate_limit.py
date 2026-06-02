@@ -66,8 +66,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return False
 
     async def dispatch(self, request: Request, call_next):
-        # Safely extract client IP, fallback to loopback if behind a proxy
-        client_ip = request.client.host if request.client else "127.0.0.1"
+        # Safely extract client IP, evaluating X-Forwarded-For proxy headers when available
+        forwarded_for = request.headers.get("x-forwarded-for")
+        if forwarded_for:
+            # X-Forwarded-For is a comma-separated list of IPs: Client, Proxy1, Proxy2...
+            client_ip = forwarded_for.split(",")[0].strip()
+        else:
+            client_ip = request.client.host if request.client else "127.0.0.1"
         path = request.url.path
         
         # 1. Protect expensive AI Copilot chat endpoints -> Max 10 requests / minute
