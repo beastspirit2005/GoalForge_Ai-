@@ -76,3 +76,69 @@ def test_secure_cookie_logout():
     assert response.status_code == 200
     cookie = response.cookies.get("access_token")
     assert cookie is None or cookie == ""
+
+
+@pytest.mark.asyncio
+async def test_redis_rate_limiter_limit_exceeded():
+    """Verify that Redis-backed rate limiter blocks requests when limit is exceeded."""
+    from app.middleware.rate_limit import RateLimitMiddleware
+    
+    class MockRedisPipeline:
+        async def __aenter__(self): return self
+        async def __aexit__(self, exc_type, exc_val, exc_tb): pass
+        def zadd(self, key, mapping): pass
+        def zremrangebyscore(self, key, min_val, max_val): pass
+        def zcard(self, key): pass
+        def expire(self, key, seconds): pass
+        async def execute(self):
+            # zadd=1, zremrange=0, zcard=11 (which is > 10, thus blocked), expire=True
+            return [1, 0, 11, True]
+
+    class MockRedisClient:
+        def pipeline(self, transaction=True):
+            return MockRedisPipeline()
+
+    middleware = RateLimitMiddleware(None)
+    middleware.redis_client = MockRedisClient()
+    
+    is_limited = await middleware._is_rate_limited(
+        client_ip="127.0.0.1",
+        limit=10,
+        window=60,
+        endpoint_type="ai",
+        fallback_registry={}
+    )
+    assert is_limited is True
+
+
+@pytest.mark.asyncio
+async def test_redis_rate_limiter_under_limit():
+    """Verify that Redis-backed rate limiter allows requests when under the limit."""
+    from app.middleware.rate_limit import RateLimitMiddleware
+    
+    class MockRedisPipeline:
+        async def __aenter__(self): return self
+        async def __aexit__(self, exc_type, exc_val, exc_tb): pass
+        def zadd(self, key, mapping): pass
+        def zremrangebyscore(self, key, min_val, max_val): pass
+        def zcard(self, key): pass
+        def expire(self, key, seconds): pass
+        async def execute(self):
+            # zadd=1, zremrange=0, zcard=5 (which is <= 10, thus allowed), expire=True
+            return [1, 0, 5, True]
+
+    class MockRedisClient:
+        def pipeline(self, transaction=True):
+            return MockRedisPipeline()
+
+    middleware = RateLimitMiddleware(None)
+    middleware.redis_client = MockRedisClient()
+    
+    is_limited = await middleware._is_rate_limited(
+        client_ip="127.0.0.1",
+        limit=10,
+        window=60,
+        endpoint_type="ai",
+        fallback_registry={}
+    )
+    assert is_limited is False

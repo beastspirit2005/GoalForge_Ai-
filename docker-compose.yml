@@ -14,6 +14,13 @@ services:
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
       - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
 
+  # Redis rate limiting database
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
   # FastAPI Python Backend Container
   backend:
     image: 1065925/goalforge-backend:latest
@@ -28,11 +35,13 @@ services:
       SECRET_KEY: ${SECRET_KEY:-goalforge-super-secret-change-in-production}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
+      REDIS_URL: redis://redis:6379
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
       - db
       - ollama
+      - redis
 
   # Next.js Frontend Container
   frontend:
