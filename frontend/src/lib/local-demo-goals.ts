@@ -3,6 +3,7 @@
 import { managerQueue, type Goal, type GoalRisk, type GoalStatus } from "@/lib/demo-data"
 import type { GeneratePlanResponse } from "@/services/ai.service"
 import { addLocalNotification } from "@/lib/local-notifications"
+import { addLocalAuditLog } from "@/lib/local-audit-logs"
 
 const LOCAL_GOALS_KEY = "goalforge.demo.goals"
 
@@ -84,6 +85,14 @@ export function addLocalDemoGoal(input: LocalGoalInput) {
   }
 
   window.localStorage.setItem(LOCAL_GOALS_KEY, JSON.stringify([nextGoal, ...current]))
+
+  addLocalAuditLog({
+    user: input.ownerName || "Aarav Mehta",
+    action: "goal_created",
+    entity: "goal",
+    entityId: id,
+    detail: `Created '${input.title}'`,
+  })
 
   // Add to manager approval queue too
   try {
