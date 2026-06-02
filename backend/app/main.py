@@ -106,28 +106,45 @@ async def db_migrate():
     from sqlalchemy import text
     
     try:
-        async with async_session() as db:
-            # Add missing columns one-by-one (SQLite + PostgreSQL compatible)
-            _migration_columns = [
-                ("is_active", "BOOLEAN DEFAULT TRUE"),
-                ("is_approved", "BOOLEAN DEFAULT FALSE"),
-                ("otp_code", "VARCHAR"),
-                ("otp_expires_at", "TIMESTAMP"),
-                ("otp_failed_attempts", "INTEGER DEFAULT 0"),
-                ("otp_lockout_count", "INTEGER DEFAULT 0"),
-                ("otp_locked_until", "TIMESTAMP"),
-                ("phone_number", "VARCHAR"),
-                ("google_id", "VARCHAR"),
-                ("microsoft_id", "VARCHAR"),
-                ("profile_picture_url", "VARCHAR"),
-            ]
-            for col_name, col_type in _migration_columns:
-                try:
+        # Add missing columns one-by-one in isolated transactions
+        _migration_columns = [
+            ("is_active", "BOOLEAN DEFAULT TRUE"),
+            ("is_approved", "BOOLEAN DEFAULT FALSE"),
+            ("otp_code", "VARCHAR"),
+            ("otp_expires_at", "TIMESTAMP"),
+            ("otp_failed_attempts", "INTEGER DEFAULT 0"),
+            ("otp_lockout_count", "INTEGER DEFAULT 0"),
+            ("otp_locked_until", "TIMESTAMP"),
+            ("phone_number", "VARCHAR"),
+            ("google_id", "VARCHAR"),
+            ("microsoft_id", "VARCHAR"),
+            ("profile_picture_url", "VARCHAR"),
+        ]
+        for col_name, col_type in _migration_columns:
+            try:
+                async with async_session() as db:
                     await db.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
-                except Exception:
-                    pass  # Column already exists
-            # Fix the auto-increment sequences on PostgreSQL in development to prevent duplicate key violations
-            env = getattr(app.state, "env", "development")
+                    await db.commit()
+            except Exception:
+                pass  # Column already exists or transaction aborted, ignore and try next
+
+        # Add missing columns to escalations one-by-one in isolated transactions
+        _escalation_columns = [
+            ("admin_remarks", "TEXT"),
+            ("resolution_note", "TEXT"),
+            ("resolved_at", "TIMESTAMP WITH TIME ZONE"),
+        ]
+        for col_name, col_type in _escalation_columns:
+            try:
+                async with async_session() as db:
+                    await db.execute(text(f"ALTER TABLE escalations ADD COLUMN {col_name} {col_type}"))
+                    await db.commit()
+            except Exception:
+                pass
+
+        # Fix the auto-increment sequences on PostgreSQL in development to prevent duplicate key violations
+        env = getattr(app.state, "env", "development")
+        async with async_session() as db:
             if env == "development" and db.bind.dialect.name == "postgresql":
                 for table, col in [
                     ("users", "id"),
@@ -150,11 +167,11 @@ async def db_migrate():
                                 false
                             );
                         """))
+                        await db.commit()
                     except Exception as seq_err:
                         import logging
                         logging.warning(f"Skipping sequence reset for {table}: {seq_err}")
-            await db.commit()
-            
+
             # Verify columns exist
             result = await db.execute(text(
                 "SELECT column_name FROM information_schema.columns WHERE table_name = 'users' ORDER BY ordinal_position;"
@@ -169,34 +186,50 @@ async def db_migrate():
 
 @app.get("/seed")
 async def run_seed():
-    """Run migrations first, then seed admin/manager in a fresh session."""
+    """Run migrations first, then seed admin/manager/employee in a fresh session."""
     from app.core.database import async_session
     from sqlalchemy import text
     
     try:
-        # Step 1: Migrate in its own session
-        async with async_session() as db:
-            # Add missing columns one-by-one (SQLite + PostgreSQL compatible)
-            _migration_columns = [
-                ("is_active", "BOOLEAN DEFAULT TRUE"),
-                ("is_approved", "BOOLEAN DEFAULT FALSE"),
-                ("otp_code", "VARCHAR"),
-                ("otp_expires_at", "TIMESTAMP"),
-                ("otp_failed_attempts", "INTEGER DEFAULT 0"),
-                ("otp_lockout_count", "INTEGER DEFAULT 0"),
-                ("otp_locked_until", "TIMESTAMP"),
-                ("phone_number", "VARCHAR"),
-                ("google_id", "VARCHAR"),
-                ("microsoft_id", "VARCHAR"),
-                ("profile_picture_url", "VARCHAR"),
-            ]
-            for col_name, col_type in _migration_columns:
-                try:
+        # Step 1: Migrate using isolated transactions
+        _migration_columns = [
+            ("is_active", "BOOLEAN DEFAULT TRUE"),
+            ("is_approved", "BOOLEAN DEFAULT FALSE"),
+            ("otp_code", "VARCHAR"),
+            ("otp_expires_at", "TIMESTAMP"),
+            ("otp_failed_attempts", "INTEGER DEFAULT 0"),
+            ("otp_lockout_count", "INTEGER DEFAULT 0"),
+            ("otp_locked_until", "TIMESTAMP"),
+            ("phone_number", "VARCHAR"),
+            ("google_id", "VARCHAR"),
+            ("microsoft_id", "VARCHAR"),
+            ("profile_picture_url", "VARCHAR"),
+        ]
+        for col_name, col_type in _migration_columns:
+            try:
+                async with async_session() as db:
                     await db.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
-                except Exception:
-                    pass  # Column already exists
-            # Fix the auto-increment sequences on PostgreSQL in development to prevent duplicate key violations
-            env = getattr(app.state, "env", "development")
+                    await db.commit()
+            except Exception:
+                pass
+
+        # Add missing columns to escalations one-by-one in isolated transactions
+        _escalation_columns = [
+            ("admin_remarks", "TEXT"),
+            ("resolution_note", "TEXT"),
+            ("resolved_at", "TIMESTAMP WITH TIME ZONE"),
+        ]
+        for col_name, col_type in _escalation_columns:
+            try:
+                async with async_session() as db:
+                    await db.execute(text(f"ALTER TABLE escalations ADD COLUMN {col_name} {col_type}"))
+                    await db.commit()
+            except Exception:
+                pass
+
+        # Fix PostgreSQL auto-increment sequences
+        env = getattr(app.state, "env", "development")
+        async with async_session() as db:
             if env == "development" and db.bind.dialect.name == "postgresql":
                 for table, col in [
                     ("users", "id"),
@@ -219,10 +252,10 @@ async def run_seed():
                                 false
                             );
                         """))
+                        await db.commit()
                     except Exception as seq_err:
                         import logging
                         logging.warning(f"Skipping sequence reset for {table}: {seq_err}")
-            await db.commit()
         
         # Step 2: Approve existing users or create new ones
         from sqlalchemy import select
@@ -233,6 +266,7 @@ async def run_seed():
             for email, name, role, dept in [
                 ('admin@goalforge.ai', 'Admin', 'admin', 'HQ'),
                 ('manager@goalforge.ai', 'Manager', 'manager', 'Sales'),
+                ('employee@goalforge.ai', 'Employee', 'employee', 'Engineering'),
             ]:
                 result = await db2.execute(select(User).where(User.email == email))
                 user = result.scalar_one_or_none()
