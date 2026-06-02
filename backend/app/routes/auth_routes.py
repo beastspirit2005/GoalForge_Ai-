@@ -14,6 +14,7 @@ from app.schemas.auth_schema import (
     TokenResponse,
     UserResponse,
     UserUpdate,
+    PasswordChangeRequest,
 )
 from app.services.auth_service import (
     authenticate_user,
@@ -21,6 +22,7 @@ from app.services.auth_service import (
     generate_and_send_otp,
     register_user,
     verify_otp_and_login,
+    change_user_password,
 )
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -145,4 +147,16 @@ async def logout(response: Response):
         samesite="strict",
     )
     return {"message": "Logged out successfully"}
+
+
+@router.post("/change-password", response_model=UserResponse)
+async def change_password(
+    data: PasswordChangeRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    user = await change_user_password(
+        db, current_user, data.current_password, data.new_password
+    )
+    return user
 

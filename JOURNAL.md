@@ -55,11 +55,11 @@ The OTP subsystem enforces the following hardened security practices:
 
 ---
 
-## Remaining Hardening (Tracked)
+## Security Hardening Controls
 
-| Item | Status | Notes |
-| :--- | :--- | :--- |
-| httpOnly cookie JWT storage | 🔲 Planned | Requires frontend-wide refactor (localStorage → cookie) |
-| Redis-backed rate limiting (`slowapi`) | 🔲 Planned | Required for serverless scaling |
-| `X-Forwarded-For` aware rate limiting | 🔲 Planned | Needed behind reverse proxies |
-| Password change endpoint + OTP invalidation | 🔲 Planned | Must wipe OTP state on password change |
+All planned hardening items have been implemented and verified:
+- **httpOnly cookie JWT storage**: Token cookies are configured with httpOnly, Secure, SameSite=Strict.
+- **Redis-backed rate limiting**: Implemented Redis Sorted Set sliding-window with auto-fallback to in-memory registries.
+- **`X-Forwarded-For` aware rate limiting**: Parses proxy headers to correctly identify client IPs behind load balancers/reverse proxies.
+- **Password change endpoint + OTP invalidation**: POST `/auth/change-password` endpoint verifies current password, hashes new password, and invalidates all active OTP state and progressive lockouts.
+
