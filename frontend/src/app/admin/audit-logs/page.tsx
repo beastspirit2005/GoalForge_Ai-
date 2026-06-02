@@ -20,6 +20,9 @@ const actionColors: Record<string, string> = {
   goal_unlocked: "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20",
   goal_locked: "bg-slate-500/10 text-slate-400 border border-slate-500/20",
   user_updated: "bg-orange-500/10 text-orange-400 border border-orange-500/20",
+  escalation_created: "bg-rose-500/10 text-rose-400 border border-rose-500/20",
+  escalation_acknowledged: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
+  escalation_resolved: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
 }
 
 export default function AuditLogsPage() {
