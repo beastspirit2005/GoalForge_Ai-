@@ -60,3 +60,10 @@ export async function verifyOtp(email: string, otpCode: string): Promise<AuthRes
   storeToken(res.access_token)
   return res
 }
+
+export async function logoutUser(): Promise<{ message: string }> {
+  clearToken()
+  return apiFetch<{ message: string }>("/auth/logout", {
+    method: "POST",
+  })
+}

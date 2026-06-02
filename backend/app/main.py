@@ -27,6 +27,8 @@ from app.middleware.rate_limit import RateLimitMiddleware
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Create DB tables on startup."""
+    import os
+    app.state.env = os.getenv("ENV", "development")
     await create_tables()
     yield
 
@@ -124,31 +126,33 @@ async def db_migrate():
                     await db.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
                 except Exception:
                     pass  # Column already exists
-            # Fix the auto-increment sequences for ALL tables in the database to prevent duplicate key violations
-            for table, col in [
-                ("users", "id"),
-                ("audit_logs", "id"),
-                ("goals", "id"),
-                ("checkins", "id"),
-                ("cycles", "id"),
-                ("escalations", "id"),
-                ("milestones", "id"),
-                ("notifications", "id"),
-                ("performance_scores", "id"),
-                ("recognitions", "id"),
-                ("shared_goals", "id"),
-            ]:
-                try:
-                    await db.execute(text(f"""
-                        SELECT setval(
-                            pg_get_serial_sequence('{table}', '{col}'), 
-                            COALESCE((SELECT MAX({col}) FROM {table}), 0) + 1, 
-                            false
-                        );
-                    """))
-                except Exception as seq_err:
-                    import logging
-                    logging.warning(f"Skipping sequence reset for {table}: {seq_err}")
+            # Fix the auto-increment sequences on PostgreSQL in development to prevent duplicate key violations
+            env = getattr(app.state, "env", "development")
+            if env == "development" and db.bind.dialect.name == "postgresql":
+                for table, col in [
+                    ("users", "id"),
+                    ("audit_logs", "id"),
+                    ("goals", "id"),
+                    ("checkins", "id"),
+                    ("cycles", "id"),
+                    ("escalations", "id"),
+                    ("milestones", "id"),
+                    ("notifications", "id"),
+                    ("performance_scores", "id"),
+                    ("recognitions", "id"),
+                    ("shared_goals", "id"),
+                ]:
+                    try:
+                        await db.execute(text(f"""
+                            SELECT setval(
+                                pg_get_serial_sequence('{table}', '{col}'), 
+                                COALESCE((SELECT MAX({col}) FROM {table}), 0) + 1, 
+                                false
+                            );
+                        """))
+                    except Exception as seq_err:
+                        import logging
+                        logging.warning(f"Skipping sequence reset for {table}: {seq_err}")
             await db.commit()
             
             # Verify columns exist
@@ -191,31 +195,33 @@ async def run_seed():
                     await db.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
                 except Exception:
                     pass  # Column already exists
-            # Fix the auto-increment sequences for ALL tables in the database to prevent duplicate key violations
-            for table, col in [
-                ("users", "id"),
-                ("audit_logs", "id"),
-                ("goals", "id"),
-                ("checkins", "id"),
-                ("cycles", "id"),
-                ("escalations", "id"),
-                ("milestones", "id"),
-                ("notifications", "id"),
-                ("performance_scores", "id"),
-                ("recognitions", "id"),
-                ("shared_goals", "id"),
-            ]:
-                try:
-                    await db.execute(text(f"""
-                        SELECT setval(
-                            pg_get_serial_sequence('{table}', '{col}'), 
-                            COALESCE((SELECT MAX({col}) FROM {table}), 0) + 1, 
-                            false
-                        );
-                    """))
-                except Exception as seq_err:
-                    import logging
-                    logging.warning(f"Skipping sequence reset for {table}: {seq_err}")
+            # Fix the auto-increment sequences on PostgreSQL in development to prevent duplicate key violations
+            env = getattr(app.state, "env", "development")
+            if env == "development" and db.bind.dialect.name == "postgresql":
+                for table, col in [
+                    ("users", "id"),
+                    ("audit_logs", "id"),
+                    ("goals", "id"),
+                    ("checkins", "id"),
+                    ("cycles", "id"),
+                    ("escalations", "id"),
+                    ("milestones", "id"),
+                    ("notifications", "id"),
+                    ("performance_scores", "id"),
+                    ("recognitions", "id"),
+                    ("shared_goals", "id"),
+                ]:
+                    try:
+                        await db.execute(text(f"""
+                            SELECT setval(
+                                pg_get_serial_sequence('{table}', '{col}'), 
+                                COALESCE((SELECT MAX({col}) FROM {table}), 0) + 1, 
+                                false
+                            );
+                        """))
+                    except Exception as seq_err:
+                        import logging
+                        logging.warning(f"Skipping sequence reset for {table}: {seq_err}")
             await db.commit()
         
         # Step 2: Approve existing users or create new ones

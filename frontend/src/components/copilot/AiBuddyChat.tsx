@@ -236,9 +236,23 @@ export function AiBuddyChat() {
 
   useEffect(() => {
     const fetchModels = async () => {
+      let res;
       try {
-        const res = await fetch("http://localhost:11434/api/tags")
-        if (res.ok) {
+        // Try Next.js proxy route first (essential for Docker environments)
+        res = await fetch("/api/ai/ollama/api/tags")
+        if (!res.ok) throw new Error("Proxy failed")
+      } catch {
+        try {
+          // Fallback to client browser direct access (localhost)
+          res = await fetch("http://localhost:11434/api/tags")
+        } catch {
+          console.log('[AI Buddy] Local Ollama not available')
+          return
+        }
+      }
+
+      try {
+        if (res && res.ok) {
           const data = await res.json()
           const models = data.models?.map((m: any) => m.name) || []
           if (models.length > 0) {
@@ -248,8 +262,8 @@ export function AiBuddyChat() {
             }
           }
         }
-      } catch {
-        console.log('[AI Buddy] Local Ollama not available')
+      } catch (err) {
+        console.warn("[AI Buddy] Error parsing Ollama models", err)
       }
     }
     fetchModels()
@@ -323,6 +337,39 @@ export function AiBuddyChat() {
       },
     })
   }
+  
+  const queryOllama = async (prompt: string, model: string) => {
+    const payload = {
+      model,
+      prompt,
+      stream: false,
+      options: {
+        num_predict: 250, // Limit generated tokens
+        num_ctx: 2048,    // Restrict context window size to save RAM/VRAM
+      }
+    };
+    
+    let res;
+    try {
+      // 1. Try Next.js proxy route first (Docker environment compatible)
+      res = await fetch("/api/ai/ollama/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Proxy request failed");
+    } catch {
+      // 2. Fallback to client browser direct access (localhost)
+      res = await fetch("http://localhost:11434/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Local Ollama direct request failed");
+    }
+    return res.json();
+  };
+
 
   const applyMessages = useCallback(
     (nextMessages: ChatMessage[], title?: string) => {
@@ -490,21 +537,7 @@ ${userMessage}
 
 Respond in a helpful, conversational, and professional tone. Keep it concise, actionable, and formatted in Markdown. Focus entirely on the user's performance and the provided context. If they ask a general question, guide it back to their goals.`
         
-        const directRes = await fetch("http://localhost:11434/api/generate", {
-          method: "POST",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({
-            model: selectedOllamaModel || ollamaModels[0] || "llama3",
-            prompt: prompt,
-            stream: false,
-            options: {
-              num_predict: 250, // Limit generated tokens
-              num_ctx: 2048,    // Restrict context window size to save RAM/VRAM
-            }
-          }),
-        })
-        if (!directRes.ok) throw new Error("Local Ollama is not responding")
-        const data = await directRes.json()
+        const data = await queryOllama(prompt, selectedOllamaModel || ollamaModels[0] || "llama3")
         res = { response: data.response, source: `ollama (${selectedOllamaModel || "llama3"})` }
       } else {
         res = await runBackendCopilot(
@@ -596,21 +629,7 @@ ${lastQuery}
 
 Respond in a helpful, conversational, and professional tone. Keep it concise, actionable, and formatted in Markdown. Focus entirely on the user's performance and the provided context. If they ask a general question, guide it back to their goals.`
         
-        const directRes = await fetch("http://localhost:11434/api/generate", {
-          method: "POST",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({
-            model: localModel || "llama3",
-            prompt: prompt,
-            stream: false,
-            options: {
-              num_predict: 250, // Limit maximum returned tokens
-              num_ctx: 2048,    // Limit context window size to save RAM/VRAM
-            }
-          }),
-        })
-        if (!directRes.ok) throw new Error("Local Ollama is not responding")
-        const data = await directRes.json()
+        const data = await queryOllama(prompt, localModel || "llama3")
         res = { response: data.response, source: `ollama (${localModel || "llama3"})` }
       } else {
         res = await runBackendCopilot(

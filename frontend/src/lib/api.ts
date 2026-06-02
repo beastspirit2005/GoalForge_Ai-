@@ -57,6 +57,7 @@ export async function apiFetch<T = unknown>(
       headers,
       body: body ? JSON.stringify(body) : undefined,
       signal: controller.signal,
+      credentials: "include",
     })
 
     clearTimeout(timeoutId)
