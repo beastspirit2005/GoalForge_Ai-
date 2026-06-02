@@ -105,17 +105,25 @@ async def db_migrate():
     
     try:
         async with async_session() as db:
-            await db.execute(text("""
-                ALTER TABLE users 
-                ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE,
-                ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE,
-                ADD COLUMN IF NOT EXISTS otp_code VARCHAR,
-                ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMP WITH TIME ZONE,
-                ADD COLUMN IF NOT EXISTS phone_number VARCHAR,
-                ADD COLUMN IF NOT EXISTS google_id VARCHAR,
-                ADD COLUMN IF NOT EXISTS microsoft_id VARCHAR,
-                ADD COLUMN IF NOT EXISTS profile_picture_url VARCHAR;
-            """))
+            # Add missing columns one-by-one (SQLite + PostgreSQL compatible)
+            _migration_columns = [
+                ("is_active", "BOOLEAN DEFAULT TRUE"),
+                ("is_approved", "BOOLEAN DEFAULT FALSE"),
+                ("otp_code", "VARCHAR"),
+                ("otp_expires_at", "TIMESTAMP"),
+                ("otp_failed_attempts", "INTEGER DEFAULT 0"),
+                ("otp_lockout_count", "INTEGER DEFAULT 0"),
+                ("otp_locked_until", "TIMESTAMP"),
+                ("phone_number", "VARCHAR"),
+                ("google_id", "VARCHAR"),
+                ("microsoft_id", "VARCHAR"),
+                ("profile_picture_url", "VARCHAR"),
+            ]
+            for col_name, col_type in _migration_columns:
+                try:
+                    await db.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
+                except Exception:
+                    pass  # Column already exists
             # Fix the auto-increment sequences for ALL tables in the database to prevent duplicate key violations
             for table, col in [
                 ("users", "id"),
@@ -164,17 +172,25 @@ async def run_seed():
     try:
         # Step 1: Migrate in its own session
         async with async_session() as db:
-            await db.execute(text("""
-                ALTER TABLE users 
-                ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE,
-                ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE,
-                ADD COLUMN IF NOT EXISTS otp_code VARCHAR,
-                ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMP WITH TIME ZONE,
-                ADD COLUMN IF NOT EXISTS phone_number VARCHAR,
-                ADD COLUMN IF NOT EXISTS google_id VARCHAR,
-                ADD COLUMN IF NOT EXISTS microsoft_id VARCHAR,
-                ADD COLUMN IF NOT EXISTS profile_picture_url VARCHAR;
-            """))
+            # Add missing columns one-by-one (SQLite + PostgreSQL compatible)
+            _migration_columns = [
+                ("is_active", "BOOLEAN DEFAULT TRUE"),
+                ("is_approved", "BOOLEAN DEFAULT FALSE"),
+                ("otp_code", "VARCHAR"),
+                ("otp_expires_at", "TIMESTAMP"),
+                ("otp_failed_attempts", "INTEGER DEFAULT 0"),
+                ("otp_lockout_count", "INTEGER DEFAULT 0"),
+                ("otp_locked_until", "TIMESTAMP"),
+                ("phone_number", "VARCHAR"),
+                ("google_id", "VARCHAR"),
+                ("microsoft_id", "VARCHAR"),
+                ("profile_picture_url", "VARCHAR"),
+            ]
+            for col_name, col_type in _migration_columns:
+                try:
+                    await db.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
+                except Exception:
+                    pass  # Column already exists
             # Fix the auto-increment sequences for ALL tables in the database to prevent duplicate key violations
             for table, col in [
                 ("users", "id"),
