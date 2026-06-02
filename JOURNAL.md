@@ -8,9 +8,9 @@ This journal documents the security posture, operational guidelines, and archite
 
 | Control | Implementation | Prod Status |
 | :--- | :--- | :--- |
-| **Auth** | JWT (HS256) + Bcrypt password hashing | ✅ Hardened |
+| **Auth** | Secure `httpOnly` cookie-based JWT storage + Bcrypt | ✅ Hardened |
 | **RBAC** | `Depends(require_role)` + `RoleMiddleware` fallback | ✅ Dual-enforced |
-| **Rate Limit** | In-memory sliding window (per-IP) | ⚠️ Needs Redis for serverless |
+| **Rate Limit** | Redis Sorted Set sliding-window (with local in-memory fallback) | ✅ Hardened |
 | **CORS** | Explicit domain list via `CORS_ORIGINS` env | ✅ Secure |
 | **DB Integrity** | Alembic + idempotent `setval` startup migration | ✅ Safe |
 | **OTP Security** | `secrets` CSPRNG + wipe-on-mismatch + progressive lockout | ✅ Hardened |
