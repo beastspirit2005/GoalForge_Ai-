@@ -123,10 +123,12 @@ Engineered to adhere to high-grade corporate security compliance:
     | 3rd | 15 minutes | Auto-unlock |
     | 4th+ | Permanent | Admin must re-enable |
 
+*   **Secure Password-Change Routing:** The `/auth/change-password` endpoint explicitly invalidates active OTP codes and wipes all progressive lockout strikes and lock timers, ensuring complete session coherence.
 *   **Dual-Enforced Role Isolation (RBAC):** Route guards via `Depends(require_role)` and a global `RoleMiddleware` fallback verify JSON Web Tokens (JWT) and evaluate exact role access at two independent layers.
 *   **New User Approval Workflow:** Self-registered accounts require an explicit Admin or Manager approval before gaining system access, preventing unauthorized data exposure.
 *   **Comprehensive Audit Logs:** Chronological record of critical operations—account creations, status changes, approvals, rejections, and escalations—providing clear, immutable accountability.
-*   **Production Observability:** Active request tracing (X-Trace-ID), server-side rate limits, database pools, and continuous system health checks.
+*   **Production Observability:** Active request tracing (X-Trace-ID), server-side Redis sliding-window rate limits (evaluating `X-Forwarded-For` proxy headers behind load balancers/ingress), database pools, and continuous system health checks.
+
 
 ---
 
