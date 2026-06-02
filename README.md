@@ -113,8 +113,17 @@ GoalForge AI goes beyond static status indicators to provide proactive performan
 
 ### 5. Enterprise Security, Audits and Observability
 Engineered to adhere to high-grade corporate security compliance:
-*   **Secure Email OTP Authentication:** Features passwordless login fallback and account verification via Brevo SMTP, ensuring reliable, fast, and secure delivery of one-time passwords directly to employee inboxes.
-*   **Rigid Role Isolation:** Route guards and dependency injection in the backend verify JSON Web Tokens (JWT) and evaluate exact role access.
+*   **Secure Email OTP Authentication:** Features passwordless login fallback and account verification via Brevo SMTP. OTP codes are generated using Python's `secrets` module (OS-level CSPRNG), ensuring cryptographic unpredictability.
+*   **OTP Brute-Force Protection:** Every failed OTP attempt immediately wipes the code from the database (forcing a re-request) and increments a persistent failure counter. After 3 failed attempts, a **progressive lockout** activates:
+
+    | Lockout # | Duration | Unlock Method |
+    | :--- | :--- | :--- |
+    | 1st | 5 minutes | Auto-unlock |
+    | 2nd | 10 minutes | Auto-unlock |
+    | 3rd | 15 minutes | Auto-unlock |
+    | 4th+ | Permanent | Admin must re-enable |
+
+*   **Dual-Enforced Role Isolation (RBAC):** Route guards via `Depends(require_role)` and a global `RoleMiddleware` fallback verify JSON Web Tokens (JWT) and evaluate exact role access at two independent layers.
 *   **New User Approval Workflow:** Self-registered accounts require an explicit Admin or Manager approval before gaining system access, preventing unauthorized data exposure.
 *   **Comprehensive Audit Logs:** Chronological record of critical operations—account creations, status changes, approvals, rejections, and escalations—providing clear, immutable accountability.
 *   **Production Observability:** Active request tracing (X-Trace-ID), server-side rate limits, database pools, and continuous system health checks.
@@ -131,7 +140,7 @@ Engineered to adhere to high-grade corporate security compliance:
 ### Backend
 *   **Framework:** FastAPI (Python 3.11+)
 *   **Database ORM:** SQLAlchemy (Asynchronous execution with asyncpg)
-*   **Security:** JOSE (JWT authentication), passlib (bcrypt hashing), CORS Middleware
+*   **Security:** JOSE (JWT authentication), bcrypt (password hashing), CORS Middleware, `secrets` (CSPRNG OTP)
 
 ### Infrastructure
 *   **Database:** PostgreSQL 16

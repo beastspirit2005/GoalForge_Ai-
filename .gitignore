@@ -19,6 +19,7 @@ $RECYCLE.BIN/
 backend/uploads/avatars/*
 !backend/uploads/avatars/.gitkeep
 token.txt
+Brevo SMTP kEY.txt
 
 # ── Next.js / Node.js (Frontend) ──────────────────────────────
 node_modules/
