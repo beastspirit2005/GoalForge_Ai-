@@ -16,6 +16,7 @@ type Props = {
 const initialEscalations = [
   {
     id: 1,
+    goalId: "GF-124",
     employee: "Kabir Singh",
     goal: "Grow enterprise pipeline",
     department: "Sales",
@@ -28,6 +29,7 @@ const initialEscalations = [
   },
   {
     id: 2,
+    goalId: "GF-117",
     employee: "Neha Rao",
     goal: "Improve sprint delivery predictability",
     department: "Engineering",
@@ -40,8 +42,9 @@ const initialEscalations = [
   },
   {
     id: 3,
+    goalId: "GF-101",
     employee: "Aarav Mehta",
-    goal: "Launch onboarding analytics",
+    goal: "Launch AI onboarding playbook",
     department: "People Ops",
     risk: "High" as const,
     status: "Open" as const,
@@ -63,10 +66,7 @@ export default function GoalCard({ goal }: Props) {
         const stored = window.localStorage.getItem("goalforge.demo.escalations")
         const currentEsc = stored ? JSON.parse(stored) : initialEscalations
         const matched = currentEsc.filter((esc: any) => {
-          if (esc.goalId && esc.goalId === goal.id) {
-            return true
-          }
-          return esc.goal === goal.title && esc.employee === goal.owner
+          return esc.goalId === goal.id
         })
         setLocalEscalations(matched)
       } catch (e) {

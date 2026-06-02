@@ -14,6 +14,7 @@ type EscalationStatus = "Open" | "Acknowledged" | "Resolved"
 
 type Escalation = {
   id: number
+  goalId?: string
   employee: string
   goal: string
   department: string
@@ -30,6 +31,7 @@ type Escalation = {
 const initialEscalations: Escalation[] = [
   {
     id: 1,
+    goalId: "GF-124",
     employee: "Kabir Singh",
     goal: "Grow enterprise pipeline",
     department: "Sales",
@@ -42,6 +44,7 @@ const initialEscalations: Escalation[] = [
   },
   {
     id: 2,
+    goalId: "GF-117",
     employee: "Neha Rao",
     goal: "Improve sprint delivery predictability",
     department: "Engineering",
@@ -54,8 +57,9 @@ const initialEscalations: Escalation[] = [
   },
   {
     id: 3,
+    goalId: "GF-101",
     employee: "Aarav Mehta",
-    goal: "Launch onboarding analytics",
+    goal: "Launch AI onboarding playbook",
     department: "People Ops",
     risk: "High",
     status: "Open" as const,
@@ -236,7 +240,7 @@ export default function AdminEscalationsPage() {
         if (storedGoals) {
           const parsed = JSON.parse(storedGoals)
           const nextGoals = parsed.map((g: any) => {
-            if (g.title === selectedEscalation.goal) {
+            if ((selectedEscalation.goalId && g.id === selectedEscalation.goalId) || g.title === selectedEscalation.goal) {
               return { ...g, status: "Approved" }
             }
             return g
