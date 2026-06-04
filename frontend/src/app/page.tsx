@@ -7,7 +7,6 @@ import {
   Sparkles,
   Target,
   Trophy,
-  Zap,
   Activity,
   BarChart3,
 } from "lucide-react"
