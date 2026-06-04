@@ -1,6 +1,6 @@
 "use client"
 
-import { AlertTriangle, Brain, Sparkles, TrendingUp } from "lucide-react"
+import { Sparkles } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { aiInsights, demoGoals } from "@/lib/demo-data"
 import RiskIndicator from "./RiskIndicator"

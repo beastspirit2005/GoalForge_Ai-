@@ -10,7 +10,6 @@ import {
   Settings,
   Sliders,
   Cpu,
-  AlertTriangle,
   MessageSquarePlus,
   Trash2,
   ShieldAlert,
@@ -165,7 +164,7 @@ export function AiBuddyChat() {
 
   const greeting = useMemo(() => getGreeting(historyRole), [historyRole])
   const activeSession = chatStore ? getActiveSession(chatStore) : undefined
-  const messages = activeSession?.messages ?? []
+  const messages = useMemo(() => activeSession?.messages ?? [], [activeSession?.messages])
   const isViewingOwnRole = historyRole === accountRole
 
   const scrollToBottom = () => {

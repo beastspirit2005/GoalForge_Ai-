@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { AlertTriangle, Clock, Sparkles, TrendingUp } from "lucide-react"
+import { AlertTriangle, Clock, Sparkles } from "lucide-react"
 import { apiFetch } from "@/lib/api"
 import { getStoredToken } from "@/services/auth.service"
 import { Goal } from "@/types/goal"

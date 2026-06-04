@@ -2,15 +2,10 @@
 
 import { useState } from "react"
 import {
-  Activity,
   AlertTriangle,
-  BarChart3,
-  Brain,
   Flame,
   Shield,
   Target,
-  TrendingDown,
-  TrendingUp,
   Zap,
 } from "lucide-react"
 import DashboardLayout from "@/components/layout/DashboardLayout"

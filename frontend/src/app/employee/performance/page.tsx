@@ -1,18 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import {
   Activity,
   Award,
-  BarChart3,
-  CheckCircle2,
   Flame,
-  Target,
-  TrendingUp,
-  Trophy,
 } from "lucide-react"
 import DashboardLayout from "@/components/layout/DashboardLayout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 // Demo performance data (will be replaced with API calls)
 const performanceData = {

@@ -1,6 +1,5 @@
 import DashboardLayout from "@/components/layout/DashboardLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { demoGoals } from "@/lib/demo-data"
 
 const comments = [
   {

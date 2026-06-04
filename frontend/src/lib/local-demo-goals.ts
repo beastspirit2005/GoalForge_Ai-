@@ -1,6 +1,6 @@
 "use client"
 
-import { managerQueue, type Goal, type GoalRisk, type GoalStatus } from "@/lib/demo-data"
+import { managerQueue, type Goal } from "@/lib/demo-data"
 import type { GeneratePlanResponse } from "@/services/ai.service"
 import { addLocalNotification } from "@/lib/local-notifications"
 import { addLocalAuditLog } from "@/lib/local-audit-logs"
@@ -33,12 +33,6 @@ function formatDateLabel(date: string) {
     month: "short",
     year: "numeric",
   })
-}
-
-function statusFromRisk(risk: GoalRisk): GoalStatus {
-  if (risk === "High") return "At Risk"
-  if (risk === "Medium") return "Needs Review"
-  return "On Track"
 }
 
 export function getLocalDemoGoals(): Goal[] {

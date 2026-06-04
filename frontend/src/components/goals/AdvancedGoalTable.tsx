@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { CalendarDays, UserRound, AlertTriangle, ShieldAlert, ChevronDown, ChevronUp } from "lucide-react"
+import { AlertTriangle, ShieldAlert, ChevronDown, ChevronUp } from "lucide-react"
 import GoalStatusBadge from "@/components/goals/GoalStatusBadge"
 import {
   Table,

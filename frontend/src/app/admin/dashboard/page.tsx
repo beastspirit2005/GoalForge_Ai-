@@ -3,9 +3,8 @@
 import DashboardLayout from "@/components/layout/DashboardLayout"
 import StatsCard from "@/components/dashboard/StatsCard"
 import CompletionChart from "@/components/analytics/CompletionChart"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { adminMetrics } from "@/lib/demo-data"
-import { BarChart3, Shield, Sparkles } from "lucide-react"
+import { Shield } from "lucide-react"
 
 export default function AdminDashboardPage() {
   return (

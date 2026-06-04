@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { BarChart3, BriefcaseBusiness, UserRound, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -40,7 +39,6 @@ const roles = [
 ]
 
 export default function SignupPage() {
-  const router = useRouter()
 
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")

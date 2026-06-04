@@ -2,15 +2,6 @@
 
 import { departmentProgress } from "@/lib/demo-data"
 
-const colors = [
-  "bg-sky-500",
-  "bg-emerald-500",
-  "bg-violet-500",
-  "bg-amber-500",
-  "bg-rose-500",
-  "bg-cyan-500",
-]
-
 const intensities = [
   "bg-slate-100",
   "bg-sky-100",
@@ -43,7 +34,7 @@ export default function HeatMap() {
           </span>
         ))}
       </div>
-      {departmentProgress.map((dept, di) => (
+      {departmentProgress.map((dept) => (
         <div key={dept.name} className="flex items-center gap-2">
           <span className="w-24 truncate text-xs font-medium text-slate-700">
             {dept.name}
