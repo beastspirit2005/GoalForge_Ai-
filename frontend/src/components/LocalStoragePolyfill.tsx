@@ -5,7 +5,7 @@ if (typeof window !== "undefined") {
     const testKey = "__ls_test__"
     window.localStorage.setItem(testKey, testKey)
     window.localStorage.removeItem(testKey)
-  } catch (e) {
+  } catch {
     console.warn("localStorage is blocked or threw an error. Applying in-memory fallback polyfill.")
     const memoryStorage: Record<string, string> = {}
     const mockStorage = {

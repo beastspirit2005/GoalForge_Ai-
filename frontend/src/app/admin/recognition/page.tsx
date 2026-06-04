@@ -1,6 +1,6 @@
 import DashboardLayout from "@/components/layout/DashboardLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Trophy, Sparkles, Shield, Medal, Star, Flame } from "lucide-react"
+import { Trophy, Sparkles, Shield, Star, Flame } from "lucide-react"
 
 const recentAwards = [
   { 

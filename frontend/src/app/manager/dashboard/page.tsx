@@ -1,10 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Users, Sparkles, TrendingUp, Shield } from "lucide-react"
+import { Users, Shield } from "lucide-react"
 import ApprovalTable from "@/components/approvals/ApprovalTable"
 import CompletionChart from "@/components/analytics/CompletionChart"
-import GoalTable from "@/components/goals/GoalTable"
 import AdvancedGoalTable from "@/components/goals/AdvancedGoalTable"
 import DashboardLayout from "@/components/layout/DashboardLayout"
 import { demoGoals, type Goal } from "@/lib/demo-data"

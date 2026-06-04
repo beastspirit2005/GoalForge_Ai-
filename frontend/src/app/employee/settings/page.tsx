@@ -5,7 +5,6 @@ import { useTheme } from "next-themes"
 import { Camera, Key, Moon, Sun, User as UserIcon } from "lucide-react"
 import {
   getGeminiKeyMode,
-  getCustomGeminiKey,
   setCustomGeminiKey,
   clearCustomGeminiKey,
   setGeminiKeyMode,

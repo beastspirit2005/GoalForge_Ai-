@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState, useEffect, useCallback } from "react"
 import { AlertTriangle, CheckCircle2, Clock3, ShieldAlert } from "lucide-react"
 import DashboardLayout from "@/components/layout/DashboardLayout"
 import { Badge } from "@/components/ui/badge"
@@ -102,7 +102,7 @@ export default function AdminEscalationsPage() {
     }
   }, [selectedId, selectedEscalation])
 
-  const loadEscalations = () => {
+  const loadEscalations = useCallback(() => {
     try {
       const stored = window.localStorage.getItem("goalforge.demo.escalations")
       if (stored) {
@@ -121,7 +121,7 @@ export default function AdminEscalationsPage() {
     } catch (e) {
       console.error("Failed to load escalations", e)
     }
-  }
+  }, [selectedId])
 
   useEffect(() => {
     setMounted(true)
@@ -130,7 +130,7 @@ export default function AdminEscalationsPage() {
     const handleUpdate = () => loadEscalations()
     window.addEventListener("escalations-updated", handleUpdate)
     return () => window.removeEventListener("escalations-updated", handleUpdate)
-  }, [selectedId])
+  }, [loadEscalations])
 
   const saveEscalations = (newEscalations: Escalation[]) => {
     setEscalations(newEscalations)

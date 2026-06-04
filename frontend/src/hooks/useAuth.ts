@@ -1,15 +1,12 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+
 import type { User } from "@/types/user"
 import {
   clearToken,
   getCurrentUser,
-  getStoredToken,
   loginUser,
-  registerUser,
-  storeToken,
   requestOtp,
   verifyOtp,
   logoutUser,
@@ -59,7 +56,7 @@ export function useAuth() {
   }, [])
 
   const loginWithApi = useCallback(async (email: string, password: string) => {
-    const res = await loginUser({ email, password })
+    await loginUser({ email, password })
     const u = await getCurrentUser()
     setUser(u)
     setIsApiMode(true)

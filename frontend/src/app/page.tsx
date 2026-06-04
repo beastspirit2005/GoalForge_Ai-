@@ -2,10 +2,8 @@ import Link from "next/link"
 import {
   ArrowRight,
   Brain,
-  CheckCircle2,
   ShieldAlert,
   Sparkles,
-  Target,
   Trophy,
   Activity,
   BarChart3,

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import { Bell, LogOut, Search, Sparkles, User, Briefcase, Mail, CheckCircle2, TrendingUp, X, Menu } from "lucide-react"
+import { useState, useRef, useEffect, useCallback } from "react"
+import { Bell, LogOut, Search, Sparkles, Briefcase, Mail, CheckCircle2, X, Menu } from "lucide-react"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -55,17 +55,17 @@ export default function Navbar({ user, onOpenMobileMenu }: NavbarProps) {
   const [showNotifDropdown, setShowNotifDropdown] = useState(false)
   const notifRef = useRef<HTMLDivElement>(null)
 
-  const loadNotifs = () => {
+  const loadNotifs = useCallback(() => {
     const all = getLocalNotifications()
     const filtered = all.filter(n => n.recipientRole === user.role)
     setNotifications(filtered)
-  }
+  }, [user.role])
 
   useEffect(() => {
     loadNotifs()
     window.addEventListener("notifications-updated", loadNotifs)
     return () => window.removeEventListener("notifications-updated", loadNotifs)
-  }, [user.role])
+  }, [loadNotifs])
 
   const handleLogout = () => {
     logout()
