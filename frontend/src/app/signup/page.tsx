@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { BarChart3, BriefcaseBusiness, UserRound, Zap, CheckCircle2 } from "lucide-react"
+import { BarChart3, BriefcaseBusiness, UserRound, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { apiFetch } from "@/lib/api"

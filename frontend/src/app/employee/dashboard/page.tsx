@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowRight, Plus, Sparkles, TrendingUp, Zap } from "lucide-react"
+import { ArrowRight, Plus, Sparkles, TrendingUp, Compass, Command } from "lucide-react"
 import GoalProgress from "@/components/dashboard/GoalProgress"
 import StatsCard from "@/components/dashboard/StatsCard"
 import DashboardLayout from "@/components/layout/DashboardLayout"
@@ -97,7 +97,7 @@ export default function EmployeeDashboardPage() {
             <div className="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--gf-indigo)] to-[var(--gf-cyan)] text-white shadow-lg shadow-[var(--gf-indigo)]/20">
-                  <Zap className="h-5 w-5 animate-pulse" />
+                  <Compass className="h-5 w-5 animate-pulse" />
                 </div>
                 <div>
                   <h2 className="text-base font-bold text-white/95">Welcome to GoalForge AI! — Quick-Start Guide</h2>
@@ -234,7 +234,7 @@ export default function EmployeeDashboardPage() {
             {/* Quick nav */}
             <div className="glass-card rounded-xl p-5">
               <div className="mb-4 flex items-center gap-2">
-                <Zap className="h-4 w-4 text-[var(--gf-amber)]" />
+                <Command className="h-4 w-4 text-[var(--gf-amber)]" />
                 <h3 className="text-sm font-semibold text-white/80">Quick actions</h3>
               </div>
               <div className="space-y-2">

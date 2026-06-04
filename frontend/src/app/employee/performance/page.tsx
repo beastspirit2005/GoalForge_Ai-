@@ -10,7 +10,6 @@ import {
   Target,
   TrendingUp,
   Trophy,
-  Zap,
 } from "lucide-react"
 import DashboardLayout from "@/components/layout/DashboardLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
