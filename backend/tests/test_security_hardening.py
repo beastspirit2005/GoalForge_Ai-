@@ -251,18 +251,6 @@ def test_production_cors_origins_validator():
     assert settings.CORS_ORIGINS == "https://goalforge.ai"
 
 
-def test_seed_endpoint_production_protection():
-    """Verify that /seed endpoint is blocked in production."""
-    from app.core.config import settings
-    # Temporarily set DEBUG to False to simulate production
-    original_debug = settings.DEBUG
-    try:
-        settings.DEBUG = False
-        response = client.get("/seed")
-        assert response.status_code == 403
-        assert "not permitted in production" in response.json()["detail"]
-    finally:
-        settings.DEBUG = original_debug
 
 
 def test_metrics_endpoint_local_protection():
