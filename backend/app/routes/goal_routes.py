@@ -95,20 +95,24 @@ async def create(
 
 @router.get("/")
 async def list_goals(
+    skip: int = 0,
+    limit: int = 100,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    goals = await get_user_goals(db, current_user.id)
+    goals = await get_user_goals(db, current_user.id, skip, limit)
     return [_goal_to_response(g, current_user.name, current_user.department) for g in goals]
 
 
 @router.get("/prioritized")
 async def prioritized_goals(
+    skip: int = 0,
+    limit: int = 100,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Smart Prioritization Engine: Ranks goals based on deadline, risk, and weightage."""
-    goals = await get_user_goals(db, current_user.id)
+    goals = await get_user_goals(db, current_user.id, skip, limit)
     active_goals = [g for g in goals if g.status not in ("completed", "archived")]
     
     def calculate_score(g):
@@ -123,8 +127,14 @@ async def prioritized_goals(
         # Deadline proximity factor
         if g.deadline:
             try:
-                # Assuming format YYYY-MM-DD
-                dl_date = datetime.strptime(g.deadline[:10], "%Y-%m-%d")
+                if isinstance(g.deadline, datetime):
+                    dl_date = g.deadline
+                else:
+                    dl_date = datetime.strptime(str(g.deadline)[:10], "%Y-%m-%d")
+                    
+                if dl_date.tzinfo is not None:
+                    dl_date = dl_date.replace(tzinfo=None)
+                    
                 days_left = (dl_date - datetime.now()).days
                 if days_left < 0:
                     score += 30 # Overdue is critical
@@ -132,7 +142,7 @@ async def prioritized_goals(
                     score += 15 # Due this week
                 elif days_left <= 30:
                     score += 5 # Due this month
-            except ValueError:
+            except (ValueError, TypeError):
                 pass
                 
         return score

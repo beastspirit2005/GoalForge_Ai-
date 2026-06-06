@@ -45,12 +45,14 @@ async def create_goal(db: AsyncSession, user: User, data: GoalCreate) -> Goal:
     return goal
 
 
-async def get_user_goals(db: AsyncSession, user_id: int) -> list[Goal]:
+async def get_user_goals(db: AsyncSession, user_id: int, skip: int = 0, limit: int = 100) -> list[Goal]:
     result = await db.execute(
         select(Goal)
         .options(selectinload(Goal.milestones), selectinload(Goal.escalations))
         .where(Goal.user_id == user_id)
         .order_by(Goal.created_at.desc())
+        .offset(skip)
+        .limit(limit)
     )
     return list(result.scalars().all())
 
@@ -121,24 +123,15 @@ async def unlock_goal(db: AsyncSession, goal: Goal) -> Goal:
     return goal
 
 
-async def get_team_goals(db: AsyncSession, manager_id: int) -> list[Goal]:
-    """Fetch goals for all employees managed by a manager."""
-    result = await db.execute(
-        select(Goal)
-        .join(User, Goal.user_id == User.id)
-        .options(selectinload(Goal.milestones))
-        .where(User.manager_id == manager_id)
-        .order_by(Goal.created_at.desc())
-    )
-    return list(result.scalars().all())
 
-
-async def get_all_goals(db: AsyncSession) -> list[Goal]:
+async def get_all_goals(db: AsyncSession, skip: int = 0, limit: int = 100) -> list[Goal]:
     """Admin: fetch all goals across the organization."""
     result = await db.execute(
         select(Goal)
         .options(selectinload(Goal.milestones), selectinload(Goal.escalations))
         .order_by(Goal.created_at.desc())
+        .offset(skip)
+        .limit(limit)
     )
     return list(result.scalars().all())
 
@@ -151,7 +144,7 @@ async def recalculate_risk(db: AsyncSession, goal: Goal, goal_count: int) -> Goa
     return goal
 
 
-async def get_team_goals(db: AsyncSession, manager_id: int) -> list[Goal]:
+async def get_team_goals(db: AsyncSession, manager_id: int, skip: int = 0, limit: int = 100) -> list[Goal]:
     """Get all goals for team members managed by a specific manager."""
     from app.models.user import User
 
@@ -167,6 +160,9 @@ async def get_team_goals(db: AsyncSession, manager_id: int) -> list[Goal]:
         select(Goal)
         .options(selectinload(Goal.milestones), selectinload(Goal.escalations))
         .where(Goal.user_id.in_(team_ids))
+        .order_by(Goal.created_at.desc())
+        .offset(skip)
+        .limit(limit)
     )
     return list(result.scalars().all())
 

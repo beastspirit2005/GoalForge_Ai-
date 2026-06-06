@@ -1,6 +1,6 @@
 import os
 from pydantic import model_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def _normalize_async_db_url(url: str) -> str:
@@ -35,7 +35,7 @@ class Settings(BaseSettings):
 
     # Base Application Config
     APP_NAME: str = "GoalForge AI"
-    DEBUG: bool = True
+    DEBUG: bool = False
 
     # SMTP Configurations
     SMTP_HOST: str = ""
@@ -45,9 +45,7 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: str = ""
     SMTP_FROM_NAME: str = "GoalForge AI"
 
-    class Config:
-        env_file = (".env", "../.env")
-        extra = "ignore"
+    model_config = SettingsConfigDict(env_file=(".env", "../.env"), extra="ignore")
 
 
     @model_validator(mode="after")
@@ -68,9 +66,16 @@ class Settings(BaseSettings):
             )
             
         self.SECRET_KEY = (self.SECRET_KEY or "").strip()
+        if not self.DEBUG and self.SECRET_KEY in ["goalforge-super-secret-change-in-production", "change-me-in-production", ""]:
+            raise ValueError("SECRET_KEY must be set to a secure value in production (DEBUG=False).")
+            
         self.GEMINI_API_KEY = (self.GEMINI_API_KEY or "").strip()
         self.CORS_ORIGINS = (self.CORS_ORIGINS or "").strip()
         self.REDIS_URL = (self.REDIS_URL or "").strip()
+        
+        if not self.DEBUG and (not self.CORS_ORIGINS or "*" in self.cors_origin_list):
+            raise ValueError("CORS_ORIGINS must be set to an explicit whitelist in production (DEBUG=False). Wildcard '*' is not permitted.")
+            
         return self
 
     @property

@@ -2,10 +2,12 @@
 
 import json
 import hashlib
+import hmac
 from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.models.audit_log import AuditLog
 
 
@@ -42,7 +44,11 @@ async def log_action(
 
     # 4. Compute unique hash chain signature in Python (database-agnostic)
     payload = f"{entry.id}:{entry.action}:{entry.user_id}:{entry.created_at}:{entry.prev_hash or ''}"
-    entry.entry_hash = hashlib.md5(payload.encode("utf-8")).hexdigest()
+    entry.entry_hash = hmac.new(
+        settings.SECRET_KEY.encode("utf-8"),
+        payload.encode("utf-8"),
+        hashlib.sha256
+    ).hexdigest()
 
     # 5. Flush once more to save the computed signature
     await db.flush()
@@ -51,10 +57,11 @@ async def log_action(
 
 async def get_audit_logs(
     db: AsyncSession,
+    skip: int = 0,
     limit: int = 100,
     entity_type: str | None = None,
 ) -> list[AuditLog]:
-    query = select(AuditLog).order_by(AuditLog.created_at.desc()).limit(limit)
+    query = select(AuditLog).order_by(AuditLog.created_at.desc()).offset(skip).limit(limit)
     if entity_type:
         query = query.where(AuditLog.entity_type == entity_type)
     result = await db.execute(query)
@@ -70,7 +77,11 @@ async def verify_audit_chain(db: AsyncSession) -> bool:
     prev_hash = None
     for log in logs:
         payload = f"{log.id}:{log.action}:{log.user_id}:{log.created_at}:{prev_hash or ''}"
-        expected = hashlib.md5(payload.encode("utf-8")).hexdigest()
+        expected = hmac.new(
+            settings.SECRET_KEY.encode("utf-8"),
+            payload.encode("utf-8"),
+            hashlib.sha256
+        ).hexdigest()
 
         if expected != log.entry_hash:
             raise ValueError(

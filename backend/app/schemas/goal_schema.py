@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from datetime import datetime
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class GoalCreate(BaseModel):
@@ -7,7 +8,7 @@ class GoalCreate(BaseModel):
     target: str | None = None
     uom: str | None = None
     weightage: float = Field(..., ge=10.0, le=100.0)
-    deadline: str | None = None
+    deadline: datetime | None = None
 
 
 class GoalUpdate(BaseModel):
@@ -16,7 +17,7 @@ class GoalUpdate(BaseModel):
     target: str | None = None
     uom: str | None = None
     weightage: float | None = Field(default=None, ge=10.0, le=100.0)
-    deadline: str | None = None
+    deadline: datetime | None = None
     progress: float | None = Field(default=None, ge=0.0, le=100.0)
 
 
@@ -28,7 +29,7 @@ class GoalResponse(BaseModel):
     target: str | None
     uom: str | None
     weightage: float
-    deadline: str | None
+    deadline: datetime | None
     status: str
     progress: float
     risk: str
@@ -40,13 +41,12 @@ class GoalResponse(BaseModel):
     department: str | None = None
     milestones: list["MilestoneResponse"] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MilestoneCreate(BaseModel):
     title: str = Field(..., min_length=3, max_length=500)
-    due_date: str | None = None
+    due_date: datetime | None = None
     source: str = "manual"
 
 
@@ -54,12 +54,11 @@ class MilestoneResponse(BaseModel):
     id: int
     goal_id: int
     title: str
-    due_date: str | None
+    due_date: datetime | None
     is_completed: bool
     source: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class GoalApprovalRequest(BaseModel):

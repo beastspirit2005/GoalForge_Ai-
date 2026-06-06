@@ -7,7 +7,7 @@ from app.models.audit_log import AuditLog
 
 @pytest.mark.asyncio
 async def test_audit_log_cryptographic_chain():
-    """Verify that audit logs are chained correctly with md5 hashes and pass verification."""
+    """Verify that audit logs are chained correctly with hmac-sha256 hashes and pass verification."""
     await create_tables()
     async with async_session() as db:
         from sqlalchemy import delete
@@ -38,11 +38,11 @@ async def test_audit_log_cryptographic_chain():
         # Check logs properties
         assert log1.prev_hash is None
         assert log1.entry_hash is not None
-        assert len(log1.entry_hash) == 32  # MD5 is 32 hex chars
+        assert len(log1.entry_hash) == 64  # SHA256 is 64 hex chars
 
         assert log2.prev_hash == log1.entry_hash
         assert log2.entry_hash is not None
-        assert len(log2.entry_hash) == 32
+        assert len(log2.entry_hash) == 64
         assert log2.entry_hash != log1.entry_hash
 
         # Verify the chain is valid

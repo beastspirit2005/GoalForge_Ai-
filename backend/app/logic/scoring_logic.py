@@ -3,20 +3,17 @@
 from datetime import datetime, timezone
 
 
-def days_until_deadline(deadline_str: str | None) -> int | None:
-    """Parse a date string and return days remaining. None if unparseable."""
-    if not deadline_str:
+def days_until_deadline(deadline: datetime | None) -> int | None:
+    """Return days remaining until deadline. None if deadline is None."""
+    if not deadline:
         return None
-    for fmt in ("%Y-%m-%d", "%d %b %Y", "%d/%m/%Y"):
-        try:
-            dl = datetime.strptime(deadline_str, fmt).replace(tzinfo=timezone.utc)
-            return (dl - datetime.now(timezone.utc)).days
-        except ValueError:
-            continue
-    return None
+    # Ensure deadline is timezone-aware
+    if deadline.tzinfo is None:
+        deadline = deadline.replace(tzinfo=timezone.utc)
+    return (deadline - datetime.now(timezone.utc)).days
 
 
-def score_risk(progress: float, deadline_str: str | None, goal_count: int) -> str:
+def score_risk(progress: float, deadline: datetime | None, goal_count: int) -> str:
     """
     Return "Low", "Medium", or "High" risk.
 
@@ -25,7 +22,7 @@ def score_risk(progress: float, deadline_str: str | None, goal_count: int) -> st
       - Medium: progress < 60% and < 30 days left
       - Low: everything else
     """
-    days_left = days_until_deadline(deadline_str)
+    days_left = days_until_deadline(deadline)
 
     # Workload pressure
     if goal_count > 6:

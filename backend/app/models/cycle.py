@@ -14,8 +14,8 @@ class Cycle(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)  # e.g. "Q2-2026"
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    start_date: Mapped[str] = mapped_column(String(30), nullable=False)
-    end_date: Mapped[str] = mapped_column(String(30), nullable=False)
+    start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="draft")  # "draft", "active", "closed"
     is_active: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

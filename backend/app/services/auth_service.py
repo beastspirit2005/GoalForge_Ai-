@@ -51,8 +51,8 @@ def create_token_for_user(user: User) -> str:
     return create_access_token({"sub": str(user.id), "role": user.role})
 
 
-async def get_all_users(db: AsyncSession) -> list[User]:
-    result = await db.execute(select(User).order_by(User.created_at.desc()))
+async def get_all_users(db: AsyncSession, skip: int = 0, limit: int = 100) -> list[User]:
+    result = await db.execute(select(User).order_by(User.created_at.desc()).offset(skip).limit(limit))
     return list(result.scalars().all())
 
 
