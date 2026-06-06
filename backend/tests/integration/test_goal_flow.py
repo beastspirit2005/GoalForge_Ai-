@@ -118,6 +118,6 @@ async def test_integration_goal_lifecycle_flow():
         # Verify the chain integrity in detail
         for i, log in enumerate(logs):
             assert log.entry_hash is not None
-            assert len(log.entry_hash) == 32
+            assert len(log.entry_hash) == 64
             if i > 0:
                 assert log.prev_hash == logs[i - 1].entry_hash

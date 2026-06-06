@@ -14,10 +14,12 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 
 @router.get("/users")
 async def list_users(
+    skip: int = 0,
+    limit: int = 100,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("admin")),
 ):
-    users = await get_all_users(db)
+    users = await get_all_users(db, skip, limit)
     return [
         {
             "id": u.id,
@@ -125,10 +127,12 @@ async def admin_unlock(
 
 @router.get("/goals")
 async def all_goals(
+    skip: int = 0,
+    limit: int = 100,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("admin")),
 ):
-    goals = await get_all_goals(db)
+    goals = await get_all_goals(db, skip, limit)
     return [
         {
             "id": g.id,
@@ -147,11 +151,12 @@ async def all_goals(
 @router.get("/audit-logs")
 async def audit_logs(
     entity_type: str | None = None,
+    skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("admin")),
 ):
-    logs = await get_audit_logs(db, limit=limit, entity_type=entity_type)
+    logs = await get_audit_logs(db, skip=skip, limit=limit, entity_type=entity_type)
     return [
         {
             "id": l.id,

@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -99,134 +99,19 @@ async def health():
     }
 
 
-@app.get("/db-migrate")
-async def db_migrate():
-    """Run raw SQL to add any missing columns to the users table."""
-    from app.core.database import async_session
-    from sqlalchemy import text
-    
-    try:
-        # Add missing columns one-by-one in isolated transactions
-        _migration_columns = [
-            ("is_active", "BOOLEAN DEFAULT TRUE"),
-            ("is_approved", "BOOLEAN DEFAULT FALSE"),
-            ("otp_code", "VARCHAR"),
-            ("otp_expires_at", "TIMESTAMP"),
-            ("otp_failed_attempts", "INTEGER DEFAULT 0"),
-            ("otp_lockout_count", "INTEGER DEFAULT 0"),
-            ("otp_locked_until", "TIMESTAMP"),
-            ("phone_number", "VARCHAR"),
-            ("google_id", "VARCHAR"),
-            ("microsoft_id", "VARCHAR"),
-            ("profile_picture_url", "VARCHAR"),
-        ]
-        for col_name, col_type in _migration_columns:
-            try:
-                async with async_session() as db:
-                    await db.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
-                    await db.commit()
-            except Exception:
-                pass  # Column already exists or transaction aborted, ignore and try next
-
-        # Add missing columns to escalations one-by-one in isolated transactions
-        _escalation_columns = [
-            ("admin_remarks", "TEXT"),
-            ("resolution_note", "TEXT"),
-            ("resolved_at", "TIMESTAMP WITH TIME ZONE"),
-        ]
-        for col_name, col_type in _escalation_columns:
-            try:
-                async with async_session() as db:
-                    await db.execute(text(f"ALTER TABLE escalations ADD COLUMN {col_name} {col_type}"))
-                    await db.commit()
-            except Exception:
-                pass
-
-        # Fix the auto-increment sequences on PostgreSQL in development to prevent duplicate key violations
-        env = getattr(app.state, "env", "development")
-        async with async_session() as db:
-            if env == "development" and db.bind.dialect.name == "postgresql":
-                for table, col in [
-                    ("users", "id"),
-                    ("audit_logs", "id"),
-                    ("goals", "id"),
-                    ("checkins", "id"),
-                    ("cycles", "id"),
-                    ("escalations", "id"),
-                    ("milestones", "id"),
-                    ("notifications", "id"),
-                    ("performance_scores", "id"),
-                    ("recognitions", "id"),
-                    ("shared_goals", "id"),
-                ]:
-                    try:
-                        await db.execute(text(f"""
-                            SELECT setval(
-                                pg_get_serial_sequence('{table}', '{col}'), 
-                                COALESCE((SELECT MAX({col}) FROM {table}), 0) + 1, 
-                                false
-                            );
-                        """))
-                        await db.commit()
-                    except Exception as seq_err:
-                        import logging
-                        logging.warning(f"Skipping sequence reset for {table}: {seq_err}")
-
-            # Verify columns exist
-            result = await db.execute(text(
-                "SELECT column_name FROM information_schema.columns WHERE table_name = 'users' ORDER BY ordinal_position;"
-            ))
-            columns = [row[0] for row in result.fetchall()]
-            
-        return {"status": "migration successful", "columns": columns}
-    except Exception as e:
-        import traceback
-        return {"status": "error", "detail": str(e), "traceback": traceback.format_exc()}
-
-
 @app.get("/seed")
 async def run_seed():
     """Run migrations first, then seed admin/manager/employee in a fresh session."""
+    if not settings.DEBUG:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Seeding is not permitted in production environment."
+        )
+
     from app.core.database import async_session
     from sqlalchemy import text
     
     try:
-        # Step 1: Migrate using isolated transactions
-        _migration_columns = [
-            ("is_active", "BOOLEAN DEFAULT TRUE"),
-            ("is_approved", "BOOLEAN DEFAULT FALSE"),
-            ("otp_code", "VARCHAR"),
-            ("otp_expires_at", "TIMESTAMP"),
-            ("otp_failed_attempts", "INTEGER DEFAULT 0"),
-            ("otp_lockout_count", "INTEGER DEFAULT 0"),
-            ("otp_locked_until", "TIMESTAMP"),
-            ("phone_number", "VARCHAR"),
-            ("google_id", "VARCHAR"),
-            ("microsoft_id", "VARCHAR"),
-            ("profile_picture_url", "VARCHAR"),
-        ]
-        for col_name, col_type in _migration_columns:
-            try:
-                async with async_session() as db:
-                    await db.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
-                    await db.commit()
-            except Exception:
-                pass
-
-        # Add missing columns to escalations one-by-one in isolated transactions
-        _escalation_columns = [
-            ("admin_remarks", "TEXT"),
-            ("resolution_note", "TEXT"),
-            ("resolved_at", "TIMESTAMP WITH TIME ZONE"),
-        ]
-        for col_name, col_type in _escalation_columns:
-            try:
-                async with async_session() as db:
-                    await db.execute(text(f"ALTER TABLE escalations ADD COLUMN {col_name} {col_type}"))
-                    await db.commit()
-            except Exception:
-                pass
-
         # Fix PostgreSQL auto-increment sequences
         env = getattr(app.state, "env", "development")
         async with async_session() as db:
@@ -288,7 +173,13 @@ async def run_seed():
         return {"status": "error", "detail": str(e), "traceback": traceback.format_exc()}
 
 @app.get("/metrics")
-def metrics():
+def metrics(request: Request):
+    client_host = request.client.host if request.client else None
+    if client_host not in ("127.0.0.1", "::1", "localhost", "testserver", "testclient"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. metrics endpoint is only available locally."
+        )
     from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
     from fastapi import Response
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)

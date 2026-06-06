@@ -233,4 +233,69 @@ def test_change_password_incorrect_current():
     assert "Incorrect current password" in change_res.json()["detail"]
 
 
+def test_production_cors_origins_validator():
+    """Verify that starting in production with wildcard or empty CORS_ORIGINS raises ValueError."""
+    from app.core.config import Settings
+    import pytest
+    
+    # Empty CORS
+    with pytest.raises(ValueError, match="CORS_ORIGINS must be set to an explicit whitelist in production"):
+        Settings(DEBUG=False, CORS_ORIGINS="", SECRET_KEY="secure-prod-key-123")
+        
+    # Wildcard CORS
+    with pytest.raises(ValueError, match="CORS_ORIGINS must be set to an explicit whitelist in production"):
+        Settings(DEBUG=False, CORS_ORIGINS="*", SECRET_KEY="secure-prod-key-123")
+        
+    # Valid CORS
+    settings = Settings(DEBUG=False, CORS_ORIGINS="https://goalforge.ai", SECRET_KEY="secure-prod-key-123")
+    assert settings.CORS_ORIGINS == "https://goalforge.ai"
 
+
+def test_seed_endpoint_production_protection():
+    """Verify that /seed endpoint is blocked in production."""
+    from app.core.config import settings
+    # Temporarily set DEBUG to False to simulate production
+    original_debug = settings.DEBUG
+    try:
+        settings.DEBUG = False
+        response = client.get("/seed")
+        assert response.status_code == 403
+        assert "not permitted in production" in response.json()["detail"]
+    finally:
+        settings.DEBUG = original_debug
+
+
+def test_metrics_endpoint_local_protection():
+    """Verify that /metrics endpoint blocks non-local access."""
+    from starlette.requests import Request
+    from starlette.types import Scope
+    
+    # We can invoke the endpoint directly to test the host validation
+    # Normally TestClient uses 'testserver' which is allowed.
+    response = client.get("/metrics")
+    assert response.status_code == 200  # Should be allowed for testserver
+    
+    # We can test blocking by simulating a remote ASGI scope
+    scope: Scope = {
+        "type": "http",
+        "method": "GET",
+        "path": "/metrics",
+        "client": ("203.0.113.195", 12345),
+        "headers": [],
+        "query_string": b""
+    }
+    import asyncio
+    from app.main import app
+    
+    async def run_asgi():
+        async def receive(): return {"type": "http.request"}
+        response_status = None
+        async def send(message):
+            nonlocal response_status
+            if message["type"] == "http.response.start":
+                response_status = message["status"]
+        await app(scope, receive, send)
+        return response_status
+        
+    status = asyncio.run(run_asgi())
+    assert status == 403

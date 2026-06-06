@@ -26,7 +26,7 @@ class Goal(Base):
     target: Mapped[str | None] = mapped_column(String(500), nullable=True)
     uom: Mapped[str | None] = mapped_column(String(50), nullable=True)  # Unit of Measurement
     weightage: Mapped[float] = mapped_column(Float, nullable=False, default=10.0)
-    deadline: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default=GoalStatus.DRAFT.value)
     progress: Mapped[float] = mapped_column(Float, default=0.0)
     risk: Mapped[str] = mapped_column(String(10), default=GoalRisk.LOW.value)
