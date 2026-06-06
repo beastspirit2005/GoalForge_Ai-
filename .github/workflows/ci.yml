@@ -69,6 +69,8 @@ jobs:
       - name: Run Pytest Coverage
         env:
           DATABASE_URL: "sqlite+aiosqlite:///:memory:"
+          DEBUG: "True"
+          SECRET_KEY: "goalforge-dev-secret-key-12345678"
         run: python -m pytest --cov=app tests/
         working-directory: ./backend
 
