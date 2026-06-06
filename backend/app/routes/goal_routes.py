@@ -240,6 +240,12 @@ async def list_milestones(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    goal = await get_goal_by_id(db, goal_id)
+    if not goal:
+        raise HTTPException(status_code=404, detail="Goal not found")
+    if goal.user_id != current_user.id and current_user.role not in ("manager", "admin"):
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
     milestones = await get_goal_milestones(db, goal_id)
     return [
         {"id": m.id, "goal_id": m.goal_id, "title": m.title, "due_date": m.due_date,
@@ -255,7 +261,7 @@ async def add_milestone(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    milestone = await create_milestone(db, goal_id, data)
+    milestone = await create_milestone(db, goal_id, data, current_user)
     return {"id": milestone.id, "goal_id": milestone.goal_id, "title": milestone.title,
             "due_date": milestone.due_date, "is_completed": milestone.is_completed, "source": milestone.source}
 
@@ -269,5 +275,5 @@ async def toggle(
     milestone = await get_milestone_by_id(db, milestone_id)
     if not milestone:
         raise HTTPException(status_code=404, detail="Milestone not found")
-    milestone = await toggle_milestone(db, milestone)
+    milestone = await toggle_milestone(db, milestone, current_user)
     return {"id": milestone.id, "is_completed": milestone.is_completed}

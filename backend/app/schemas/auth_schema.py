@@ -56,6 +56,15 @@ class UserUpdate(BaseModel):
     microsoft_id: str | None = None
 
 
+class AdminUserUpdate(BaseModel):
+    name: str | None = None
+    department: str | None = None
+    role: str | None = None
+    manager_id: int | None = None
+    is_active: bool | None = None
+    is_approved: bool | None = None
+
+
 class PasswordChangeRequest(BaseModel):
     current_password: str
     new_password: str = Field(..., min_length=6)
