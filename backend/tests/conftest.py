@@ -1,6 +1,13 @@
+import os
+# Force development mode for unit/integration tests to bypass production-only checks
+os.environ["DEBUG"] = "True"
+os.environ["SECRET_KEY"] = "goalforge-dev-secret-key-12345678"
+os.environ["CORS_ORIGINS"] = "http://localhost:3000"
+
 import asyncio
 import pytest
 from app.core.database import create_tables
+
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():
