@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import require_role
 from app.core.database import get_db
 from app.models.user import User
-from app.schemas.auth_schema import UserResponse, UserUpdate, RegisterRequest
+from app.schemas.auth_schema import UserResponse, UserUpdate, RegisterRequest, AdminUserUpdate
 from app.services.audit_service import get_audit_logs, log_action
 from app.services.auth_service import get_all_users, update_user, register_user
 from app.services.goal_service import get_all_goals, get_goal_by_id, unlock_goal
@@ -59,7 +59,7 @@ async def register_admin_user(
 @router.put("/users/{user_id}")
 async def edit_user(
     user_id: int,
-    data: UserUpdate,
+    data: AdminUserUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("admin")),
 ):

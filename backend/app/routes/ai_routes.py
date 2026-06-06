@@ -116,6 +116,14 @@ async def performance_narrative(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    if user.id != current_user.id:
+        if current_user.role == "admin":
+            pass
+        elif current_user.role == "manager" and user.manager_id == current_user.id:
+            pass
+        else:
+            raise HTTPException(status_code=403, detail="Not authorized")
+
     # Build context for AI
     score_summary = ""
     for s in scores[:3]:

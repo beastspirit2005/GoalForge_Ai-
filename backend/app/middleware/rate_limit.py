@@ -73,6 +73,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             client_ip = forwarded_for.split(",")[0].strip()
         else:
             client_ip = request.client.host if request.client else "127.0.0.1"
+            
         path = request.url.path
         
         # 1. Protect expensive AI Copilot chat endpoints -> Max 10 requests / minute

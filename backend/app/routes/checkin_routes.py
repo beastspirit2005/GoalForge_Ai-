@@ -17,6 +17,13 @@ async def create_checkin(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    from app.services.goal_service import get_goal_by_id
+    goal = await get_goal_by_id(db, data.goal_id)
+    if not goal:
+        raise HTTPException(status_code=404, detail="Goal not found")
+    if goal.user_id != current_user.id and current_user.role not in ("manager", "admin"):
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
     checkin = Checkin(
         goal_id=data.goal_id,
         user_id=current_user.id,
@@ -50,7 +57,7 @@ async def get_checkin(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    checkin = await _get_or_404(db, checkin_id)
+    checkin = await _get_or_404(db, checkin_id, current_user)
     return _to_response(checkin)
 
 
@@ -61,7 +68,7 @@ async def update_checkin(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    checkin = await _get_or_404(db, checkin_id)
+    checkin = await _get_or_404(db, checkin_id, current_user)
 
     for field, value in data.model_dump(exclude_unset=True).items():
         # Only managers can add manager_comment
@@ -74,11 +81,13 @@ async def update_checkin(
     return _to_response(checkin)
 
 
-async def _get_or_404(db: AsyncSession, checkin_id: int) -> Checkin:
+async def _get_or_404(db: AsyncSession, checkin_id: int, current_user: User) -> Checkin:
     result = await db.execute(select(Checkin).where(Checkin.id == checkin_id))
     checkin = result.scalar_one_or_none()
     if not checkin:
         raise HTTPException(status_code=404, detail="Check-in not found")
+    if checkin.user_id != current_user.id and current_user.role not in ("manager", "admin"):
+        raise HTTPException(status_code=403, detail="Not authorized")
     return checkin
 
 
