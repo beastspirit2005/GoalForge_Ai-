@@ -125,6 +125,7 @@ Engineered to adhere to high-grade corporate security compliance:
 
 *   **Secure Password-Change Routing:** The `/auth/change-password` endpoint explicitly invalidates active OTP codes and wipes all progressive lockout strikes and lock timers, ensuring complete session coherence.
 *   **Dual-Enforced Role Isolation (RBAC):** Route guards via `Depends(require_role)` and a global `RoleMiddleware` fallback verify JSON Web Tokens (JWT) and evaluate exact role access at two independent layers.
+*   **IDOR and Broken Access Control Protections:** Enforces data-level ownership check on milestones, check-ins, and AI coaching narrative routes. Restricts manager views to direct reportees, and sanitizes admin inputs with explicit Pydantic schemas to avoid unauthorized user updates.
 *   **New User Approval Workflow:** Self-registered accounts require an explicit Admin or Manager approval before gaining system access, preventing unauthorized data exposure.
 *   **Comprehensive Audit Logs:** Chronological record of critical operations—account creations, status changes, approvals, rejections, and escalations—providing clear, immutable accountability.
 *   **Production Observability:** Active request tracing (X-Trace-ID), server-side Redis sliding-window rate limits (evaluating `X-Forwarded-For` proxy headers behind load balancers/ingress), database pools, and continuous system health checks.
@@ -332,6 +333,7 @@ In June 2026, the GoalForge AI repository was upgraded to address key framework 
 *   **CI Test Resiliency:** Instrumented the GitHub Actions CI/CD workflows and unit test setups (`conftest.py`) to run in safe development scopes to avoid pipeline blocks.
 *   **Query & Route Robustness:** Consolidated redundant service definitions and corrected route-level datetime filter parsing to prevent query exceptions when operating on SQLite and PostgreSQL.
 *   **Logger Modernization:** Restructured python-json-logger integration imports to align with modern library pathways, silencing deprecated namespace alerts at startup.
+*   **Access Control & IDOR Hardening**: Introduced ownership verification checks across milestones, check-ins, and AI performance narrative generation. Restructured administrative user endpoints to use a dedicated, restricted `AdminUserUpdate` schema, preventing unauthorized privilege escalation or cross-tenant data access.
 
 ---
 
