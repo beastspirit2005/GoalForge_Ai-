@@ -324,6 +324,18 @@ GoalForge-Ai/
 
 ---
 
+## Recent Enhancements & Security Patches
+
+In June 2026, the GoalForge AI repository was upgraded to address key framework transitions, security, and stability guidelines:
+*   **Pydantic v2 Upgrade:** Completed the migration of core data schemas and application settings to Pydantic v2 conventions, resolving deprecation warnings and enhancing JSON validation performance.
+*   **Production Configuration Guardrails:** Enhanced application startup checks to block server boots in production mode (`DEBUG=False`) if insecure or default keys (`SECRET_KEY`) are left unconfigured, or if CORS settings permit dangerous wildcards.
+*   **CI Test Resiliency:** Instrumented the GitHub Actions CI/CD workflows and unit test setups (`conftest.py`) to run in safe development scopes to avoid pipeline blocks.
+*   **Query & Route Robustness:** Consolidated redundant service definitions and corrected route-level datetime filter parsing to prevent query exceptions when operating on SQLite and PostgreSQL.
+*   **Logger Modernization:** Restructured python-json-logger integration imports to align with modern library pathways, silencing deprecated namespace alerts at startup.
+
+---
+
 ## License and Contact
 
 GoalForge AI is built for professional OKR tracking, advanced interactive dashboards, and modern cloud deployment demonstration. All Rights Reserved. Built by GoalForge Devs.
+
