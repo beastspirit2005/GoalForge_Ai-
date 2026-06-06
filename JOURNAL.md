@@ -62,6 +62,9 @@ All planned hardening items have been implemented and verified:
 - **Redis-backed rate limiting**: Implemented Redis Sorted Set sliding-window with auto-fallback to in-memory registries.
 - **`X-Forwarded-For` aware rate limiting**: Parses proxy headers to correctly identify client IPs behind load balancers/reverse proxies.
 - **Password change endpoint + OTP invalidation**: POST `/auth/change-password` endpoint verifies current password, hashes new password, and invalidates all active OTP state and progressive lockouts.
+- **Administrative IDOR Prevention**: Replaced `UserUpdate` with `AdminUserUpdate` schema for `/admin/users/{user_id}` route to whitelist and restrict editable fields for administration profiles.
+- **Goal, Milestone & Check-in Access Control**: Added strict ownership verification to block users from creating, modifying, or querying milestones and check-ins belonging to other users' goals unless they are an authorized manager or administrator.
+- **AI Performance Narrative Authorization**: Restricted the AI performance narrative generator (`/ai/performance-narrative`) to ensure users can only generate reports for themselves, L1 managers for their direct reportees, and administrators for any user.
 
 ---
 
@@ -86,5 +89,11 @@ The platform backend has undergone a series of critical security, architectural,
 
 4. **Integration Test Suite Extension:**
    * Integrated comprehensive security-hardening unit tests under `backend/tests/test_security_hardening.py` to assert that CORS wildcards are blocked under production, default keys fail validations, and `/seed`/`/metrics` blocks unauthorized origins.
+
+5. **IDOR & Broken Access Control Hardening:**
+   * **Administrative IDOR Fix**: Replaced `UserUpdate` with `AdminUserUpdate` schema inside `admin_routes.py` (`edit_user`) to explicitly whitelist fields that admins can modify, reducing the attack surface.
+   * **Milestone & Check-in Guards**: Added ownership checks in `milestone_service.py` and `checkin_routes.py` to prevent unauthorized resource viewing or manipulation.
+   * **AI Performance Narrative Safeguards**: Added role and reportee verification in `ai_routes.py` (`/ai/performance-narrative`) ensuring users can only run narratives on their own records, managers on their direct reportees, and admins system-wide.
+   * **Vercel Deployability Assurance**: Retained standard proxy and config settings to preserve "plug-and-play" compatibility for Vercel and serverless architectures.
 
 
