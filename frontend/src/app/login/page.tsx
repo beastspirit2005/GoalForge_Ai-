@@ -18,8 +18,8 @@ const roles = [
     desc: "Create goals, track performance, earn badges.",
     icon: UserRound,
     gradient: "from-sky-500 to-indigo-500",
-    border: "hover:border-sky-300/60",
-    bg: "hover:bg-sky-50/40",
+    border: "hover:border-sky-300/60 dark:hover:border-sky-500/40",
+    bg: "hover:bg-sky-50/40 dark:hover:bg-sky-950/25",
   },
   {
     key: "manager" as DemoRole,
@@ -27,8 +27,8 @@ const roles = [
     desc: "Review teams, predictions, and approvals.",
     icon: BriefcaseBusiness,
     gradient: "from-emerald-500 to-teal-500",
-    border: "hover:border-emerald-300/60",
-    bg: "hover:bg-emerald-50/40",
+    border: "hover:border-emerald-300/60 dark:hover:border-emerald-500/40",
+    bg: "hover:bg-emerald-50/40 dark:hover:bg-emerald-950/25",
   },
   {
     key: "admin" as DemoRole,
@@ -36,8 +36,8 @@ const roles = [
     desc: "Org-wide analytics, escalations, cycles.",
     icon: BarChart3,
     gradient: "from-violet-500 to-fuchsia-500",
-    border: "hover:border-violet-300/60",
-    bg: "hover:bg-violet-50/40",
+    border: "hover:border-violet-300/60 dark:hover:border-violet-500/40",
+    bg: "hover:bg-violet-55/40 dark:hover:bg-violet-950/25",
   },
 ]
 
@@ -155,22 +155,22 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative grid min-h-screen place-items-center overflow-hidden p-6 bg-slate-50 text-slate-800 selection:bg-indigo-500/10 selection:text-indigo-900">
+    <div className="relative grid min-h-screen place-items-center overflow-hidden p-6 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 selection:bg-indigo-500/10 selection:text-indigo-900 transition-colors duration-300">
       {/* Background orbs */}
-      <div className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-indigo-500/5 blur-[120px]" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-80 w-80 rounded-full bg-violet-500/5 blur-[100px]" />
+      <div className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-indigo-500/5 dark:bg-indigo-500/10 blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-0 right-0 h-80 w-80 rounded-full bg-violet-500/5 dark:bg-violet-500/10 blur-[100px]" />
 
-      <div className="relative z-10 w-full max-w-5xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-100">
+      <div className="relative z-10 w-full max-w-5xl overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl shadow-slate-100 dark:shadow-none">
         <div className="grid h-full gap-0 lg:grid-cols-[0.9fr_1.2fr]">
           {/* Left Panel: Authentication Forms */}
-          <div className="flex h-full flex-col justify-center rounded-t-2xl border-r border-slate-100 bg-slate-50/50 p-8 lg:rounded-none lg:rounded-l-2xl">
+          <div className="flex h-full flex-col justify-center rounded-t-2xl border-r border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 p-8 lg:rounded-none lg:rounded-l-2xl">
             <Link href="/" className="group transition-opacity hover:opacity-90">
               <BrandLogo size="lg" />
             </Link>
-            <h1 className="mt-6 text-3xl font-extrabold leading-tight tracking-tight text-slate-900">
+            <h1 className="mt-6 text-3xl font-extrabold leading-tight tracking-tight text-slate-900 dark:text-white">
               Sign in to your workspace
             </h1>
-            <p className="mt-2 text-[13px] leading-6 text-slate-500 font-medium">
+            <p className="mt-2 text-[13px] leading-6 text-slate-500 dark:text-slate-400 font-medium">
               AI-powered performance intelligence for teams.
             </p>
 
@@ -178,13 +178,13 @@ export default function LoginPage() {
               {authMode === "PASSWORD" && (
                 <>
                   <Input
-                    className="h-10 rounded-lg border-slate-200 bg-white text-[13px] text-slate-800 placeholder:text-slate-400 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 focus-visible:ring-2"
+                    className="h-10 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-[13px] text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 focus-visible:ring-2"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email"
                   />
                   <Input
-                    className="h-10 rounded-lg border-slate-200 bg-white text-[13px] text-slate-800 placeholder:text-slate-400 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 focus-visible:ring-2"
+                    className="h-10 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-[13px] text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 focus-visible:ring-2"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
@@ -207,12 +207,12 @@ export default function LoginPage() {
                   </Button>
                 </>
               )}
-
+ 
               {authMode === "OTP_EMAIL" && (
                 <>
-                  <p className="text-[12px] text-slate-550 font-medium">Enter your registered email to receive a one-time login code.</p>
+                  <p className="text-[12px] text-slate-500 dark:text-slate-400 font-medium">Enter your registered email to receive a one-time login code.</p>
                   <Input
-                    className="h-10 rounded-lg border-slate-200 bg-white text-[13px] text-slate-800 placeholder:text-slate-400 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 focus-visible:ring-2"
+                    className="h-10 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-[13px] text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 focus-visible:ring-2"
                     value={otpEmail}
                     onChange={(e) => setOtpEmail(e.target.value)}
                     placeholder="your@email.com"
@@ -235,12 +235,12 @@ export default function LoginPage() {
                   </Button>
                 </>
               )}
-
+ 
               {authMode === "OTP_CODE" && (
                 <>
                   <p className="text-[12px] text-emerald-600 font-semibold">{successMsg}</p>
                   <Input
-                    className="h-12 rounded-lg border-slate-200 bg-white text-center text-lg tracking-[0.4em] text-slate-800 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 focus-visible:ring-2"
+                    className="h-12 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-center text-lg tracking-[0.4em] text-slate-800 dark:text-white focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 focus-visible:ring-2"
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value)}
                     placeholder="------"
@@ -269,10 +269,10 @@ export default function LoginPage() {
           {/* Right Panel: Quick-Login Demo Account Shortcuts */}
           <div className="grid gap-4 p-6 sm:grid-cols-3 lg:p-8 lg:content-center">
             <div className="col-span-full mb-2">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
                 Quick sign-in
               </p>
-              <p className="mt-1 text-[12px] text-slate-500 font-medium">
+              <p className="mt-1 text-[12px] text-slate-500 dark:text-slate-400 font-medium">
                 {isDemoAuthAllowed()
                   ? "Demo fallback if API is offline, or use seeded accounts when API is live."
                   : "Uses your deployed API (seeded accounts: password123)."}
@@ -283,14 +283,14 @@ export default function LoginPage() {
               return (
                 <button
                   key={role.key}
-                  className={`group rounded-xl border border-slate-200 bg-white p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${role.border} ${role.bg}`}
+                  className={`group rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/40 p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-md dark:hover:shadow-none ${role.border} ${role.bg}`}
                   onClick={() => handleLogin(role.key)}
                 >
                   <span className={`grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br ${role.gradient} text-white shadow-md transition-transform duration-300 group-hover:scale-110`}>
                     <Icon className="h-5 w-5" />
                   </span>
-                  <p className="mt-4 text-[14px] font-semibold text-slate-800">{role.label}</p>
-                  <p className="mt-1 text-[12px] text-slate-400 font-medium">{role.desc}</p>
+                  <p className="mt-4 text-[14px] font-semibold text-slate-800 dark:text-slate-200">{role.label}</p>
+                  <p className="mt-1 text-[12px] text-slate-400 dark:text-slate-500 font-medium">{role.desc}</p>
                 </button>
               )
             })}
