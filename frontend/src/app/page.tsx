@@ -1053,9 +1053,9 @@ export default function Home() {
               Secure. Reliable. Intelligent.
             </div>
 
-            {/* Build specs */}
-            <div className="text-center">
-              Built with <span className="text-slate-600 dark:text-slate-350">FastAPI + Python</span> • <span className="text-slate-600 dark:text-slate-350">PostgreSQL</span> • <span className="text-slate-600 dark:text-slate-350">Redis</span> • <span className="text-slate-600 dark:text-slate-350">Next.js</span> • <span className="text-slate-600 dark:text-slate-350">Tailwind CSS</span>
+            {/* Developer credit */}
+            <div className="text-center text-[11px]">
+              Built by <span className="text-[13px] font-black bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">Harshit Sharma</span>
             </div>
 
             {/* Copyright */}
