@@ -1,6 +1,7 @@
 """Succession Engine — detects single points of failure in skill coverage."""
 
 from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
@@ -20,7 +21,9 @@ async def detect_knowledge_risks(
     """
     # Get all active tasks with required skills
     tasks_result = await db.execute(
-        select(Task).where(Task.status.in_(["pending", "assigned", "active", "completed"]))
+        select(Task)
+        .options(selectinload(Task.required_skills))
+        .where(Task.status.in_(["pending", "assigned", "active", "completed"]))
     )
     tasks = list(tasks_result.scalars().all())
 
@@ -31,7 +34,8 @@ async def detect_knowledge_risks(
     for task in tasks:
         if not task.required_skills or not task.assigned_to:
             continue
-        for skill_name in [s.strip() for s in task.required_skills.split(",") if s.strip()]:
+        for skill_req in task.required_skills:
+            skill_name = skill_req.skill_name
             skill_lower = skill_name.lower()
             if skill_lower not in skill_user_counts:
                 skill_user_counts[skill_lower] = {}

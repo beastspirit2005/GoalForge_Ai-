@@ -1,8 +1,13 @@
 import json
 from typing import Any, List, Dict
 import httpx
+from pydantic import BaseModel, ValidationError
 
 from app.core.config import settings
+
+class AutoAssignmentResponse(BaseModel):
+    assigned_user_id: int | None
+    reason: str
 
 def fallback_auto_assign(task_data: dict, available_users: list[dict]) -> dict:
     if not available_users:
@@ -15,19 +20,23 @@ def fallback_auto_assign(task_data: dict, available_users: list[dict]) -> dict:
         "reason": f"Fallback assignment: Selected {best_user['name']} as they were the first available."
     }
 
-async def generate_auto_assignment(task_data: dict, available_users: list[dict], api_key: str | None = None) -> dict:
+async def generate_auto_assignment(
+    task_data: dict, 
+    available_users: list[dict], 
+    api_key: str | None = None,
+    ai_provider: str = "gemini",
+    ai_model: str = "gemini-2.5-flash"
+) -> dict:
     """
     Takes a task definition and a list of available users (with their skills/proficiencies)
-    and asks the AI to select the best fit. Supports both Gemini and Local Ollama.
+    and asks the AI to select the best fit. Supports both Gemini and Local Ollama via Master Control.
     """
     import os
     
-    use_local_ai = os.getenv("USE_LOCAL_AI", "false").lower() == "true"
     ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-    ollama_model = os.getenv("OLLAMA_MODEL", "gemma2:2b")
     
     active_key = api_key or settings.GEMINI_API_KEY
-    if not active_key and not use_local_ai:
+    if not active_key and ai_provider == "gemini":
         return fallback_auto_assign(task_data, available_users)
         
     prompt = f"""
@@ -56,13 +65,13 @@ async def generate_auto_assignment(task_data: dict, available_users: list[dict],
     
     try:
         async with httpx.AsyncClient() as client:
-            if use_local_ai:
+            if ai_provider == "ollama":
                 # -----------------------
                 # OLLAMA LOCAL AI ROUTING
                 # -----------------------
                 url = f"{ollama_host.rstrip('/')}/api/generate"
                 payload = {
-                    "model": ollama_model,
+                    "model": ai_model,
                     "prompt": prompt,
                     "stream": False,
                     "format": "json"
@@ -75,8 +84,11 @@ async def generate_auto_assignment(task_data: dict, available_users: list[dict],
                 # -----------------------
                 # GEMINI CLOUD AI ROUTING
                 # -----------------------
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={active_key}"
-                headers = {"Content-Type": "application/json"}
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{ai_model}:generateContent"
+                headers = {
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": active_key
+                }
                 payload = {
                     "contents": [{"parts": [{"text": prompt}]}],
                     "generationConfig": {"temperature": 0.2}
@@ -92,17 +104,14 @@ async def generate_auto_assignment(task_data: dict, available_users: list[dict],
             elif text.startswith("```"):
                 text = text.strip("```").strip()
                 
-            result = json.loads(text)
-            
-            # Ensure assigned_user_id is an integer or None
-            assigned_id = result.get("assigned_user_id")
-            if assigned_id is not None and not isinstance(assigned_id, int):
-                try:
-                    result["assigned_user_id"] = int(assigned_id)
-                except ValueError:
-                    result["assigned_user_id"] = None
-            
-            return result
+            # Strict validation using Pydantic
+            validated = AutoAssignmentResponse.model_validate_json(text)
+            return validated.model_dump()
+
     except Exception as e:
-        print(f"Error calling AI for auto assignment ({'Ollama' if use_local_ai else 'Gemini'}): {e}")
+        print(f"Error calling AI for auto assignment ({ai_provider}): {e}")
+        # Try fallback provider if Ollama fails
+        if ai_provider == "ollama" and active_key:
+            print("Falling back to Gemini...")
+            return await generate_auto_assignment(task_data, available_users, api_key=active_key, ai_provider="gemini", ai_model="gemini-2.5-flash")
         return fallback_auto_assign(task_data, available_users)

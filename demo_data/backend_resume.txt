@@ -1,0 +1,27 @@
+BOB SMITH
+Backend Systems Engineer
+Austin, TX | bob.smith@example.com | (555) 987-6543
+
+SUMMARY
+Backend Engineer with deep expertise in designing high-concurrency microservices, managing relational databases, and optimizing cloud infrastructure. Proficient in Python, Go, and PostgreSQL. Experienced in deploying containerized applications with Docker and Kubernetes.
+
+SKILLS
+• Languages: Python, Go, SQL, Bash
+• Databases: PostgreSQL, Redis, MongoDB, Elasticsearch
+• Cloud & DevOps: AWS (EC2, S3, RDS), Docker, Kubernetes, Terraform, CI/CD (GitLab, GitHub Actions)
+• Frameworks: FastAPI, Django, Flask, SQLAlchemy
+• Architecture: Microservices, RESTful APIs, gRPC, Event-driven architecture (Kafka)
+
+EXPERIENCE
+Senior Backend Engineer | CloudScale Data (2020 - Present)
+- Architected and developed a high-throughput event processing pipeline using Python and Kafka.
+- Migrated legacy monolith to a Kubernetes-based microservices architecture, improving uptime to 99.99%.
+- Optimized complex PostgreSQL queries, reducing average API response times by 60%.
+
+Backend Developer | StartupX (2016 - 2020)
+- Built robust REST APIs using FastAPI and SQLAlchemy to serve a mobile application with 500K+ monthly active users.
+- Implemented caching strategies using Redis to offload database load.
+- Automated deployment workflows using Terraform and Docker.
+
+EDUCATION
+B.S. Software Engineering | University of Texas at Austin (2016)

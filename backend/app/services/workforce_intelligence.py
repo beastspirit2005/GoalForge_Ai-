@@ -1,55 +1,73 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy import func
+from cachetools import TTLCache
 
 from app.models.user import User
 from app.models.skill import UserSkill, Skill
-from app.models.target import Target, Task
+from app.models.target import Task, TaskRequiredSkill
+
+# Global cache to prevent heavy DB queries (max 100 entries, 5 minute TTL)
+workforce_insights_cache = TTLCache(maxsize=100, ttl=300)
 
 async def analyze_workforce_skills(db: AsyncSession, department: str | None = None) -> dict:
     """
-    Analyzes the skills of users, optionally filtered by department,
-    and compares them to the required skills of active tasks to find gaps.
+    Analyzes the skills of users using DB aggregations,
+    and compares them to required skills to find gaps.
     """
-    users_query = select(User).options(selectinload(User.user_skills).selectinload(UserSkill.skill))
+    cache_key = f"workforce_skills_{department or 'all'}"
+    if cache_key in workforce_insights_cache:
+        return workforce_insights_cache[cache_key]
+
+    # Aggregate skill proficiencies across the workforce via SQL
+    skill_inventory = {}
+    
+    # 1. Total Employees
+    users_query = select(func.count(User.id)).where(User.is_active == True)
     if department:
         users_query = users_query.where(User.department == department)
-        
-    users_result = await db.execute(users_query)
-    users = users_result.scalars().all()
+    total_employees = await db.scalar(users_query)
     
-    # Aggregate skill proficiencies
-    skill_inventory = {}
-    for u in users:
-        for us in getattr(u, 'user_skills', []):
-            skill_name = us.skill.name
-            if skill_name not in skill_inventory:
-                skill_inventory[skill_name] = {"count": 0, "total_proficiency": 0}
-            skill_inventory[skill_name]["count"] += 1
-            skill_inventory[skill_name]["total_proficiency"] += us.proficiency
-            
-    # Calculate average proficiencies
-    for k, v in skill_inventory.items():
-        v["average_proficiency"] = v["total_proficiency"] / v["count"]
-        
-    # Find skill gaps (Tasks that require a skill no one has)
-    tasks_result = await db.execute(select(Task).where(Task.status != "completed"))
-    tasks = tasks_result.scalars().all()
+    # 2. Skill aggregates (Count, Total Proficiency)
+    skills_query = select(
+        Skill.name, 
+        func.count(UserSkill.user_id).label("count"), 
+        func.sum(UserSkill.proficiency).label("total_proficiency")
+    ).join(Skill, UserSkill.skill_id == Skill.id)
     
-    gaps = []
-    required_skills_tally = {}
-    for t in tasks:
-        if t.required_skills:
-            # Assuming comma separated for simplicity
-            for req in [s.strip() for s in t.required_skills.split(",")]:
-                required_skills_tally[req] = required_skills_tally.get(req, 0) + 1
-                if req not in skill_inventory:
-                    if req not in gaps:
-                        gaps.append(req)
-                        
-    return {
-        "total_employees_analyzed": len(users),
+    if department:
+        skills_query = skills_query.join(User, UserSkill.user_id == User.id).where(User.department == department)
+    skills_query = skills_query.group_by(Skill.name)
+    
+    skills_result = await db.execute(skills_query)
+    for row in skills_result:
+        skill_name = row.name
+        skill_inventory[skill_name] = {
+            "count": row.count,
+            "total_proficiency": row.total_proficiency,
+            "average_proficiency": row.total_proficiency / row.count if row.count > 0 else 0
+        }
+
+    # 3. Required skills tally
+    # Using SQL aggregations for required skills
+    required_query = select(
+        TaskRequiredSkill.skill_name, 
+        func.count(TaskRequiredSkill.task_id).label("count")
+    ).join(Task).where(Task.status != "completed").group_by(TaskRequiredSkill.skill_name)
+    
+    required_result = await db.execute(required_query)
+    required_skills_tally = {row.skill_name: row.count for row in required_result}
+
+    # 4. Find Gaps
+    # In a full implementation, we match skill_name from Skill table with TaskRequiredSkill.skill_name
+    gaps = [skill for skill in required_skills_tally.keys() if skill not in skill_inventory] # Mock gap finding
+
+    result = {
+        "total_employees_analyzed": total_employees or 0,
         "skill_inventory": skill_inventory,
         "high_demand_skills": required_skills_tally,
         "critical_skill_gaps": gaps
     }
+    
+    workforce_insights_cache[cache_key] = result
+    return result

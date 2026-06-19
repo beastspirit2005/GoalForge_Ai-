@@ -3,11 +3,17 @@
  */
 
 import { API_URL } from "@/lib/api"
+import { getStoredToken } from "@/services/auth.service"
 
 async function apiFetchRaw<T = unknown>(path: string): Promise<T> {
+  const token = getStoredToken()
+  const headers: Record<string, string> = { "Content-Type": "application/json" }
+  if (token) headers["Authorization"] = `Bearer ${token}`
+
   const res = await fetch(`${API_URL}${path}`, {
     credentials: "include",
-    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+    headers,
   })
   if (!res.ok) {
     throw new Error(`API error ${res.status}`)
@@ -16,10 +22,14 @@ async function apiFetchRaw<T = unknown>(path: string): Promise<T> {
 }
 
 async function apiPostRaw<T = unknown>(path: string, body?: unknown): Promise<T> {
+  const token = getStoredToken()
+  const headers: Record<string, string> = { "Content-Type": "application/json" }
+  if (token) headers["Authorization"] = `Bearer ${token}`
+
   const res = await fetch(`${API_URL}${path}`, {
     method: "POST",
     credentials: "include",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   })
   if (!res.ok) {

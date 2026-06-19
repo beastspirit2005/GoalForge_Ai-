@@ -40,6 +40,8 @@ class UserResponse(BaseModel):
     profile_picture_url: str | None = None
     google_id: str | None = None
     microsoft_id: str | None = None
+    preferred_ai_provider: str = "gemini"
+    preferred_ai_model: str = "gemini-2.5-flash"
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -54,6 +56,8 @@ class UserUpdate(BaseModel):
     profile_picture_url: str | None = None
     google_id: str | None = None
     microsoft_id: str | None = None
+    preferred_ai_provider: str | None = None
+    preferred_ai_model: str | None = None
 
 
 class AdminUserUpdate(BaseModel):

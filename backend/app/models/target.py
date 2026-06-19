@@ -4,13 +4,24 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
+class TargetRequiredSkill(Base):
+    __tablename__ = "target_required_skills"
+    target_id: Mapped[int] = mapped_column(Integer, ForeignKey("targets.id", ondelete="CASCADE"), primary_key=True)
+    skill_name: Mapped[str] = mapped_column(String(100), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+class TaskRequiredSkill(Base):
+    __tablename__ = "task_required_skills"
+    task_id: Mapped[int] = mapped_column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), primary_key=True)
+    skill_name: Mapped[str] = mapped_column(String(100), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
 class Target(Base):
     __tablename__ = "targets"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    required_skills: Mapped[str | None] = mapped_column(String(500), nullable=True)
     manager_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     pending_review: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     progress: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
@@ -21,6 +32,7 @@ class Target(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     tasks = relationship("Task", back_populates="target", cascade="all, delete-orphan")
+    required_skills = relationship("TargetRequiredSkill", cascade="all, delete-orphan")
 
 
 class Task(Base):
@@ -30,7 +42,6 @@ class Task(Base):
     target_id: Mapped[int] = mapped_column(Integer, ForeignKey("targets.id", ondelete="CASCADE"), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    required_skills: Mapped[str | None] = mapped_column(String(500), nullable=True)
     assigned_to: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     pending_review: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     progress: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
@@ -41,6 +52,7 @@ class Task(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     target = relationship("Target", back_populates="tasks")
+    required_skills = relationship("TaskRequiredSkill", cascade="all, delete-orphan")
 
 
 class RecommendationFeedback(Base):

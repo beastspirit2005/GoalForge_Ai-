@@ -69,6 +69,10 @@ async def update_me(data: UserUpdate, db: AsyncSession = Depends(get_db), curren
         current_user.department = data.department
     if data.profile_picture_url is not None:
         current_user.profile_picture_url = data.profile_picture_url
+    if data.preferred_ai_provider is not None:
+        current_user.preferred_ai_provider = data.preferred_ai_provider
+    if data.preferred_ai_model is not None:
+        current_user.preferred_ai_model = data.preferred_ai_model
     
     await db.flush()
     await db.refresh(current_user)

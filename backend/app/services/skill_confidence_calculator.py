@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.goal import Goal
 from app.models.milestone import Milestone
-from app.models.target import Task
+from app.models.target import Task, TaskRequiredSkill
 from app.models.skill import Skill, UserSkill
 
 
@@ -19,7 +19,7 @@ async def calculate_task_confidence(db: AsyncSession, user_id: int, skill_name: 
         .where(
             Task.assigned_to == user_id,
             Task.status == "completed",
-            Task.required_skills.ilike(f"%{skill_name}%"),
+            Task.required_skills.any(TaskRequiredSkill.skill_name.ilike(f"%{skill_name}%")),
         )
     )
     completed_with_skill = result.scalar() or 0

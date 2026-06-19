@@ -39,6 +39,9 @@ class User(Base):
     department_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     org_tree_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
+    # Global AI Master Control
+    preferred_ai_provider: Mapped[str] = mapped_column(String(20), nullable=False, default="gemini", server_default="gemini")
+    preferred_ai_model: Mapped[str] = mapped_column(String(50), nullable=False, default="gemini-2.5-flash", server_default="gemini-2.5-flash")
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

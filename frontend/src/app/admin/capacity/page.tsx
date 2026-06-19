@@ -42,7 +42,10 @@ export default function CapacityPlanningPage() {
         setCapacity(capData);
         setRisks(riskData.risks || []);
       })
-      .catch(() => {})
+      .catch((err) => {
+        console.error("Capacity Page Error:", err);
+        setCapacity({} as CapacityData); // Dummy to force render of something
+      })
       .finally(() => setLoading(false));
   }, []);
 

@@ -1,0 +1,25 @@
+ALICE WONG
+Senior Frontend Engineer
+San Francisco, CA | alice.wong@example.com | (555) 123-4567
+
+SUMMARY
+Passionate frontend developer with 6+ years of experience building scalable, performant web applications. Expert in React, TypeScript, and modern CSS frameworks like Tailwind CSS. Strong eye for design and UX.
+
+SKILLS
+• Languages: JavaScript (ES6+), TypeScript, HTML5, CSS3, GraphQL
+• Frameworks: React, Next.js, Vue.js, Tailwind CSS, Material UI
+• Tools: Git, Webpack, Vite, Jest, Cypress, Figma
+• Other: Responsive Design, Web Accessibility (WCAG), State Management (Redux, Zustand)
+
+EXPERIENCE
+Frontend Tech Lead | TechFlow Inc. (2021 - Present)
+- Led a team of 4 frontend engineers to rebuild the core dashboard in Next.js, reducing load times by 40%.
+- Implemented a robust design system using Tailwind CSS and Radix UI.
+- Mentored junior developers and established CI/CD best practices using GitHub Actions.
+
+Frontend Developer | WebSolutions (2018 - 2021)
+- Built interactive single-page applications using React and Redux.
+- Collaborated with backend teams to integrate RESTful APIs.
+
+EDUCATION
+B.S. Computer Science | University of California, Berkeley (2018)
