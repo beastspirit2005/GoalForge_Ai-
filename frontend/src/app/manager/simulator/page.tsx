@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 import {
   Select,
   SelectContent,
@@ -41,67 +42,78 @@ export default function SimulatorPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Capacity Simulator</h1>
-        <p className="text-muted-foreground">Simulate deadline adjustments and resource reallocations.</p>
-      </div>
+    <DashboardLayout>
+      <div className="p-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold tracking-tight">Capacity Simulator</h1>
+          <p className="text-muted-foreground">Simulate deadline adjustments and resource reallocations.</p>
+        </div>
 
-      <div className="border rounded-lg p-6 bg-card text-card-foreground shadow-sm max-w-2xl">
-        <h2 className="text-xl font-semibold mb-4">Run Prediction Model</h2>
-        <p className="mb-4 text-sm text-muted-foreground">
-          This uses the AI Auto Assigner to predict if your team can handle a new target.
-        </p>
-        
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">AI Engine</label>
-            <Select value={aiProvider} onValueChange={(v: "gemini" | "ollama") => setAiProvider(v)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="AI Engine" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="gemini">Google Gemini 2.5</SelectItem>
-                <SelectItem value="ollama">Local Ollama</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="border rounded-lg p-6 bg-card text-card-foreground shadow-sm max-w-2xl">
+          <h2 className="text-xl font-semibold mb-4">Run Prediction Model</h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            This uses the AI Auto Assigner to predict if your team can handle a new target.
+          </p>
           
-          {aiProvider === "ollama" && (
-            <div className="flex flex-col gap-1.5 flex-1">
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ollama Model</label>
-              <Select value={aiModel} onValueChange={setAiModel}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Ollama Model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ollamaModels.map(m => (
-                    <SelectItem key={m} value={m}>{m}</SelectItem>
-                  ))}
-                  {ollamaModels.length === 0 && (
-                    <SelectItem value="none" disabled>No local models found</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
+          <div className="flex flex-col sm:flex-row gap-6 mb-8">
+            <div className="flex flex-col gap-2 flex-1">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                AI ENGINE
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {(["gemini", "ollama"] as const).map((prov) => (
+                  <button
+                    key={prov}
+                    type="button"
+                    onClick={() => setAiProvider(prov)}
+                    className={`rounded-lg border py-2 text-sm font-semibold capitalize transition-all ${
+                      aiProvider === prov
+                        ? "border-[var(--gf-indigo)] bg-[var(--gf-indigo)]/10 text-[var(--gf-indigo)] dark:text-indigo-300"
+                        : "border-border bg-background text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {prov === "gemini" ? "Google Gemini" : "Local Ollama"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {aiProvider === "ollama" && (
+              <div className="flex flex-col gap-2 flex-1">
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ollama Model</label>
+                <Select value={aiModel} onValueChange={setAiModel}>
+                  <SelectTrigger className="w-full h-[38px]">
+                    <SelectValue placeholder="Select a model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ollamaModels.map(m => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                    {ollamaModels.length === 0 && (
+                      <SelectItem value="none" disabled>No local models found</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <button 
+            onClick={runSimulation}
+            disabled={loading}
+            className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 disabled:opacity-50 w-full sm:w-auto"
+          >
+            {loading ? "Simulating..." : "Run Simulation"}
+          </button>
+
+          {simulationResult && (
+            <div className="mt-6 p-4 bg-muted text-muted-foreground rounded-md border border-border">
+              <h3 className="font-semibold text-foreground mb-2">Simulation Results:</h3>
+              <p>{simulationResult}</p>
             </div>
           )}
         </div>
-
-        <button 
-          onClick={runSimulation}
-          disabled={loading}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 disabled:opacity-50 w-full sm:w-auto"
-        >
-          {loading ? "Simulating..." : "Run Simulation"}
-        </button>
-
-        {simulationResult && (
-          <div className="mt-6 p-4 bg-muted text-muted-foreground rounded-md border border-border">
-            <h3 className="font-semibold text-foreground mb-2">Simulation Results:</h3>
-            <p>{simulationResult}</p>
-          </div>
-        )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

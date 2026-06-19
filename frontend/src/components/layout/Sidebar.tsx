@@ -25,6 +25,7 @@ import {
   GraduationCap,
   Gamepad2,
   PieChart,
+  Cpu,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
@@ -54,6 +55,7 @@ const links: NavLink[] = [
   { title: "Comments", href: "/manager/comments", icon: MessageSquare, section: "Manager" },
   { title: "Predictions", href: "/manager/predictions", icon: Zap, section: "Manager" },
   { title: "Workload", href: "/manager/workload", icon: Flame, section: "Manager" },
+  { title: "Capacity Simulator", href: "/manager/simulator", icon: Cpu, section: "Manager" },
   // Admin
   { title: "Admin Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, section: "Admin" },
   { title: "Analytics", href: "/admin/org-analytics", icon: BarChart3, section: "Admin" },
