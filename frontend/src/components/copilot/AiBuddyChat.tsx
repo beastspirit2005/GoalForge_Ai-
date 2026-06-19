@@ -190,10 +190,6 @@ export function AiBuddyChat() {
   )
 
   useEffect(() => {
-    const savedProvider = localStorage.getItem("aiBuddyProvider") as "gemini" | "ollama" | "fallback"
-    if (savedProvider) setActiveProvider(savedProvider)
-    const savedOllama = localStorage.getItem("aiBuddyOllamaModel")
-    if (savedOllama) setSelectedOllamaModel(savedOllama)
     const storedMode = localStorage.getItem("gf_gemini_key_mode")
     setGeminiKeyModeState(storedMode === "custom" ? "custom" : "app")
     const isSaved = localStorage.getItem("gf_gemini_custom_key_saved") === "true"
@@ -494,7 +490,7 @@ ${userMessage}
 
 Respond in a helpful, conversational, and professional tone. Keep it concise, actionable, and formatted in Markdown. Focus entirely on the user's performance and the provided context. If they ask a general question, guide it back to their goals.`
         
-        const data = await queryOllama(prompt, selectedOllamaModel || ollamaModels[0] || "llama3")
+        const data = await queryOllama(prompt, selectedOllamaModel || "llama3")
         res = { response: data.response, source: `ollama (${selectedOllamaModel || "llama3"})` }
       } else {
         res = await runBackendCopilot(
