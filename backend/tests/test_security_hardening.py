@@ -16,13 +16,13 @@ def clean_and_seed_db():
     async def _setup():
         async with async_session() as db:
             # Clean up users to avoid conflicts
-            await db.execute(text("DELETE FROM users WHERE email IN ('test_sec_emp@goalforge.ai');"))
+            await db.execute(text("DELETE FROM users WHERE email IN ('test_sec_emp@example.com');"))
             
             # Create a test employee
             test_user = User(
                 id=9999,
                 name="Security Test Employee",
-                email="test_sec_emp@goalforge.ai",
+                email="test_sec_emp@example.com",
                 password_hash=hash_password("password123"),
                 role="employee",
                 department="QA",
@@ -37,7 +37,7 @@ def clean_and_seed_db():
     
     async def _cleanup():
         async with async_session() as db:
-            await db.execute(text("DELETE FROM users WHERE email IN ('test_sec_emp@goalforge.ai');"))
+            await db.execute(text("DELETE FROM users WHERE email IN ('test_sec_emp@example.com');"))
             await db.commit()
     asyncio.run(_cleanup())
 
@@ -45,7 +45,7 @@ def clean_and_seed_db():
 def test_request_otp_demo_mode_active():
     """Verify that request-otp returns the code in response body when DEMO_MODE is active."""
     os.environ["DEMO_MODE"] = "true"
-    response = client.post("/auth/request-otp", json={"email": "test_sec_emp@goalforge.ai"})
+    response = client.post("/auth/request-otp", json={"email": "test_sec_emp@example.com"})
     assert response.status_code == 200
     data = response.json()
     assert "Demo Mode" in data["message"]
@@ -57,14 +57,14 @@ def test_request_otp_demo_mode_inactive_no_smtp():
     os.environ["DEMO_MODE"] = "false"
     # Ensure SMTP_PASSWORD is empty
     os.environ["SMTP_PASSWORD"] = ""
-    response = client.post("/auth/request-otp", json={"email": "test_sec_emp@goalforge.ai"})
+    response = client.post("/auth/request-otp", json={"email": "test_sec_emp@example.com"})
     assert response.status_code == 500
     assert "Mailing service (SMTP) is not configured" in response.json()["detail"]
 
 
 def test_secure_cookie_login():
     """Verify that a successful login sets the access_token secure cookie."""
-    response = client.post("/auth/login", json={"email": "test_sec_emp@goalforge.ai", "password": "password123"})
+    response = client.post("/auth/login", json={"email": "test_sec_emp@example.com", "password": "password123"})
     assert response.status_code == 200
     assert "access_token" in response.cookies
     assert response.cookies["access_token"] is not None
@@ -185,7 +185,7 @@ def test_change_password_success():
     """Verify that password change works, hashes the new password, and resets OTP/lockout state."""
     local_client = TestClient(app, base_url="https://testserver")
     # 1. Log in to get authentication cookie
-    login_res = local_client.post("/auth/login", json={"email": "test_sec_emp@goalforge.ai", "password": "password123"})
+    login_res = local_client.post("/auth/login", json={"email": "test_sec_emp@example.com", "password": "password123"})
     assert login_res.status_code == 200
     
     # 2. Call change-password route
@@ -196,18 +196,18 @@ def test_change_password_success():
     assert change_res.status_code == 200
     
     # 3. Try logging in with the old password (should fail)
-    old_login = local_client.post("/auth/login", json={"email": "test_sec_emp@goalforge.ai", "password": "password123"})
+    old_login = local_client.post("/auth/login", json={"email": "test_sec_emp@example.com", "password": "password123"})
     assert old_login.status_code == 401
     
     # 4. Try logging in with the new password (should succeed)
-    new_login = local_client.post("/auth/login", json={"email": "test_sec_emp@goalforge.ai", "password": "newpassword456"})
+    new_login = local_client.post("/auth/login", json={"email": "test_sec_emp@example.com", "password": "newpassword456"})
     assert new_login.status_code == 200
     
     # 5. Verify Database User record directly to ensure all OTP/lockout fields are cleared
     async def verify_db():
         async with async_session() as db:
             from sqlalchemy import select
-            result = await db.execute(select(User).where(User.email == "test_sec_emp@goalforge.ai"))
+            result = await db.execute(select(User).where(User.email == "test_sec_emp@example.com"))
             user = result.scalar_one()
             assert user.otp_code is None
             assert user.otp_expires_at is None
@@ -222,7 +222,7 @@ def test_change_password_success():
 def test_change_password_incorrect_current():
     """Verify that password change fails when current password is wrong."""
     local_client = TestClient(app, base_url="https://testserver")
-    login_res = local_client.post("/auth/login", json={"email": "test_sec_emp@goalforge.ai", "password": "password123"})
+    login_res = local_client.post("/auth/login", json={"email": "test_sec_emp@example.com", "password": "password123"})
     assert login_res.status_code == 200
     
     change_res = local_client.post(
@@ -240,15 +240,29 @@ def test_production_cors_origins_validator():
     
     # Empty CORS
     with pytest.raises(ValueError, match="CORS_ORIGINS must be set to an explicit whitelist in production"):
-        Settings(DEBUG=False, CORS_ORIGINS="", SECRET_KEY="secure-prod-key-123")
+        Settings(DEBUG=False, CORS_ORIGINS="", SECRET_KEY="secure-prod-key-123", DATABASE_URL="postgresql+asyncpg://u:p@localhost/db")
         
     # Wildcard CORS
     with pytest.raises(ValueError, match="CORS_ORIGINS must be set to an explicit whitelist in production"):
-        Settings(DEBUG=False, CORS_ORIGINS="*", SECRET_KEY="secure-prod-key-123")
+        Settings(DEBUG=False, CORS_ORIGINS="*", SECRET_KEY="secure-prod-key-123", DATABASE_URL="postgresql+asyncpg://u:p@localhost/db")
         
     # Valid CORS
-    settings = Settings(DEBUG=False, CORS_ORIGINS="https://goalforge.ai", SECRET_KEY="secure-prod-key-123")
+    settings = Settings(DEBUG=False, CORS_ORIGINS="https://goalforge.ai", SECRET_KEY="secure-prod-key-123", DATABASE_URL="postgresql+asyncpg://u:p@localhost/db")
     assert settings.CORS_ORIGINS == "https://goalforge.ai"
+
+
+def test_production_sqlite_blocked():
+    """Verify that starting in production with SQLite DATABASE_URL raises ValueError."""
+    from app.core.config import Settings
+    import pytest
+    
+    with pytest.raises(ValueError, match="SQLite is not supported in production"):
+        Settings(
+            DEBUG=False,
+            CORS_ORIGINS="https://goalforge.ai",
+            SECRET_KEY="secure-prod-key-123",
+            DATABASE_URL="sqlite+aiosqlite:///./goalforge.db",
+        )
 
 
 

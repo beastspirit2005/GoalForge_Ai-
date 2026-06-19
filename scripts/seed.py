@@ -38,11 +38,11 @@ async def seed():
         # ── Users ────────────────────────────────────────────────
         print("   → Adding demo users...")
         users_data = [
-            {"id": 1, "name": "Aarav Mehta", "email": "employee@goalforge.ai", "phone_number": "+1234567890", "password_hash": pw, "role": UserRole.EMPLOYEE.value, "department": "People Ops", "manager_id": 2},
-            {"id": 2, "name": "Priya Nair", "email": "manager@goalforge.ai", "phone_number": "+1987654321", "password_hash": pw, "role": UserRole.MANAGER.value, "department": "People Ops", "manager_id": 3},
-            {"id": 3, "name": "Rohan Kapoor", "email": "admin@goalforge.ai", "phone_number": "+1122334455", "password_hash": pw, "role": UserRole.ADMIN.value, "department": "Operations", "manager_id": None},
-            {"id": 4, "name": "Neha Rao", "email": "neha.rao@goalforge.ai", "phone_number": None, "password_hash": pw, "role": UserRole.EMPLOYEE.value, "department": "Engineering", "manager_id": 2},
-            {"id": 5, "name": "Kabir Singh", "email": "kabir.s@goalforge.ai", "phone_number": None, "password_hash": pw, "role": UserRole.EMPLOYEE.value, "department": "Sales", "manager_id": 2},
+            {"id": 1, "name": "Aarav Mehta", "email": "employee@example.com", "phone_number": "+1234567890", "password_hash": pw, "role": UserRole.EMPLOYEE.value, "department": "People Ops", "manager_id": 2},
+            {"id": 2, "name": "Priya Nair", "email": "manager@example.com", "phone_number": "+1987654321", "password_hash": pw, "role": UserRole.MANAGER.value, "department": "People Ops", "manager_id": 3},
+            {"id": 3, "name": "Rohan Kapoor", "email": "admin@example.com", "phone_number": "+1122334455", "password_hash": pw, "role": UserRole.ADMIN.value, "department": "Operations", "manager_id": None},
+            {"id": 4, "name": "Neha Rao", "email": "neha.rao@example.com", "phone_number": None, "password_hash": pw, "role": UserRole.EMPLOYEE.value, "department": "Engineering", "manager_id": 2},
+            {"id": 5, "name": "Kabir Singh", "email": "kabir.s@example.com", "phone_number": None, "password_hash": pw, "role": UserRole.EMPLOYEE.value, "department": "Sales", "manager_id": 2},
         ]
         users = [User(**data) for data in users_data]
         for u in users:
@@ -144,9 +144,9 @@ async def seed():
         print()
         print("   Login credentials:")
         print("   ┌─────────────────────────────────────────┐")
-        print("   │ employee@goalforge.ai / password123     │")
-        print("   │ manager@goalforge.ai  / password123     │")
-        print("   │ admin@goalforge.ai    / password123     │")
+        print("   │ employee@example.com / password123     │")
+        print("   │ manager@example.com  / password123     │")
+        print("   │ admin@example.com    / password123     │")
         print("   └─────────────────────────────────────────┘")
 
 

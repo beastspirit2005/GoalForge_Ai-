@@ -40,7 +40,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             HTTP_REQUESTS_TOTAL.labels(
                 method=method,
                 endpoint=endpoint,
-                status=response.status_code
+                status=str(response.status_code)
             ).inc()
             
             HTTP_REQUEST_DURATION.labels(
@@ -53,7 +53,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             HTTP_REQUESTS_TOTAL.labels(
                 method=method,
                 endpoint=endpoint,
-                status=500
+                status="500"
             ).inc()
             
             HTTP_REQUEST_DURATION.labels(

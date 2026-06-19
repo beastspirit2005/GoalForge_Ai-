@@ -20,6 +20,8 @@ async def list_users(
     current_user: User = Depends(require_role("admin")),
 ):
     users = await get_all_users(db, skip, limit)
+    # Filter out soft-deleted users so they disappear from the UI after deletion
+    users = [u for u in users if u.is_active]
     return [
         {
             "id": u.id,
@@ -84,28 +86,69 @@ async def approve_user(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("admin")),
 ):
+    print("APPROVE_USER ROUTE HIT!")
+    try:
+        from sqlalchemy import select
+        from app.services.email_service import EmailDeliveryError, send_approval_email
+        import asyncio
+        
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user.is_approved = True
+        await db.flush()
+        await db.refresh(user)
+        
+        await log_action(
+            db, user_id=current_user.id, action="user_approved",
+            entity_type="user", entity_id=user.id,
+        )
+        
+        def send_approval_email_safely():
+            try:
+                send_approval_email(user.email, user.name, user.role)
+            except EmailDeliveryError as exc:
+                print(f"Approval email was not sent for user {user.id}: {exc}")
+
+        loop = asyncio.get_event_loop()
+        loop.run_in_executor(None, send_approval_email_safely)
+
+        return {"id": user.id, "is_approved": user.is_approved, "message": "User approved successfully"}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("admin")),
+):
     from sqlalchemy import select
-    from app.services.email_service import send_approval_email
-    import asyncio
+    from sqlalchemy.exc import IntegrityError
     
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    user.is_approved = True
-    await db.commit()
-    await db.refresh(user)
-    
+        
+    try:
+        await db.delete(user)
+        await db.flush()
+    except IntegrityError:
+        await db.rollback()
+        # Fallback to soft delete if there are foreign key constraints
+        user.is_active = False
+        await db.flush()
+        
     await log_action(
-        db, user_id=current_user.id, action="user_approved",
-        entity_type="user", entity_id=user.id,
+        db, user_id=current_user.id, action="user_deleted",
+        entity_type="user", entity_id=user_id,
     )
-    
-    loop = asyncio.get_event_loop()
-    loop.run_in_executor(None, send_approval_email, user.email, user.name, user.role)
-
-    return {"id": user.id, "is_approved": user.is_approved, "message": "User approved successfully"}
+    return {"message": "User deleted successfully"}
 
 
 @router.post("/goals/{goal_id}/unlock")

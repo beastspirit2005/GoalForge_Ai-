@@ -47,7 +47,7 @@ Test-Http "Backend /health" "http://localhost:8000/health" | Out-Null
 Test-Http "Frontend /api/health" "http://localhost:3000/api/health" | Out-Null
 Test-Http "Frontend home" "http://localhost:3000/" | Out-Null
 
-$loginBody = '{"email":"employee@goalforge.ai","password":"password123"}'
+$loginBody = '{"email":"employee@example.com","password":"password123"}'
 try {
     $login = Invoke-RestMethod -Uri "http://localhost:8000/auth/login" -Method POST -ContentType "application/json" -Body $loginBody -TimeoutSec 30 -ErrorAction Stop
     Report "Auth login" $true "token issued"

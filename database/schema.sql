@@ -11,9 +11,19 @@ CREATE TABLE IF NOT EXISTS users (
     department VARCHAR(120),
     manager_id INTEGER REFERENCES users(id),
     is_active BOOLEAN DEFAULT TRUE,
+    is_approved BOOLEAN DEFAULT FALSE,
     otp_code VARCHAR(6),
     otp_expires_at TIMESTAMPTZ,
+    otp_failed_attempts INTEGER DEFAULT 0,
+    otp_lockout_count INTEGER DEFAULT 0,
+    otp_locked_until TIMESTAMPTZ,
+    google_id VARCHAR(255) UNIQUE,
+    microsoft_id VARCHAR(255) UNIQUE,
     profile_picture_url VARCHAR(500),
+    experience_years DOUBLE PRECISION,
+    experience_summary TEXT,
+    resume_text_encrypted BYTEA,
+    work_points DOUBLE PRECISION DEFAULT 0.0,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -25,7 +35,7 @@ CREATE TABLE IF NOT EXISTS goals (
     target VARCHAR(500),
     uom VARCHAR(50),
     weightage DOUBLE PRECISION NOT NULL DEFAULT 10.0,
-    deadline VARCHAR(30),
+    deadline TIMESTAMPTZ,
     status VARCHAR(20) NOT NULL DEFAULT 'draft',
     progress DOUBLE PRECISION DEFAULT 0.0,
     risk VARCHAR(10) DEFAULT 'Low',
@@ -85,11 +95,14 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     entity_id INTEGER NOT NULL,
     old_value TEXT,
     new_value TEXT,
+    prev_hash TEXT,
+    entry_hash TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_goals_user_id ON goals(user_id);
+CREATE INDEX IF NOT EXISTS idx_goals_status ON goals(status);
 CREATE INDEX IF NOT EXISTS idx_milestones_goal_id ON milestones(goal_id);
 CREATE INDEX IF NOT EXISTS idx_checkins_goal_id ON checkins(goal_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);

@@ -271,9 +271,9 @@ Get started instantly using our pre-seeded simulation profiles:
 
 | System Role | Username / Email | Password | Access Capabilities |
 | :--- | :--- | :--- | :--- |
-| **Administrator** | `admin@goalforge.ai` | `password123` | Control User Accounts, Audit Trails, Operations |
-| **L1 Manager** | `manager@goalforge.ai` | `password123` | Goal Approvals, Team Statistics, Risk Analytics |
-| **Employee** | `employee@goalforge.ai` | `password123` | Personal Goal Creation, Milestone Logging, AI Chats |
+| **Administrator** | `admin@example.com` | `password123` | Control User Accounts, Audit Trails, Operations |
+| **L1 Manager** | `manager@example.com` | `password123` | Goal Approvals, Team Statistics, Risk Analytics |
+| **Employee** | `employee@example.com` | `password123` | Personal Goal Creation, Milestone Logging, AI Chats |
 
 ---
 
@@ -325,15 +325,17 @@ GoalForge-Ai/
 
 ---
 
-## Recent Enhancements & Security Patches
+## Recent Enhancements & Security Patches (Version 2)
 
-In June 2026, the GoalForge AI repository was upgraded to address key framework transitions, security, and stability guidelines:
+In the Version 2 rollout of GoalForge AI, significant structural and security upgrades were introduced to prepare the application for real-world staging:
+*   **Frontend Modularization:** The monolithic 1700-line `page.tsx` was deeply refactored into distinct, maintainable React components (`HeroSection`, `ExecutionOverviewCard`, `FeatureCards`, `EngineStatusPanel`, etc.), ensuring strict separation of concerns and resolving deep layout hydration issues.
+*   **True API Authentication:** The development "Mock Quick Sign-In" fallback code was completely scrubbed from all authentication hooks and `login/page.tsx`, enforcing a strict, real-world OTP and password flow through the FastAPI backend.
+*   **Database Schema Integrity:** Self-referential User foreign key loops (`manager_id` vs `reports_to`) were consolidated, missing `department_id` references were stabilized, and the schema was wiped and re-migrated to a clean state.
+*   **Database Seeding Automations:** Introduced robust python seed scripts (`seed_admin.py` and `seed_more.py`) to easily provision standardized `Admin`, `Manager`, and `Employee` accounts via direct async SQLAlchemy sessions.
+*   **SMTP Configuration Routing:** Hardened `.env` inheritance so that root environment variables no longer silently overwrite backend-specific Brevo SMTP passwords during Uvicorn hot-reloads, ensuring bulletproof transactional email delivery.
 *   **Pydantic v2 Upgrade:** Completed the migration of core data schemas and application settings to Pydantic v2 conventions, resolving deprecation warnings and enhancing JSON validation performance.
-*   **Production Configuration Guardrails:** Enhanced application startup checks to block server boots in production mode (`DEBUG=False`) if insecure or default keys (`SECRET_KEY`) are left unconfigured, or if CORS settings permit dangerous wildcards.
-*   **CI Test Resiliency:** Instrumented the GitHub Actions CI/CD workflows and unit test setups (`conftest.py`) to run in safe development scopes to avoid pipeline blocks.
-*   **Query & Route Robustness:** Consolidated redundant service definitions and corrected route-level datetime filter parsing to prevent query exceptions when operating on SQLite and PostgreSQL.
-*   **Logger Modernization:** Restructured python-json-logger integration imports to align with modern library pathways, silencing deprecated namespace alerts at startup.
-*   **Access Control & IDOR Hardening**: Introduced ownership verification checks across milestones, check-ins, and AI performance narrative generation. Restructured administrative user endpoints to use a dedicated, restricted `AdminUserUpdate` schema, preventing unauthorized privilege escalation or cross-tenant data access.
+*   **Production Configuration Guardrails:** Enhanced application startup checks to block server boots in production mode (`DEBUG=False`) if insecure or default keys (`SECRET_KEY`) are left unconfigured.
+*   **Access Control & IDOR Hardening**: Introduced ownership verification checks across milestones, check-ins, and AI performance narrative generation. Restructured administrative user endpoints to use a dedicated, restricted `AdminUserUpdate` schema.
 
 ---
 

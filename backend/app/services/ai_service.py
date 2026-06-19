@@ -44,7 +44,8 @@ async def generate_and_store_plan(db: AsyncSession, goal: Goal, api_key: str | N
         goal.risk = plan["risk"]
 
     await db.flush()
-    await db.refresh(goal)
+    from app.services.goal_service import refresh_columns_only
+    await refresh_columns_only(db, goal)
 
     return plan
 

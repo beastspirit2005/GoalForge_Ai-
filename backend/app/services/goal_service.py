@@ -11,6 +11,14 @@ from app.models.role import GoalStatus
 from app.models.user import User
 from app.models.escalation import Escalation
 from app.schemas.goal_schema import GoalCreate, GoalUpdate
+from sqlalchemy import inspect as sa_inspect
+
+async def refresh_columns_only(db: AsyncSession, instance):
+    """Refresh only column attributes without expiring loaded relationships."""
+    mapper = sa_inspect(type(instance))
+    column_attrs = [c.key for c in mapper.column_attrs]
+    await db.refresh(instance, attribute_names=column_attrs)
+
 
 
 async def _user_goal_stats(db: AsyncSession, user_id: int) -> tuple[int, float]:
@@ -37,11 +45,12 @@ async def create_goal(db: AsyncSession, user: User, data: GoalCreate) -> Goal:
         uom=data.uom,
         weightage=data.weightage,
         deadline=data.deadline,
+        task_id=getattr(data, 'task_id', None),
         status=GoalStatus.DRAFT.value,
     )
     db.add(goal)
     await db.flush()
-    await db.refresh(goal)
+    await refresh_columns_only(db, goal)
     return goal
 
 
@@ -75,7 +84,7 @@ async def update_goal(db: AsyncSession, goal: Goal, data: GoalUpdate, user: User
         setattr(goal, field, value)
 
     await db.flush()
-    await db.refresh(goal)
+    await refresh_columns_only(db, goal)
     return goal
 
 
@@ -87,7 +96,7 @@ async def delete_goal(db: AsyncSession, goal: Goal) -> None:
 async def submit_goal(db: AsyncSession, goal: Goal) -> Goal:
     goal.status = GoalStatus.PENDING.value
     await db.flush()
-    await db.refresh(goal)
+    await refresh_columns_only(db, goal)
     return goal
 
 
@@ -98,28 +107,28 @@ async def approve_goal(db: AsyncSession, goal: Goal, **overrides) -> Goal:
         goal.target = overrides["target"]
     goal.status = GoalStatus.APPROVED.value
     await db.flush()
-    await db.refresh(goal)
+    await refresh_columns_only(db, goal)
     return goal
 
 
 async def reject_goal(db: AsyncSession, goal: Goal) -> Goal:
     goal.status = GoalStatus.REJECTED.value
     await db.flush()
-    await db.refresh(goal)
+    await refresh_columns_only(db, goal)
     return goal
 
 
 async def lock_goal(db: AsyncSession, goal: Goal) -> Goal:
     goal.status = GoalStatus.LOCKED.value
     await db.flush()
-    await db.refresh(goal)
+    await refresh_columns_only(db, goal)
     return goal
 
 
 async def unlock_goal(db: AsyncSession, goal: Goal) -> Goal:
     goal.status = GoalStatus.APPROVED.value
     await db.flush()
-    await db.refresh(goal)
+    await refresh_columns_only(db, goal)
     return goal
 
 
@@ -140,7 +149,7 @@ async def recalculate_risk(db: AsyncSession, goal: Goal, goal_count: int) -> Goa
     """Recalculate and persist the risk score for a goal."""
     goal.risk = score_risk(goal.progress, goal.deadline, goal_count)
     await db.flush()
-    await db.refresh(goal)
+    await refresh_columns_only(db, goal)
     return goal
 
 

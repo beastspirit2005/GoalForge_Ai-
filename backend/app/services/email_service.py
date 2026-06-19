@@ -4,32 +4,49 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from dotenv import load_dotenv
+from app.core.config import settings
 
-load_dotenv(os.path.join(os.path.dirname(__file__), "../../../.env"))
+
+class EmailDeliveryError(RuntimeError):
+    """Raised when a transactional email cannot be sent."""
+
+
+def _env_or_setting(name: str, default=None):
+    value = os.getenv(name)
+    if value is not None:
+        return value
+    return getattr(settings, name, default)
 
 
 def _get_smtp_config():
     return {
-        "host": os.environ.get("SMTP_HOST", "smtp-relay.brevo.com"),
-        "port": int(os.environ.get("SMTP_PORT", 587)),
-        "user": os.environ.get("SMTP_USER", "acc1af001@smtp-brevo.com"),
-        "password": os.environ.get("SMTP_PASSWORD"),
-        "from_email": os.environ.get("SMTP_FROM_EMAIL"),
-        "from_name": os.environ.get("SMTP_FROM_NAME", "GoalForge AI"),
+        "host": _env_or_setting("SMTP_HOST") or "",
+        "port": int(_env_or_setting("SMTP_PORT", 587) or 587),
+        "user": _env_or_setting("SMTP_USER") or "",
+        "password": _env_or_setting("SMTP_PASSWORD") or "",
+        "from_email": _env_or_setting("SMTP_FROM_EMAIL") or "",
+        "from_name": _env_or_setting("SMTP_FROM_NAME") or "GoalForge AI",
     }
+
+
+def is_email_configured() -> bool:
+    cfg = _get_smtp_config()
+    return bool(cfg["host"] and cfg["port"] and cfg["user"] and cfg["password"])
+
+
+def is_demo_mode() -> bool:
+    return os.getenv("DEMO_MODE", "false").lower() == "true"
 
 
 def _send_email(to_email: str, subject: str, text: str, html: str):
     # Skip actual email sending on Vercel to act as a pure mock/demo
-    if os.environ.get("VERCEL") is not None:
+    if os.getenv("VERCEL") is not None or is_demo_mode():
         print(f"[DEMO MODE] Skipping smtplib SMTP email sending to {to_email} on Vercel.")
         return
 
     cfg = _get_smtp_config()
-    if not cfg["password"]:
-        print("Warning: SMTP_PASSWORD is not set. Email not sent.")
-        return
+    if not is_email_configured():
+        raise EmailDeliveryError("Mailing service (SMTP) is not configured on this server.")
 
     from_addr = cfg["from_email"] or cfg["user"]
 
@@ -49,7 +66,7 @@ def _send_email(to_email: str, subject: str, text: str, html: str):
             server.sendmail(from_addr, to_email, msg.as_string())
             print(f"Email sent successfully to {to_email}")
     except Exception as e:
-        print(f"Failed to send email to {to_email}: {e}")
+        raise EmailDeliveryError(f"Failed to send email to {to_email}: {e}") from e
 
 
 def send_approval_email(to_email: str, user_name: str, role: str):

@@ -11,7 +11,7 @@ from app.models.user import User
 
 
 async def main() -> None:
-    email = os.environ.get("CHECK_EMAIL", "employee@goalforge.ai")
+    email = os.environ.get("CHECK_EMAIL", "employee@example.com")
     password = os.environ.get("CHECK_PASSWORD", "password123")
 
     print(f"DATABASE_URL={settings.DATABASE_URL[:60]}...")

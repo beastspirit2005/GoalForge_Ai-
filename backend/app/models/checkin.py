@@ -11,7 +11,7 @@ class Checkin(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     goal_id: Mapped[int] = mapped_column(Integer, ForeignKey("goals.id", ondelete="CASCADE"), nullable=False, index=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     quarter: Mapped[str] = mapped_column(String(10), nullable=False)  # e.g. "Q2-2026"
     actual_achievement: Mapped[float] = mapped_column(Float, default=0.0)
     progress_status: Mapped[str] = mapped_column(String(30), default="On Track")

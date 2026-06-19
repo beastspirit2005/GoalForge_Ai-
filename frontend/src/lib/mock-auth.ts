@@ -14,7 +14,7 @@ const SESSION_KEY = "goalforge.demo.session"
 export const demoUsers: Record<DemoRole, DemoUser> = {
   employee: {
     name: "Aarav Mehta",
-    email: "employee@goalforge.ai",
+    email: "employee@example.com",
     role: "employee",
     avatar: "AM",
     department: "People Ops",
@@ -22,7 +22,7 @@ export const demoUsers: Record<DemoRole, DemoUser> = {
   },
   manager: {
     name: "Priya Nair",
-    email: "manager@goalforge.ai",
+    email: "manager@example.com",
     role: "manager",
     avatar: "PN",
     department: "Engineering",
@@ -30,7 +30,7 @@ export const demoUsers: Record<DemoRole, DemoUser> = {
   },
   admin: {
     name: "Rohan Kapoor",
-    email: "admin@goalforge.ai",
+    email: "admin@example.com",
     role: "admin",
     avatar: "RK",
     department: "HR",

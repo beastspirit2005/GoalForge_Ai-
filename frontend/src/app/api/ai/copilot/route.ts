@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 const BACKEND_URL =
   process.env.API_PROXY_TARGET?.replace(/\/$/, "") ||
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
-  "http://127.0.0.1:8001";
+  "http://127.0.0.1:8000";
 
 /**
  * Next.js Server API Proxy for AI Copilot.

@@ -1,0 +1,11 @@
+{
+    "chain": [
+        {
+            "index": 1,
+            "timestamp": 1781677224.1056318,
+            "transactions": [],
+            "proof": 100,
+            "previous_hash": "1"
+        }
+    ]
+}

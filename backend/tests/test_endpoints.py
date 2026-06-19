@@ -6,7 +6,7 @@ from app.models.user import User
 
 def mock_get_current_user():
     # Return a dummy active User instance to satisfyDepends(get_current_user)
-    return User(id=1, name="Test User", role="employee", email="employee@goalforge.ai")
+    return User(id=1, name="Test User", role="employee", email="employee@example.com")
 
 @pytest.fixture(autouse=True)
 def setup_overrides():

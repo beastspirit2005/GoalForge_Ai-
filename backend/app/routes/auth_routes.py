@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Request, Response
 import os
 import uuid
+from pathlib import Path
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_current_user
@@ -69,7 +70,7 @@ async def update_me(data: UserUpdate, db: AsyncSession = Depends(get_db), curren
     if data.profile_picture_url is not None:
         current_user.profile_picture_url = data.profile_picture_url
     
-    await db.commit()
+    await db.flush()
     await db.refresh(current_user)
     return current_user
 
@@ -81,20 +82,47 @@ async def upload_avatar(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if not file.content_type.startswith("image/"):
+    if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File provided is not an image.")
     
-    # Generate unique filename
-    ext = file.filename.split(".")[-1]
+    # Validate file extension
+    allowed_extensions = {"png", "jpg", "jpeg", "gif", "webp"}
+    ext = (file.filename or "").rsplit(".", 1)[-1].lower() if file.filename else ""
+    if ext not in allowed_extensions:
+        raise HTTPException(status_code=400, detail=f"File extension '.{ext}' is not allowed. Use: {', '.join(allowed_extensions)}")
+    
+    # Validate file magic bytes match declared extension
+    _MAGIC_BYTES = {
+        "png": [b"\x89PNG"],
+        "jpg": [b"\xff\xd8\xff"],
+        "jpeg": [b"\xff\xd8\xff"],
+        "gif": [b"GIF87a", b"GIF89a"],
+        "webp": [b"RIFF"],
+    }
+    header = await file.read(12)
+    await file.seek(0)  # Reset for later full read
+    signatures = _MAGIC_BYTES.get(ext, [])
+    if not any(header.startswith(sig) for sig in signatures):
+        raise HTTPException(status_code=400, detail=f"File content does not match '.{ext}' format. Upload a genuine image file.")
+
+    # Validate file size (max 5MB)
+    contents = await file.read()
+    max_size = 5 * 1024 * 1024  # 5MB
+    if len(contents) > max_size:
+        raise HTTPException(status_code=400, detail="File size exceeds 5MB limit.")
+    
+    # Generate unique filename (ext already validated above)
     filename = f"{uuid.uuid4()}.{ext}"
-    file_path = os.path.join("uploads", "avatars", filename)
+    _upload_dir = Path(__file__).resolve().parents[2] / "uploads" / "avatars"
+    _upload_dir.mkdir(parents=True, exist_ok=True)
+    file_path = _upload_dir / filename
     
     with open(file_path, "wb") as f:
-        f.write(await file.read())
+        f.write(contents)
         
     base_url = str(request.base_url).rstrip("/")
     current_user.profile_picture_url = f"{base_url}/uploads/avatars/{filename}"
-    await db.commit()
+    await db.flush()
     await db.refresh(current_user)
     
     return current_user
@@ -102,22 +130,28 @@ async def upload_avatar(
 
 @router.post("/request-otp", status_code=status.HTTP_200_OK)
 async def request_otp(data: OTPRequest, db: AsyncSession = Depends(get_db)):
-    otp_code = await generate_and_send_otp(db, data.email)
+    from app.services.email_service import EmailDeliveryError, is_demo_mode, is_email_configured, _get_smtp_config
     
-    # Check if we are running in demo mode
-    is_demo_mode = os.environ.get("DEMO_MODE", "false").lower() == "true"
-    smtp_pass = os.environ.get("SMTP_PASSWORD")
-    
-    if is_demo_mode:
-        return {
-            "message": f"Demo Mode: Use code {otp_code} to log in. (Email sending skipped in production demo)"
-        }
-        
-    if not smtp_pass:
+    demo_mode = is_demo_mode()
+    print("DEBUG SMTP CONFIG:", _get_smtp_config())
+    if not demo_mode and not is_email_configured():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Mailing service (SMTP) is not configured on this server."
         )
+
+    try:
+        otp_code = await generate_and_send_otp(db, data.email)
+    except EmailDeliveryError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc
+    
+    if demo_mode:
+        return {
+            "message": f"Demo Mode: Use code {otp_code} to log in. (Email sending skipped in production demo)"
+        }
         
     return {"message": "OTP sent successfully! Check your inbox."}
 

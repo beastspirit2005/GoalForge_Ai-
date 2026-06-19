@@ -22,7 +22,7 @@ Create a new user account.
 ```json
 {
   "name": "Aarav Mehta",
-  "email": "employee@goalforge.ai",
+  "email": "employee@example.com",
   "password": "password123",
   "role": "employee",
   "department": "People Ops"
@@ -34,7 +34,7 @@ Create a new user account.
 {
   "id": 1,
   "name": "Aarav Mehta",
-  "email": "employee@goalforge.ai",
+  "email": "employee@example.com",
   "role": "employee",
   "department": "People Ops",
   "manager_id": null,
@@ -48,7 +48,7 @@ Authenticate and receive a JWT token.
 **Body:**
 ```json
 {
-  "email": "employee@goalforge.ai",
+  "email": "employee@example.com",
   "password": "password123"
 }
 ```

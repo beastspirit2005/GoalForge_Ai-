@@ -29,11 +29,11 @@ const roleLabel: Record<string, string> = {
 
 // Seeded users from database/seed.sql
 const demoUsers = [
-  { name: "Aarav Mehta", email: "employee@goalforge.ai", role: "employee", department: "People Ops", avatarColor: "from-blue-500 to-indigo-500", goalsCount: 1, avgProgress: 72 },
-  { name: "Priya Nair", email: "manager@goalforge.ai", role: "manager", department: "Engineering", avatarColor: "from-purple-500 to-pink-500", goalsCount: 1, avgProgress: 46 },
-  { name: "Rohan Kapoor", email: "admin@goalforge.ai", role: "admin", department: "HR", avatarColor: "from-amber-500 to-orange-500", goalsCount: 1, avgProgress: 31 },
-  { name: "Neha Rao", email: "neha@goalforge.ai", role: "employee", department: "Engineering", avatarColor: "from-emerald-500 to-teal-500", goalsCount: 0, avgProgress: 0 },
-  { name: "Kabir Singh", email: "kabir@goalforge.ai", role: "employee", department: "Sales", avatarColor: "from-rose-500 to-red-500", goalsCount: 0, avgProgress: 0 }
+  { name: "Aarav Mehta", email: "employee@example.com", role: "employee", department: "People Ops", avatarColor: "from-blue-500 to-indigo-500", goalsCount: 1, avgProgress: 72 },
+  { name: "Priya Nair", email: "manager@example.com", role: "manager", department: "Engineering", avatarColor: "from-purple-500 to-pink-500", goalsCount: 1, avgProgress: 46 },
+  { name: "Rohan Kapoor", email: "admin@example.com", role: "admin", department: "HR", avatarColor: "from-amber-500 to-orange-500", goalsCount: 1, avgProgress: 31 },
+  { name: "Neha Rao", email: "neha@example.com", role: "employee", department: "Engineering", avatarColor: "from-emerald-500 to-teal-500", goalsCount: 0, avgProgress: 0 },
+  { name: "Kabir Singh", email: "kabir@example.com", role: "employee", department: "Sales", avatarColor: "from-rose-500 to-red-500", goalsCount: 0, avgProgress: 0 }
 ]
 
 // Seeded goals from database/seed.sql

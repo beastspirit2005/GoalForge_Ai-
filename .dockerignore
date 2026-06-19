@@ -1,0 +1,50 @@
+.git
+.gitignore
+.dockerignore
+
+# ── Environment & Secrets ─────────────────────────────────────
+.env
+.env.*
+*.env
+token.txt
+*.pem
+"Brevo SMTP kEY.txt"
+secrets/
+
+# ── OS Files ──────────────────────────────────────────
+.DS_Store
+Thumbs.db
+[Dd]esktop.ini
+
+# ── Frontend ──────────────────────────────
+node_modules/
+.next/
+out/
+build/
+dist/
+*.log*
+*.tsbuildinfo
+
+# ── Backend ────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# ── Local DBs, Logs, and Backups ──────────────────────────────
+*.db
+*.sqlite3
+goalforge.db
+*.log
+backend/uploads/avatars/*
+backend/app/uploads/*

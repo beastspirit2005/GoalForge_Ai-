@@ -31,6 +31,11 @@ def fallback_ai_plan(goal_data: dict[str, Any]) -> dict[str, Any]:
 def generate_ai_plan(goal_data, api_key: str | None = None):
     active_key = api_key or settings.GEMINI_API_KEY
     if not active_key:
+        import logging
+        logging.warning(
+            "GEMINI_API_KEY is not set and no user-supplied API key provided. "
+            "Falling back to hardcoded AI plan. Set GEMINI_API_KEY in .env for real AI features."
+        )
         return fallback_ai_plan(goal_data)
 
     prompt = milestone_prompt(

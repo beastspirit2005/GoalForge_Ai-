@@ -57,4 +57,4 @@ Write-Host "`nStep 4: Deploying to production..." -ForegroundColor Green
 vercel deploy --prod
 
 Write-Host "`nDone. Test: https://<your-deployment>/api/health" -ForegroundColor Cyan
-Write-Host "Login: employee@goalforge.ai / password123 (after running seed.py on production DB)`n" -ForegroundColor Cyan
+Write-Host "Login: employee@example.com / password123 (after running seed.py on production DB)`n" -ForegroundColor Cyan

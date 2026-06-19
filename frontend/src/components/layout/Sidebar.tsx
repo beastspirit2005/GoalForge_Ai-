@@ -20,6 +20,11 @@ import {
   Award,
   Shield,
   Settings,
+  Flame,
+  Search,
+  GraduationCap,
+  Gamepad2,
+  PieChart,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
@@ -39,6 +44,8 @@ const links: NavLink[] = [
   { title: "Check-ins", href: "/employee/checkins", icon: CalendarDays, section: "Employee" },
   { title: "AI Insights", href: "/employee/ai-insights", icon: Brain, section: "Employee" },
   { title: "Performance", href: "/employee/performance", icon: Activity, section: "Employee" },
+  { title: "Skill Profile", href: "/employee/skill-profile", icon: GraduationCap, section: "Employee" },
+  { title: "Gamification", href: "/employee/gamification", icon: Gamepad2, section: "Employee" },
   { title: "Leaderboard", href: "/employee/leaderboard", icon: Trophy, section: "Employee" },
   // Manager
   { title: "Manager", href: "/manager/dashboard", icon: Users, section: "Manager" },
@@ -46,10 +53,13 @@ const links: NavLink[] = [
   { title: "Approvals", href: "/manager/approvals", icon: ClipboardCheck, section: "Manager" },
   { title: "Comments", href: "/manager/comments", icon: MessageSquare, section: "Manager" },
   { title: "Predictions", href: "/manager/predictions", icon: Zap, section: "Manager" },
+  { title: "Workload", href: "/manager/workload", icon: Flame, section: "Manager" },
   // Admin
   { title: "Admin Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, section: "Admin" },
   { title: "Analytics", href: "/admin/org-analytics", icon: BarChart3, section: "Admin" },
   { title: "Users", href: "/admin/users", icon: Users, section: "Admin" },
+  { title: "Talent Search", href: "/admin/talent-search", icon: Search, section: "Admin" },
+  { title: "Capacity", href: "/admin/capacity", icon: PieChart, section: "Admin" },
   { title: "Recognition", href: "/admin/recognition", icon: Award, section: "Admin" },
   { title: "Audit Logs", href: "/admin/audit-logs", icon: FileText, section: "Admin" },
   { title: "Cycles", href: "/admin/cycles", icon: CalendarDays, section: "Admin" },

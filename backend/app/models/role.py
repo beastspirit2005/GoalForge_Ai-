@@ -4,8 +4,12 @@ import enum
 
 
 class UserRole(str, enum.Enum):
-    EMPLOYEE = "employee"
+    SUPER_ADMIN = "super_admin"
+    DEPARTMENT_HEAD = "department_head"
+    HR = "hr"
     MANAGER = "manager"
+    TEAM_LEAD = "team_lead"
+    EMPLOYEE = "employee"
     ADMIN = "admin"
 
 

@@ -96,8 +96,8 @@ export default function DashboardLayout({
           user={{
             name: user.name,
             role: ("role" in user ? user.role : "employee") as "employee" | "manager" | "admin",
-            avatar: "avatar" in user ? (user as Record<string, string>).avatar : undefined,
-            profile_picture_url: "profile_picture_url" in user ? user.profile_picture_url : undefined,
+            avatar: ('avatar' in user && typeof (user as any).avatar === 'string') ? (user as any).avatar : undefined,
+            profile_picture_url: ('profile_picture_url' in user && user.profile_picture_url) ? user.profile_picture_url : undefined,
           }} 
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
         />

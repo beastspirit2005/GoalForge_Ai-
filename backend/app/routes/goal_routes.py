@@ -127,15 +127,17 @@ async def prioritized_goals(
         # Deadline proximity factor
         if g.deadline:
             try:
+                from datetime import timezone
                 if isinstance(g.deadline, datetime):
                     dl_date = g.deadline
                 else:
                     dl_date = datetime.strptime(str(g.deadline)[:10], "%Y-%m-%d")
-                    
-                if dl_date.tzinfo is not None:
-                    dl_date = dl_date.replace(tzinfo=None)
-                    
-                days_left = (dl_date - datetime.now()).days
+                
+                # Normalize both sides to UTC-aware datetimes
+                if dl_date.tzinfo is None:
+                    dl_date = dl_date.replace(tzinfo=timezone.utc)
+                now = datetime.now(timezone.utc)
+                days_left = (dl_date - now).days
                 if days_left < 0:
                     score += 30 # Overdue is critical
                 elif days_left <= 7:

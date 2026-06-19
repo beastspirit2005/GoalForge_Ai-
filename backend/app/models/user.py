@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Float, Text, LargeBinary, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -15,7 +15,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     phone_number: Mapped[str | None] = mapped_column(String(20), unique=True, nullable=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    role: Mapped[str] = mapped_column(String(20), nullable=False, default=UserRole.EMPLOYEE.value)
+    role: Mapped[str] = mapped_column(String(20), nullable=False, default=UserRole.EMPLOYEE.value, index=True)
     department: Mapped[str | None] = mapped_column(String(120), nullable=True)
     manager_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -28,12 +28,24 @@ class User(Base):
     google_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
     microsoft_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
     profile_picture_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    
+    # Enterprise Talent fields
+    experience_years: Mapped[float | None] = mapped_column(Float, nullable=True)
+    experience_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    resume_text_encrypted: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    work_points: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")
+    
+    # Enterprise Org fields
+    department_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    org_tree_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
     goals = relationship("Goal", back_populates="owner", foreign_keys="Goal.user_id")
     managed_employees = relationship("User", backref="manager", remote_side="User.id", foreign_keys=[manager_id])
+
 
     def __repr__(self) -> str:
         return f"<User {self.id} {self.email} [{self.role}]>"

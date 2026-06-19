@@ -31,7 +31,7 @@ async def test_integration_goal_lifecycle_flow():
         manager = User(
             id=902,
             name="Test Priya Nair",
-            email="test_manager_902@goalforge.ai",
+            email="test_manager_902@example.com",
             password_hash="$2b$12$zA76FnlxRcjUJX1De7Qh8.8T2s/A83X8KM91K0Xf/RPoR66TH84Jy",
             role="manager",
             department="Engineering",
@@ -41,7 +41,7 @@ async def test_integration_goal_lifecycle_flow():
         employee = User(
             id=901,
             name="Test Aarav Mehta",
-            email="test_employee_901@goalforge.ai",
+            email="test_employee_901@example.com",
             password_hash="$2b$12$zA76FnlxRcjUJX1De7Qh8.8T2s/A83X8KM91K0Xf/RPoR66TH84Jy",
             role="employee",
             department="People Ops",

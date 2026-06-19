@@ -86,11 +86,17 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 fallback_registry=AI_REQUESTS
             )
             if is_limited:
+                headers = {"Retry-After": "60"}
+                origin = request.headers.get("origin")
+                if origin:
+                    headers["Access-Control-Allow-Origin"] = origin
+                    headers["Access-Control-Allow-Credentials"] = "true"
                 return JSONResponse(
                     status_code=429,
                     content={
                         "detail": "Too many requests. AI Copilot is limited to 10 queries per minute to protect API limits."
                     },
+                    headers=headers,
                 )
             
         # 2. Protect Admin Console and CRUD operations -> Max 30 requests / minute
@@ -103,11 +109,17 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 fallback_registry=ADMIN_REQUESTS
             )
             if is_limited:
+                headers = {"Retry-After": "60"}
+                origin = request.headers.get("origin")
+                if origin:
+                    headers["Access-Control-Allow-Origin"] = origin
+                    headers["Access-Control-Allow-Credentials"] = "true"
                 return JSONResponse(
                     status_code=429,
                     content={
                         "detail": "Too many requests. Administrative endpoints are throttled to 30 requests per minute."
                     },
+                    headers=headers,
                 )
             
         return await call_next(request)

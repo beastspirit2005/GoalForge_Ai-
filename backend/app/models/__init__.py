@@ -10,3 +10,17 @@ from app.models.recognition import Badge, Streak, LeaderboardEntry
 from app.models.cycle import Cycle
 from app.models.escalation import Escalation
 from app.models.role import UserRole, GoalStatus, GoalRisk, CheckinStatus, NotificationType
+
+from app.models.skill import Skill, UserSkill
+from app.models.target import Target, Task, RecommendationFeedback, TaskDependency
+
+# Enterprise V2 models
+from app.models.team_health_score import TeamHealthScore
+from app.models.burnout_risk import BurnoutRisk
+from app.models.goal_success_prediction import GoalSuccessPrediction
+from app.models.capacity_forecast import CapacityForecast
+from app.models.knowledge_risk import KnowledgeRisk
+from app.models.impact_analysis import ImpactAnalysis
+from app.models.work_points_transaction import PointTransaction
+from app.models.skill_confidence_profile import SkillConfidenceProfile
+from app.models.learning_recommendation import LearningRecommendation

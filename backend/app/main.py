@@ -1,5 +1,10 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+# Force override OS environment variables with .env values
+load_dotenv(Path(__file__).resolve().parents[2] / ".env", override=True)
 
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,6 +23,17 @@ from app.routes.manager_routes import router as manager_router
 from app.routes.performance_routes import router as performance_router
 from app.routes.prediction_routes import router as prediction_router
 from app.routes.recognition_routes import router as recognition_router
+from app.routes.task_routes import router as task_router
+
+# Enterprise V2 routes
+from app.routes.ai_recommendation_routes import router as ai_recommend_router
+from app.routes.workload_routes import router as workload_router
+from app.routes.risk_prediction_routes import router as risk_router
+from app.routes.capacity_routes import router as capacity_router
+from app.routes.gamification_routes import router as gamification_router
+from app.routes.talent_search_routes import router as talent_router
+from app.routes.dependency_routes import router as dependency_router
+from app.routes.skill_intelligence_routes import router as skill_intelligence_router
 
 
 from app.middleware.trace import TraceMiddleware
@@ -38,6 +54,7 @@ app = FastAPI(
     description="AI-powered goal management & performance intelligence API",
     version="2.0.0",
     lifespan=lifespan,
+    debug=settings.DEBUG,
 )
 
 # Register Tracing, Metrics, and Rate Limiting middlewares
@@ -50,13 +67,28 @@ app.add_middleware(TraceMiddleware)
 async def strip_api_prefix(request, call_next):
     path = request.scope.get("path", "")
     if path.startswith("/api"):
-        # Internally route to the path without /api
-        request.scope["path"] = path[len("/api"):]
+        stripped = path[len("/api"):] or "/"
+        # Only strip if the stripped path could match a registered route
+        route_paths = [r.path for r in app.routes if hasattr(r, "path")]
+        if any(stripped == rp or stripped.startswith(rp + "/") or rp.startswith(stripped.split("/{" )[0]) for rp in route_paths):
+            request.scope["path"] = stripped
     response = await call_next(request)
     return response
 
 
 _cors_origins = settings.cors_origin_list
+
+# In development with wildcard origins, add explicit localhost entries
+# so that credentials (cookies) work correctly during local development.
+# The CORS spec forbids allow_credentials=True with allow_origins=["*"].
+if "*" in _cors_origins and settings.DEBUG:
+    _cors_origins = [
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8000",
+    ]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
@@ -102,12 +134,23 @@ async def health():
 
 @app.get("/metrics")
 def metrics(request: Request):
-    client_host = request.client.host if request.client else None
-    if client_host not in ("127.0.0.1", "::1", "localhost", "testserver", "testclient"):
+    # Block proxy-forwarded requests to prevent IP spoofing
+    if request.headers.get("x-forwarded-for") or request.headers.get("x-real-ip"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. metrics endpoint is only available locally."
+            detail="Metrics endpoint cannot be accessed through a proxy.",
         )
+    client_host = request.client.host if request.client else None
+    allowed_hosts = ("127.0.0.1", "::1", "localhost", "testserver", "testclient")
+    if client_host not in allowed_hosts:
+        # External access requires Bearer token authentication
+        auth_header = request.headers.get("authorization", "")
+        expected = f"Bearer {settings.SECRET_KEY}"
+        if auth_header != expected:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. Metrics endpoint is only available locally or with valid authorization.",
+            )
     from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
     from fastapi import Response
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
@@ -141,3 +184,14 @@ app.include_router(performance_router)
 app.include_router(prediction_router)
 app.include_router(recognition_router)
 app.include_router(escalation_router)
+app.include_router(task_router)
+
+# Enterprise V2 routers
+app.include_router(ai_recommend_router)
+app.include_router(workload_router)
+app.include_router(risk_router)
+app.include_router(capacity_router)
+app.include_router(gamification_router)
+app.include_router(talent_router)
+app.include_router(dependency_router)
+app.include_router(skill_intelligence_router)

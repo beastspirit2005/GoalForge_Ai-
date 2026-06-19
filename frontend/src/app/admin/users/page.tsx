@@ -28,12 +28,12 @@ import {
 import { addLocalAuditLog } from "@/lib/local-audit-logs"
 
 const defaultUsers = [
-  { id: 1, name: "Aarav Mehta", email: "aarav@goalforge.ai", role: "employee", department: "People Ops", active: true },
-  { id: 2, name: "Priya Nair", email: "priya@goalforge.ai", role: "manager", department: "Engineering", active: true },
-  { id: 3, name: "Rohan Kapoor", email: "rohan@goalforge.ai", role: "admin", department: "HR", active: true },
-  { id: 4, name: "Neha Rao", email: "neha@goalforge.ai", role: "employee", department: "Engineering", active: true },
-  { id: 5, name: "Kabir Singh", email: "kabir@goalforge.ai", role: "employee", department: "Sales", active: true },
-  { id: 6, name: "Ananya Iyer", email: "ananya@goalforge.ai", role: "employee", department: "Marketing", active: false },
+  { id: 1, name: "Aarav Mehta", email: "aarav@example.com", role: "employee", department: "People Ops", active: true },
+  { id: 2, name: "Priya Nair", email: "priya@example.com", role: "manager", department: "Engineering", active: true },
+  { id: 3, name: "Rohan Kapoor", email: "rohan@example.com", role: "admin", department: "HR", active: true },
+  { id: 4, name: "Neha Rao", email: "neha@example.com", role: "employee", department: "Engineering", active: true },
+  { id: 5, name: "Kabir Singh", email: "kabir@example.com", role: "employee", department: "Sales", active: true },
+  { id: 6, name: "Ananya Iyer", email: "ananya@example.com", role: "employee", department: "Marketing", active: false },
 ]
 
 const roleColors: Record<string, string> = {
@@ -143,9 +143,9 @@ export default function UsersPage() {
 
   const openEditDialog = (user: any) => {
     setEditingUserId(user.id)
-    setEditName(user.name)
-    setEditRole(user.role)
-    setEditDept(user.department)
+    setEditName(user.name || "")
+    setEditRole(user.role || "employee")
+    setEditDept(user.department || "")
     setEditActive(user.active ?? user.is_active ?? true)
     setIsEditDialogOpen(true)
   }
@@ -188,16 +188,26 @@ export default function UsersPage() {
     }
   }
 
-  const handleDeleteUser = (id: number, name: string) => {
+  const handleDeleteUser = async (id: number, name: string) => {
     if (confirm(`Are you sure you want to completely delete the account for ${name}?`)) {
-      saveUsers(users.filter(u => u.id !== id))
-      addLocalAuditLog({
-        user: "Admin",
-        action: "user_deleted",
-        entity: "user",
-        entityId: id.toString(),
-        detail: `Deleted user account for ${name}`
-      })
+      try {
+        const token = getStoredToken()
+        await apiFetch<any>(`/admin/users/${id}`, {
+          method: "DELETE",
+          token,
+        })
+        setUsers(users.filter(u => u.id !== id))
+        addLocalAuditLog({
+          user: "Admin",
+          action: "user_deleted",
+          entity: "user",
+          entityId: id.toString(),
+          detail: `Deleted user account for ${name}`
+        })
+      } catch (err) {
+        console.error("Failed to delete user via API:", err)
+        alert(err instanceof Error ? err.message : "Failed to delete user")
+      }
     }
   }
 
@@ -264,7 +274,7 @@ export default function UsersPage() {
                   <Input 
                     value={newEmail} 
                     onChange={(e) => setNewEmail(e.target.value)} 
-                    placeholder="john@goalforge.ai" 
+                    placeholder="john@example.com" 
                     className="border-slate-200 dark:border-white/[0.08] bg-transparent dark:text-white"
                   />
                 </div>

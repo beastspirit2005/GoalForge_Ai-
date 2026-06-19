@@ -19,7 +19,7 @@ export function getApiUrl(): string {
     return `https://${process.env.VERCEL_URL}/api`
   }
 
-  return "http://localhost:8001"
+  return "http://localhost:8000"
 }
 
 const API_URL = getApiUrl()

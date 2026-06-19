@@ -1,6 +1,14 @@
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+ROOT_DIR = BACKEND_DIR.parent
+
+for env_path in (BACKEND_DIR / ".env", ROOT_DIR / ".env"):
+    load_dotenv(env_path, override=True)
 
 
 def _normalize_async_db_url(url: str) -> str:
@@ -15,7 +23,7 @@ def _normalize_async_db_url(url: str) -> str:
 class Settings(BaseSettings):
     # Database Settings (PostgreSQL default, fallback to local SQLite)
     # Default: SQLite (zero-setup). Override with PostgreSQL via .env:
-    #   DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/goalforge
+    #   DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5433/goalforge
     DATABASE_URL: str = "sqlite+aiosqlite:///./goalforge.db"
     DATABASE_URL_SYNC: str = "sqlite:///./goalforge.db"
 
@@ -45,7 +53,10 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: str = ""
     SMTP_FROM_NAME: str = "GoalForge AI"
 
-    model_config = SettingsConfigDict(env_file=(".env", "../.env"), extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=(ROOT_DIR / ".env", BACKEND_DIR / ".env"),
+        extra="ignore",
+    )
 
 
     @model_validator(mode="after")
@@ -68,12 +79,15 @@ class Settings(BaseSettings):
         self.SECRET_KEY = (self.SECRET_KEY or "").strip()
         if not self.DEBUG and self.SECRET_KEY in ["goalforge-super-secret-change-in-production", "change-me-in-production", ""]:
             raise ValueError("SECRET_KEY must be set to a secure value in production (DEBUG=False).")
+
+        if not self.DEBUG and self.DATABASE_URL.startswith("sqlite"):
+            raise ValueError("SQLite is not supported in production (DEBUG=False). Configure a PostgreSQL DATABASE_URL.")
             
         self.GEMINI_API_KEY = (self.GEMINI_API_KEY or "").strip()
         self.CORS_ORIGINS = (self.CORS_ORIGINS or "").strip()
         self.REDIS_URL = (self.REDIS_URL or "").strip()
         
-        if not self.DEBUG and (not self.CORS_ORIGINS or "*" in self.cors_origin_list):
+        if not self.DEBUG and (not self.CORS_ORIGINS or "*" in [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]):
             raise ValueError("CORS_ORIGINS must be set to an explicit whitelist in production (DEBUG=False). Wildcard '*' is not permitted.")
             
         return self

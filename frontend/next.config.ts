@@ -5,7 +5,7 @@ const externalBackend = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
 const proxyTarget =
   process.env.API_PROXY_TARGET?.replace(/\/$/, "") ||
   externalBackend ||
-  "http://127.0.0.1:8001";
+  "http://127.0.0.1:8000";
 
 const nextConfig: NextConfig = {
   async rewrites() {

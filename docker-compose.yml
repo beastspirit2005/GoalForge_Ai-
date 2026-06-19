@@ -23,7 +23,7 @@ services:
 
   # FastAPI Python Backend Container
   backend:
-    image: 1065925/goalforge-backend:latest
+    image: goalforge-backend:latest
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -45,7 +45,7 @@ services:
 
   # Next.js Frontend Container
   frontend:
-    image: 1065925/goalforge-frontend:latest
+    image: goalforge-frontend:latest
     build:
       context: ./frontend
       dockerfile: Dockerfile
