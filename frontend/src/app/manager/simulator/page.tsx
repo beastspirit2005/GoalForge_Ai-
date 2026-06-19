@@ -1,6 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function SimulatorPage() {
   const [simulationResult, setSimulationResult] = useState<string | null>(null);
@@ -49,28 +56,33 @@ export default function SimulatorPage() {
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex flex-col gap-1.5 flex-1">
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">AI Engine</label>
-            <select 
-              value={aiProvider} 
-              onChange={(e) => setAiProvider(e.target.value as "gemini" | "ollama")}
-              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <option value="gemini">Google Gemini 2.5</option>
-              <option value="ollama">Local Ollama</option>
-            </select>
+            <Select value={aiProvider} onValueChange={(v: "gemini" | "ollama") => setAiProvider(v)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="AI Engine" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="gemini">Google Gemini 2.5</SelectItem>
+                <SelectItem value="ollama">Local Ollama</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           {aiProvider === "ollama" && (
             <div className="flex flex-col gap-1.5 flex-1">
               <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ollama Model</label>
-              <select
-                value={aiModel}
-                onChange={(e) => setAiModel(e.target.value)}
-                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {ollamaModels.map(m => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
+              <Select value={aiModel} onValueChange={setAiModel}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Ollama Model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ollamaModels.map(m => (
+                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                  ))}
+                  {ollamaModels.length === 0 && (
+                    <SelectItem value="none" disabled>No local models found</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           )}
         </div>
