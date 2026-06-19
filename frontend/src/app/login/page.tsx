@@ -180,12 +180,40 @@ export default function LoginPage() {
           </div>
           
           <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 text-center">
-            <p className="text-[13px] text-slate-500 dark:text-slate-400 font-medium">
+            <p className="text-[13px] text-slate-500 dark:text-slate-400 font-medium mb-6">
               Don&apos;t have an account?{" "}
               <Link href="/signup" className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
                 Sign up
               </Link>
             </p>
+            
+            {/* Demo Credentials Box */}
+            <div className="rounded-xl border border-indigo-100 dark:border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-500/5 p-4 text-left">
+              <h3 className="text-[12px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-3 flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                </span>
+                Demo Accounts
+              </h3>
+              <div className="space-y-2 text-[12px] text-slate-600 dark:text-slate-300">
+                <div className="flex justify-between items-center bg-white dark:bg-slate-900 px-3 py-2 rounded border border-slate-100 dark:border-slate-800">
+                  <span className="font-semibold w-16">Admin</span>
+                  <span className="font-mono text-[11px] text-slate-500 select-all">admin@goalforge.ai</span>
+                  <span className="font-mono text-[11px] text-slate-400">admin</span>
+                </div>
+                <div className="flex justify-between items-center bg-white dark:bg-slate-900 px-3 py-2 rounded border border-slate-100 dark:border-slate-800">
+                  <span className="font-semibold w-16">Manager</span>
+                  <span className="font-mono text-[11px] text-slate-500 select-all">manager@goalforge.ai</span>
+                  <span className="font-mono text-[11px] text-slate-400">manager</span>
+                </div>
+                <div className="flex justify-between items-center bg-white dark:bg-slate-900 px-3 py-2 rounded border border-slate-100 dark:border-slate-800">
+                  <span className="font-semibold w-16">Employee</span>
+                  <span className="font-mono text-[11px] text-slate-500 select-all">employee@goalforge.ai</span>
+                  <span className="font-mono text-[11px] text-slate-400">employee</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
