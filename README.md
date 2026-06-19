@@ -29,47 +29,59 @@ GoalForge AI's architecture is built on strict tier isolation and a hybrid AI la
 ```mermaid
 graph TD
     subgraph Client_Browser [Client Web Browser]
-        UI[Next.js Frontend - Vercel / Local]
-        Chat[AiBuddyChat Component]
+        UI[Next.js Frontend]
+        Chat[AiBuddyChat]
+        Dashboards[Role Dashboards & Leaderboards]
     end
 
     subgraph Local_Machine [User Local Machine]
-        Ollama[Local Ollama Engine - Port 11434]
+        Ollama[Local Ollama Engine]
     end
 
     subgraph Backend_Services [Backend Infrastructure]
-        Backend[FastAPI Backend Server - Port 8000]
-        DB[(PostgreSQL Database - Port 5433)]
+        Backend[FastAPI Backend Server]
+        DB[(PostgreSQL Database)]
+        
+        subgraph Enterprise_Engines [Enterprise Intelligence V2]
+            TargetCascade[Target -> Task -> Goal Cascade]
+            WorkforceAI[AI Workforce Intelligence]
+            SkillGraph[Dynamic Skill Graph]
+            Workload[Workload & Capacity Planner]
+            RiskPred[Risk Prediction & Escalations]
+            Gamification[Gamification & Work Points]
+        end
+        
+        Backend --> Enterprise_Engines
+        Enterprise_Engines --> DB
     end
 
     subgraph Cloud_APIs [External SaaS Cloud]
         Gemini[Google Gemini API]
+        Brevo[Brevo SMTP / Auth]
     end
 
     %% Client Interactions
     UI --> Backend
     Chat --> Ollama
+    Dashboards --> Backend
     
     %% Backend Connections
     Backend --> DB
     Backend --> Gemini
+    Backend --> Brevo
     
-    %% Local docker orchestration
-    DockerCompose[Docker Compose Setup] -.-> Backend
-    DockerCompose -.-> DB
-    DockerCompose -.-> PullModel[ollama-pull-model Container]
-    PullModel -.-> Ollama
-
     %% Styles
     classDef client fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
     classDef local fill:#181825,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4;
     classDef backend fill:#11111b,stroke:#cba6f7,stroke-width:2px,color:#cdd6f4;
     classDef cloud fill:#313244,stroke:#f9e2af,stroke-width:2px,color:#cdd6f4;
+    classDef engine fill:#585b70,stroke:#f38ba8,stroke-width:2px,color:#cdd6f4;
     
-    class UI,Chat client;
-    class Ollama,PullModel local;
+    class UI,Chat,Dashboards client;
+    class Ollama local;
     class Backend,DB backend;
-    class Gemini cloud;
+    class Gemini,Brevo cloud;
+    class TargetCascade,WorkforceAI,SkillGraph,Workload,RiskPred,Gamification engine;
 ```
 
 ---
@@ -327,15 +339,32 @@ GoalForge-Ai/
 
 ## Recent Enhancements & Security Patches (Version 2)
 
-In the Version 2 rollout of GoalForge AI, significant structural and security upgrades were introduced to prepare the application for real-world staging:
-*   **Frontend Modularization:** The monolithic 1700-line `page.tsx` was deeply refactored into distinct, maintainable React components (`HeroSection`, `ExecutionOverviewCard`, `FeatureCards`, `EngineStatusPanel`, etc.), ensuring strict separation of concerns and resolving deep layout hydration issues.
-*   **True API Authentication:** The development "Mock Quick Sign-In" fallback code was completely scrubbed from all authentication hooks and `login/page.tsx`, enforcing a strict, real-world OTP and password flow through the FastAPI backend.
-*   **Database Schema Integrity:** Self-referential User foreign key loops (`manager_id` vs `reports_to`) were consolidated, missing `department_id` references were stabilized, and the schema was wiped and re-migrated to a clean state.
-*   **Database Seeding Automations:** Introduced robust python seed scripts (`seed_admin.py` and `seed_more.py`) to easily provision standardized `Admin`, `Manager`, and `Employee` accounts via direct async SQLAlchemy sessions.
-*   **SMTP Configuration Routing:** Hardened `.env` inheritance so that root environment variables no longer silently overwrite backend-specific Brevo SMTP passwords during Uvicorn hot-reloads, ensuring bulletproof transactional email delivery.
-*   **Pydantic v2 Upgrade:** Completed the migration of core data schemas and application settings to Pydantic v2 conventions, resolving deprecation warnings and enhancing JSON validation performance.
-*   **Production Configuration Guardrails:** Enhanced application startup checks to block server boots in production mode (`DEBUG=False`) if insecure or default keys (`SECRET_KEY`) are left unconfigured.
-*   **Access Control & IDOR Hardening**: Introduced ownership verification checks across milestones, check-ins, and AI performance narrative generation. Restructured administrative user endpoints to use a dedicated, restricted `AdminUserUpdate` schema.
+In the massive Version 2 rollout of GoalForge AI, significant structural upgrades, AI engines, and enterprise features were introduced to prepare the application for real-world scaling:
+
+### 🌟 Enterprise V2 Features Highlight
+*   **Target → Task → Goal Cascade System:** Seamlessly cascade large org Targets down to Manager Tasks and Employee Goals with automatic upward progress synchronization.
+*   **AI Workforce Intelligence Engine:** Explainable AI intelligently matches Managers to Targets and Employees to Tasks based on historic completion rates, current active workload, and specific required skills.
+*   **Dynamic Skill Intelligence:** Instead of trusting static resumes, skills dynamically evolve based on actual completed tasks/goals, calculating a verified `Skill Confidence Score`. Includes a Resume Parser to extract baseline skills.
+*   **Workload & Capacity Intelligence:** Visual workload heatmaps (Overloaded vs Available) and active `Capacity Forecasting` to detect understaffed teams (+40% demand).
+*   **Performance & Trend Analysis:** Calculates 30-day/90-day trends and spots productivity insights like top performing skills or most delayed skill areas.
+*   **Risk Prediction System:** actively calculates `Burnout Risk` and `Goal Success Likelihood` using real-time signals (delayed tasks, high workload, declining trends).
+*   **Team Health Intelligence:** Compiles burnout, delays, consistency, and completion rates into a single unified `Team Health Index`.
+*   **Dependency Management & Impact Analysis:** Maps task dependencies and actively calculates ripple-effect delays across the organization if one task slips.
+*   **SLA & Escalation Engine:** Automatically escalates goals missing deadlines (e.g., At Risk after 3 days -> Notifies Manager, Critical after 7 days -> Notifies Admin).
+*   **Gamification Layer:** Awards dynamic `Work Points` to employees for finishing early or on time, displayed on Global and Team Leaderboards.
+*   **Enterprise Security:** Deep Role-Based Access Control (Admin, HR, Manager, Employee), encrypted resumes at rest, and cryptographic audit trails for all reassignments/approvals.
+*   **Learning Recommendation Engine:** Detects missing skills required for tasks and recommends precise learning paths (e.g., Suggests "Kubernetes Basics" if only "Docker" is known).
+*   **Organization Talent Search:** Allows leadership to query the dynamic skill graph to find the best available talent for urgent initiatives.
+*   **Succession & Knowledge Risk Engine:** Analyzes completion history to detect "Single Points of Failure" (e.g., 90% of a technology handled by one employee) and proactively suggests backup training.
+
+### 🛡️ Architecture & Security Upgrades
+*   **Frontend Modularization:** The monolithic 1700-line `page.tsx` was deeply refactored into distinct, maintainable React components, resolving layout hydration issues.
+*   **True API Authentication:** "Mock Quick Sign-In" fallback code was scrubbed, enforcing a strict real-world OTP and password flow through FastAPI.
+*   **Database Schema Integrity:** Self-referential User foreign key loops were consolidated, missing `department_id` references stabilized, and schema re-migrated cleanly.
+*   **Database Seeding Automations:** Introduced robust python seed scripts (`seed_admin.py` and `seed_more.py`) to easily provision standardized `Admin`, `Manager`, and `Employee` accounts.
+*   **SMTP Configuration Routing:** Hardened `.env` inheritance so that root variables no longer overwrite backend Brevo SMTP passwords during Uvicorn hot-reloads.
+*   **Pydantic v2 Upgrade:** Completed the migration of core data schemas to Pydantic v2 conventions.
+*   **Access Control & IDOR Hardening**: Introduced ownership verification checks across milestones, check-ins, and AI performance narrative generation.
 
 ---
 
