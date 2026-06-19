@@ -1,15 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function SimulatorPage() {
   const [simulationResult, setSimulationResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [aiProvider, setAiProvider] = useState<"gemini" | "ollama">("gemini");
+  const [aiModel, setAiModel] = useState("gemini-2.5-flash");
+  const [ollamaModels, setOllamaModels] = useState<string[]>(["llama3", "gemma2:2b"]);
+
+  useEffect(() => {
+    if (aiProvider === "ollama") {
+      fetch("http://localhost:11434/api/tags")
+        .then(res => res.json())
+        .then(data => {
+          if (data.models && data.models.length > 0) {
+            const models = data.models.map((m: any) => m.name);
+            setOllamaModels(models);
+            if (!models.includes(aiModel)) setAiModel(models[0]);
+          }
+        })
+        .catch(() => console.warn("Could not fetch Ollama models"));
+    }
+  }, [aiProvider, aiModel]);
+
   const runSimulation = () => {
     setLoading(true);
     setTimeout(() => {
-      setSimulationResult("Based on current team capacity and skill levels, there is a 78% probability of completing the Q3 OKRs on time. Bottleneck detected in UI Design.");
+      setSimulationResult(`Simulation powered by ${aiProvider === "ollama" ? aiModel : "Gemini"}. Based on current team capacity and skill levels, there is a 78% probability of completing the Q3 OKRs on time. Bottleneck detected in UI Design.`);
       setLoading(false);
     }, 1500);
   };
@@ -27,10 +46,39 @@ export default function SimulatorPage() {
           This uses the AI Auto Assigner to predict if your team can handle a new target.
         </p>
         
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="flex flex-col gap-1.5 flex-1">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">AI Engine</label>
+            <select 
+              value={aiProvider} 
+              onChange={(e) => setAiProvider(e.target.value as "gemini" | "ollama")}
+              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="gemini">Google Gemini 2.5</option>
+              <option value="ollama">Local Ollama</option>
+            </select>
+          </div>
+          
+          {aiProvider === "ollama" && (
+            <div className="flex flex-col gap-1.5 flex-1">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ollama Model</label>
+              <select
+                value={aiModel}
+                onChange={(e) => setAiModel(e.target.value)}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {ollamaModels.map(m => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
         <button 
           onClick={runSimulation}
           disabled={loading}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 disabled:opacity-50"
+          className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 disabled:opacity-50 w-full sm:w-auto"
         >
           {loading ? "Simulating..." : "Run Simulation"}
         </button>

@@ -2,7 +2,17 @@
 
 import { useEffect, useState } from "react"
 import { useTheme } from "next-themes"
-import { Camera, Key, Moon, Sun, User as UserIcon, Bot, Server, Settings2 } from "lucide-react"
+import { Camera, Key, Moon, Sun, User as UserIcon } from "lucide-react"
+import {
+  getGeminiKeyMode,
+  setCustomGeminiKey,
+  clearCustomGeminiKey,
+  setGeminiKeyMode,
+  resolveCustomGeminiKey,
+  syncGeminiKeyFromStorage,
+  GEMINI_KEY_CHANGED_EVENT,
+  type GeminiKeyMode,
+} from "@/lib/gemini-storage"
 import { listRoleSessionCounts } from "@/lib/chat-history"
 import DashboardLayout from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
@@ -16,8 +26,6 @@ type SettingsProfile = {
   name: string
   department: string | null
   profile_picture_url?: string | null
-  preferred_ai_provider?: string
-  preferred_ai_model?: string
 }
 
 function getErrorMessage(error: unknown) {
@@ -34,11 +42,25 @@ export default function SettingsPage() {
   
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState("")
+  const [geminiMode, setGeminiMode] = useState<GeminiKeyMode>("app")
+  const [geminiKeyDraft, setGeminiKeyDraft] = useState("")
+  const [showGeminiKey, setShowGeminiKey] = useState(false)
+  const [aiKeyMessage, setAiKeyMessage] = useState("")
 
-  // Master AI Control State
-  const [aiProvider, setAiProvider] = useState("gemini")
-  const [aiModel, setAiModel] = useState("gemini-2.5-flash")
-  const [ollamaModels, setOllamaModels] = useState<string[]>(["gemma2:2b", "llama3"])
+  useEffect(() => {
+    const sync = () => {
+      const { mode, key } = syncGeminiKeyFromStorage()
+      setGeminiMode(mode)
+      setGeminiKeyDraft(key)
+    }
+    sync()
+    window.addEventListener(GEMINI_KEY_CHANGED_EVENT, sync)
+    window.addEventListener("focus", sync)
+    return () => {
+      window.removeEventListener(GEMINI_KEY_CHANGED_EVENT, sync)
+      window.removeEventListener("focus", sync)
+    }
+  }, [])
 
   useEffect(() => {
     if (!ready) {
@@ -60,30 +82,12 @@ export default function SettingsPage() {
         setName(res.name || "")
         setDepartment(res.department || "")
         setProfilePic(res.profile_picture_url || "")
-        setAiProvider(res.preferred_ai_provider || "gemini")
-        setAiModel(res.preferred_ai_model || "gemini-2.5-flash")
       } catch (err) {
         console.error("Failed to load profile", err)
       }
     }
     fetchProfile()
   }, [authUser, isApiMode, ready])
-
-  useEffect(() => {
-    if (aiProvider === "ollama") {
-      // Try to fetch local models dynamically
-      fetch("http://localhost:11434/api/tags")
-        .then(res => res.json())
-        .then(data => {
-          if (data.models && data.models.length > 0) {
-            setOllamaModels(data.models.map((m: any) => m.name))
-          }
-        })
-        .catch(() => {
-          console.warn("Could not reach local Ollama. Using fallback models.")
-        })
-    }
-  }, [aiProvider])
 
   const handleSaveProfile = async () => {
     setIsSaving(true)
@@ -100,15 +104,10 @@ export default function SettingsPage() {
       await apiFetch("/auth/me", {
         method: "PUT",
         token,
-        body: { 
-            name, 
-            department, 
-            profile_picture_url: profilePic || null,
-            preferred_ai_provider: aiProvider,
-            preferred_ai_model: aiModel
-        },
+        body: { name, department, profile_picture_url: profilePic || null },
       })
       setMessage("Profile updated successfully.")
+      // Reload page to reflect changes in navbar if needed
       window.location.reload()
     } catch (err: unknown) {
       setMessage(`Error: ${getErrorMessage(err)}`)
@@ -231,72 +230,96 @@ export default function SettingsPage() {
 
           {/* Preferences Section */}
           <div className="space-y-6">
-            <div className="glass-card rounded-xl p-6 border-l-4 border-l-[var(--gf-indigo)]">
+            <div className="glass-card rounded-xl p-6">
               <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold dark:text-white/90">
-                <Settings2 className="h-5 w-5 text-[var(--gf-indigo)]" />
-                Master AI Control
+                <Key className="h-5 w-5 text-emerald-500" />
+                Gemini API key
               </h2>
               <p className="mb-4 text-xs text-slate-500 dark:text-white/40">
-                Select which AI engine powers your organization's analytics, assignments, and recommendations.
+                Stored only in this browser. Never uploaded to GoalForge servers.
               </p>
-              
-              <div className="mb-4 flex gap-2">
+              <div className="mb-3 flex gap-2">
                 <button
                   type="button"
-                  onClick={() => { setAiProvider("gemini"); setAiModel("gemini-2.5-flash"); }}
-                  className={`flex-1 rounded-lg border py-3 flex flex-col items-center justify-center gap-1 transition-all ${
-                    aiProvider === "gemini"
+                  onClick={() => {
+                    clearCustomGeminiKey()
+                    setGeminiMode("app")
+                    setGeminiKeyDraft("")
+                    setAiKeyMessage("Using the app Gemini key.")
+                  }}
+                  className={`flex-1 rounded-lg border py-2 text-xs font-semibold ${
+                    geminiMode === "app"
                       ? "border-[var(--gf-indigo)] bg-[var(--gf-indigo)]/10 text-[var(--gf-indigo)]"
-                      : "border-slate-200 dark:border-white/[0.08] text-slate-500 hover:bg-slate-50 dark:hover:bg-white/[0.02]"
+                      : "border-slate-200 dark:border-white/[0.08] text-slate-500"
                   }`}
                 >
-                  <Bot className="h-5 w-5" />
-                  <span className="text-xs font-semibold">Google Gemini</span>
+                  App key
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setAiProvider("ollama"); setAiModel("gemma2:2b"); }}
-                  className={`flex-1 rounded-lg border py-3 flex flex-col items-center justify-center gap-1 transition-all ${
-                    aiProvider === "ollama"
+                  onClick={() => {
+                    const key = resolveCustomGeminiKey(geminiKeyDraft)
+                    if (key) {
+                      setCustomGeminiKey(key)
+                      setGeminiKeyDraft(key)
+                      setAiKeyMessage("Your key is saved in this browser.")
+                    } else {
+                      setGeminiKeyMode("custom")
+                      setGeminiMode("custom")
+                      setAiKeyMessage("Paste your key below, then click Save in browser.")
+                    }
+                    setGeminiMode(getGeminiKeyMode())
+                  }}
+                  className={`flex-1 rounded-lg border py-2 text-xs font-semibold ${
+                    geminiMode === "custom"
                       ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"
-                      : "border-slate-200 dark:border-white/[0.08] text-slate-500 hover:bg-slate-50 dark:hover:bg-white/[0.02]"
+                      : "border-slate-200 dark:border-white/[0.08] text-slate-500"
                   }`}
                 >
-                  <Server className="h-5 w-5" />
-                  <span className="text-xs font-semibold">Local Ollama</span>
+                  My key (local)
                 </button>
               </div>
-
-              <div className="space-y-3 p-4 bg-slate-50 dark:bg-white/[0.02] rounded-lg border border-slate-100 dark:border-white/[0.05]">
-                <label className="text-xs font-semibold text-slate-600 dark:text-white/60">Selected Model</label>
-                {aiProvider === "gemini" ? (
-                  <select 
-                    value={aiModel} 
-                    onChange={(e) => setAiModel(e.target.value)}
-                    className="w-full rounded-md border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white"
-                  >
-                    <option value="gemini-2.5-flash">Gemini 2.5 Flash (Fast)</option>
-                    <option value="gemini-2.5-pro">Gemini 2.5 Pro (Advanced)</option>
-                  </select>
-                ) : (
-                  <select 
-                    value={aiModel} 
-                    onChange={(e) => setAiModel(e.target.value)}
-                    className="w-full rounded-md border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white"
-                  >
-                    {ollamaModels.map(model => (
-                        <option key={model} value={model}>{model}</option>
-                    ))}
-                  </select>
-                )}
-                
-                {aiProvider === "ollama" && (
-                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-2">
-                      Currently using your local Ollama instance (http://localhost:11434). Data never leaves your machine.
-                    </p>
-                )}
-              </div>
-
+              {geminiMode === "custom" && (
+                <div className="space-y-2">
+                  <Input
+                    type={showGeminiKey ? "text" : "password"}
+                    value={geminiKeyDraft}
+                    onChange={(e) => setGeminiKeyDraft(e.target.value)}
+                    placeholder="AIza…"
+                    className="h-9 dark:border-white/[0.08] dark:bg-white/[0.04]"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-8 text-xs"
+                      onClick={() => setShowGeminiKey(!showGeminiKey)}
+                    >
+                      {showGeminiKey ? "Hide" : "Show"}
+                    </Button>
+                    <Button
+                      type="button"
+                      className="h-8 flex-1 bg-emerald-600 text-xs text-white hover:bg-emerald-500"
+                      onClick={() => {
+                        const key = resolveCustomGeminiKey(geminiKeyDraft)
+                        if (!key) {
+                          setAiKeyMessage("Enter a valid Gemini API key.")
+                          return
+                        }
+                        setCustomGeminiKey(key)
+                        setGeminiKeyDraft(key)
+                        setGeminiMode(getGeminiKeyMode())
+                        setAiKeyMessage("API key saved in this browser only.")
+                      }}
+                    >
+                      Save in browser
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {aiKeyMessage && (
+                <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-400">{aiKeyMessage}</p>
+              )}
               {authUser?.email && (
                 <p className="mt-4 border-t border-slate-100 pt-3 text-[11px] text-slate-500 dark:border-white/[0.06] dark:text-white/35">
                   Saved chats:{" "}

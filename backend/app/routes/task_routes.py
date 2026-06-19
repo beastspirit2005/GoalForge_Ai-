@@ -152,6 +152,8 @@ async def list_tasks(
 @router.post("/tasks/{task_id}/auto-assign")
 async def auto_assign_task(
     task_id: int,
+    ai_provider: str = Query("gemini", description="AI Provider (gemini/ollama)"),
+    ai_model: str = Query("gemini-2.5-flash", description="AI Model"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -195,9 +197,6 @@ async def auto_assign_task(
         "description": task.description,
         "required_skills": ", ".join(required_skills_list) if required_skills_list else "None"
     }
-
-    ai_provider = getattr(current_user, 'preferred_ai_provider', 'gemini')
-    ai_model = getattr(current_user, 'preferred_ai_model', 'gemini-2.5-flash')
 
     assignment = await generate_auto_assignment(task_data, available_users, ai_provider=ai_provider, ai_model=ai_model)
     
