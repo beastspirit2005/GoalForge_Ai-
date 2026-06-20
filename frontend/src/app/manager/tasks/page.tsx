@@ -42,11 +42,7 @@ export default function ManagerTasksPage() {
     else setAiModel("gemini-2.5-flash")
   }
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
-  const fetchData = async () => {
+async function fetchData() {
     setLoading(true)
     try {
       const tData = await listTargets()
@@ -64,6 +60,10 @@ export default function ManagerTasksPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
 
   const handleSaveTask = async () => {
     if (!activeTargetId) return

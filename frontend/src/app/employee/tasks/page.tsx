@@ -14,13 +14,7 @@ export default function EmployeeTasksPage() {
   const [tasks, setTasks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchData()
-    }
-  }, [user?.id])
-
-  const fetchData = async () => {
+async function fetchData() {
     setLoading(true)
     try {
       const tData = await listTasks()
@@ -31,6 +25,12 @@ export default function EmployeeTasksPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchData()
+    }
+  }, [user?.id])
 
   return (
     <DashboardLayout>

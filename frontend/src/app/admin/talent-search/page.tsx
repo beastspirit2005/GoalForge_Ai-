@@ -99,7 +99,7 @@ export default function TalentSearchPage() {
               <Sparkles className="h-3 w-3" />
               Quick:
             </span>
-            {["React, TypeScript", "Python, FastAPI", "Docker, Kubernetes", "Machine Learning, Python", "AWS, Terraform"].map(
+            {["Java, Spring Boot", "Figma, UI/UX", "C++, Systems Programming", "Content Writing, SEO", "React, TypeScript", "Agile, Scrum"].map(
               (chip) => (
                 <button
                   key={chip}

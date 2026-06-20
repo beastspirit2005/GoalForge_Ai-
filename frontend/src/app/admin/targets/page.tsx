@@ -33,18 +33,17 @@ export default function AdminTargetsPage() {
   const [skills, setSkills] = useState("")
   const [editTargetId, setEditTargetId] = useState<number | null>(null)
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
-  const fetchData = async () => {
+  async function fetchData() {
     setLoading(true)
     try {
       const [tData, mData] = await Promise.all([
         listTargets(),
         fetch(`${API_URL}/admin/users`, {
           headers: { Authorization: `Bearer ${getStoredToken()}` }
-        }).then(res => res.json())
+        }).then(res => {
+          if (!res.ok) return [];
+          return res.json();
+        }).catch(() => [])
       ])
       setTargets(tData)
       setManagers(mData.filter((u: any) => u.role === "manager"))
@@ -54,6 +53,10 @@ export default function AdminTargetsPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
 
   const handleSave = async () => {
     try {
@@ -296,7 +299,7 @@ export default function AdminTargetsPage() {
               </div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">Initialize the Cascade</h3>
               <p className="text-slate-500 max-w-sm mt-2 leading-relaxed">
-                You haven't defined any organizational targets yet. Create your first target to begin deploying tasks to managers.
+                You haven&apos;t defined any organizational targets yet. Create your first target to begin deploying tasks to managers.
               </p>
             </div>
           )}
