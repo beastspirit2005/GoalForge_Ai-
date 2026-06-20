@@ -344,7 +344,8 @@ In the massive Version 2 rollout of GoalForge AI, significant structural upgrade
 ### 🌟 Enterprise V2 Features Highlight
 *   **Target → Task → Goal Cascade System:** Seamlessly cascade large org Targets down to Manager Tasks and Employee Goals with automatic upward progress synchronization.
 *   **AI Workforce Intelligence Engine:** Explainable AI intelligently matches Managers to Targets and Employees to Tasks based on historic completion rates, current active workload, and specific required skills.
-*   **Dynamic Skill Intelligence:** Instead of trusting static resumes, skills dynamically evolve based on actual completed tasks/goals, calculating a verified `Skill Confidence Score`. Includes a Resume Parser to extract baseline skills.
+*   **Dynamic Skill Intelligence:** Skills dynamically evolve based on actual completed tasks/goals, calculating a verified `Skill Confidence Score`.
+*   **Drag-and-Drop Resume Parser:** Instantly extracts baseline skills and experience from uploaded PDFs or DOCX files natively, parsing them into the user's skill profile using local or cloud AI models.
 *   **Workload & Capacity Intelligence:** Visual workload heatmaps (Overloaded vs Available) and active `Capacity Forecasting` to detect understaffed teams (+40% demand).
 *   **Performance & Trend Analysis:** Calculates 30-day/90-day trends and spots productivity insights like top performing skills or most delayed skill areas.
 *   **Risk Prediction System:** actively calculates `Burnout Risk` and `Goal Success Likelihood` using real-time signals (delayed tasks, high workload, declining trends).
@@ -358,13 +359,15 @@ In the massive Version 2 rollout of GoalForge AI, significant structural upgrade
 *   **Succession & Knowledge Risk Engine:** Analyzes completion history to detect "Single Points of Failure" (e.g., 90% of a technology handled by one employee) and proactively suggests backup training.
 
 ### 🛡️ Architecture & Security Upgrades
-*   **Frontend Modularization:** The monolithic 1700-line `page.tsx` was deeply refactored into distinct, maintainable React components, resolving layout hydration issues.
+*   **Frontend Modularization:** The monolithic 1700-line `page.tsx` was deeply refactored into distinct, maintainable React components, resolving layout hydration issues. Includes a global `ErrorBoundary` for crash protection.
 *   **True API Authentication:** "Mock Quick Sign-In" fallback code was scrubbed, enforcing a strict real-world OTP and password flow through FastAPI.
 *   **Database Schema Integrity:** Self-referential User foreign key loops were consolidated, missing `department_id` references stabilized, and schema re-migrated cleanly.
+*   **Database Performance Optimization:** Applied extensive compound indexes (e.g., `idx_badges_type_user`) and strict `ON DELETE CASCADE` rules across 11 key relational models, eliminating orphan records and skyrocketing query speeds.
 *   **Database Seeding Automations:** Introduced robust python seed scripts (`seed_admin.py` and `seed_more.py`) to easily provision standardized `Admin`, `Manager`, and `Employee` accounts.
-*   **SMTP Configuration Routing:** Hardened `.env` inheritance so that root variables no longer overwrite backend Brevo SMTP passwords during Uvicorn hot-reloads.
-*   **Pydantic v2 Upgrade:** Completed the migration of core data schemas to Pydantic v2 conventions.
-*   **Access Control & IDOR Hardening**: Introduced ownership verification checks across milestones, check-ins, and AI performance narrative generation.
+*   **Production Environment Protection:** Built guardrails in `config.py` that actively block SQLite execution in production, enforcing PostgreSQL.
+*   **SMTP Configuration Routing:** Hardened `.env` inheritance so that root variables no longer overwrite backend Brevo SMTP passwords during Uvicorn hot-reloads. Wrapped OTP services in strict `try/except` rollback blocks to preserve database integrity during email delivery failures.
+*   **Pydantic v2 Upgrade:** Completed the migration of core data schemas to Pydantic v2 conventions and introduced aggressive XSS string sanitizers.
+*   **Access Control & IDOR Hardening**: Introduced ownership verification checks across milestones, check-ins, and AI performance narrative generation. Prometheus metrics API and avatar upload endpoints were secured via proxy blocks, Auth headers, and magic-bytes validation.
 
 ---
 
