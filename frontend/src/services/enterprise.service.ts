@@ -207,7 +207,7 @@ export const createTask = (data: any) =>
 export const listTasks = (targetId?: number) =>
   apiFetchRaw<any[]>(targetId ? `/tasks?target_id=${targetId}` : `/tasks`)
 
-export const autoAssignTask = (taskId: number, aiProvider = "gemini", aiModel = "gemini-pro") =>
+export const autoAssignTask = (taskId: number, aiProvider = "gemini", aiModel = "gemini-2.5-flash") =>
   apiPostRaw<any>(`/tasks/${taskId}/auto-assign?ai_provider=${aiProvider}&ai_model=${aiModel}`)
 
 export const updateTarget = (targetId: number, data: any) =>

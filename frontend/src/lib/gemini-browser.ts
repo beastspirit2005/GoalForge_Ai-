@@ -2,7 +2,7 @@
 
 import { normalizeGeminiKey, resolveCustomGeminiKey } from "./gemini-storage"
 
-const GEMINI_MODEL = "gemini-pro"
+const GEMINI_MODEL = "gemini-2.5-flash"
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta"
 
 function buildBuddyPrompt(query: string, context: string): string {

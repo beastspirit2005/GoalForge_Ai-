@@ -49,7 +49,7 @@ def generate_ai_plan(goal_data, api_key: str | None = None):
         import google.generativeai as genai
 
         genai.configure(api_key=active_key)
-        model = genai.GenerativeModel("gemini-pro")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         response = model.generate_content(prompt)
         raw_response = response.text.strip()
 
@@ -93,7 +93,7 @@ def refine_goal(raw_goal: str, api_key: str | None = None) -> dict:
         import google.generativeai as genai
 
         genai.configure(api_key=active_key)
-        model = genai.GenerativeModel("gemini-pro")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         response = model.generate_content(prompt)
         raw = response.text.strip()
 
@@ -278,7 +278,7 @@ async def ai_buddy_chat(query: str, context: str, provider: str = "gemini", mode
             # Use thread pool executor to prevent blocking FastAPI's event loop
             import asyncio
             genai.configure(api_key=active_key)
-            gemini_model = genai.GenerativeModel("gemini-pro")
+            gemini_model = genai.GenerativeModel("gemini-2.5-flash")
             response = await asyncio.to_thread(gemini_model.generate_content, prompt)
             
             execution_time_ms = int((time.time() - start_time) * 1000)
