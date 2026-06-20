@@ -94,7 +94,7 @@ export default function AdminTargetsPage() {
              userId: targetRes.manager_id.toString(),
              title: "New Target Delegated",
              message: `You have been assigned a new target: ${title}`,
-             type: "target_assigned"
+             type: "info"
            })
         }
       }
