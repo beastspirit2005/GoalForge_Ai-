@@ -357,17 +357,21 @@ In the massive Version 2 rollout of GoalForge AI, significant structural upgrade
 *   **Learning Recommendation Engine:** Detects missing skills required for tasks and recommends precise learning paths (e.g., Suggests "Kubernetes Basics" if only "Docker" is known).
 *   **Organization Talent Search:** Allows leadership to query the dynamic skill graph to find the best available talent for urgent initiatives.
 *   **Succession & Knowledge Risk Engine:** Analyzes completion history to detect "Single Points of Failure" (e.g., 90% of a technology handled by one employee) and proactively suggests backup training.
+*   **Instant Demo Architecture:** Comes pre-seeded with 5 Managers, 10 Employees, full resume extractions, dynamic skills, targets, and tasks to showcase AI intelligence engines instantly upon boot.
 
 ### 🛡️ Architecture & Security Upgrades
 *   **Frontend Modularization:** The monolithic 1700-line `page.tsx` was deeply refactored into distinct, maintainable React components, resolving layout hydration issues. Includes a global `ErrorBoundary` for crash protection.
 *   **True API Authentication:** "Mock Quick Sign-In" fallback code was scrubbed, enforcing a strict real-world OTP and password flow through FastAPI.
 *   **Database Schema Integrity:** Self-referential User foreign key loops were consolidated, missing `department_id` references stabilized, and schema re-migrated cleanly.
 *   **Database Performance Optimization:** Applied extensive compound indexes (e.g., `idx_badges_type_user`) and strict `ON DELETE CASCADE` rules across 11 key relational models, eliminating orphan records and skyrocketing query speeds.
-*   **Database Seeding Automations:** Introduced robust python seed scripts (`seed_admin.py` and `seed_more.py`) to easily provision standardized `Admin`, `Manager`, and `Employee` accounts.
-*   **Production Environment Protection:** Built guardrails in `config.py` that actively block SQLite execution in production, enforcing PostgreSQL.
-*   **SMTP Configuration Routing:** Hardened `.env` inheritance so that root variables no longer overwrite backend Brevo SMTP passwords during Uvicorn hot-reloads. Wrapped OTP services in strict `try/except` rollback blocks to preserve database integrity during email delivery failures.
+*   **Database Seeding Automations:** Introduced robust python seed scripts (`seed_team.py` and `seed_demo_data.py`) to instantly provision standardized `Admin`, `Manager`, and `Employee` accounts packed with realistic analytics data.
+*   **Production Environment Protection:** Built guardrails in `config.py` that actively block SQLite execution in production, enforcing PostgreSQL (Neon Serverless).
+*   **Vercel Cloud Infrastructure Security:** Enforced strict separation between local development environments and production cloud variables. Implemented a strict `.vercelignore` policy to actively block local `.env` files from bleeding into the cloud container and overwriting runtime secrets.
+*   **GitGuardian Incident Remediation:** Addressed false-positive GitGuardian alerts by purging `.env.vercel.prod` files and strictly ignoring sensitive configuration from version control.
+*   **JWT Cryptographic Hardening:** Fully rotated all JWT signatures using a mathematically secure 64-byte `SECRET_KEY`, fully isolating user tokens.
+*   **Brevo SMTP Configuration Routing:** Hardened SMTP authentication by resolving deep-level Windows PowerShell encoding bugs (UTF-16 LE) and shell formatting artifacts that were mutating keys during Vercel CLI injections. Wrapped OTP services in strict `try/except` rollback blocks to preserve database integrity during email delivery failures.
 *   **Pydantic v2 Upgrade:** Completed the migration of core data schemas to Pydantic v2 conventions and introduced aggressive XSS string sanitizers.
-*   **Access Control & IDOR Hardening**: Introduced ownership verification checks across milestones, check-ins, and AI performance narrative generation. Prometheus metrics API and avatar upload endpoints were secured via proxy blocks, Auth headers, and magic-bytes validation.
+*   **Access Control & IDOR Hardening**: Introduced ownership verification checks across milestones, check-ins, and AI performance narrative generation. Secured API endpoints using Proxy blocks, Auth headers, and magic-bytes validation.
 
 ---
 

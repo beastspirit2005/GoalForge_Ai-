@@ -13,7 +13,7 @@ from app.services.goal_service import get_all_goals, get_goal_by_id, unlock_goal
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
-@router.get("/users")
+@router.get("/users", response_model=list[UserResponse])
 async def list_users(
     skip: int = 0,
     limit: int = 100,
