@@ -235,34 +235,18 @@ export function AiBuddyChat() {
 
   useEffect(() => {
     const fetchModels = async () => {
-      let res;
       try {
-        // Try Next.js proxy route first (essential for Docker environments)
-        res = await fetch("/api/ai/ollama/api/tags")
-        if (!res.ok) throw new Error("Proxy failed")
+        // Direct browser fetch to local Ollama.
+        const res = await fetch("http://localhost:11434/api/tags")
+        if (!res.ok) throw new Error("Failed to fetch")
+        const data = await res.json()
+        const models = data.models?.map((m: any) => m.name) || []
+        setOllamaModels(models)
+        if (models.length > 0 && !selectedOllamaModel) {
+          setSelectedOllamaModel(models[0])
+        }
       } catch {
-        try {
-          // Fallback to client browser direct access (localhost)
-          res = await fetch("http://localhost:11434/api/tags")
-        } catch {
-          console.log('[AI Buddy] Local Ollama not available')
-          return
-        }
-      }
-
-      try {
-        if (res && res.ok) {
-          const data = await res.json()
-          const models = data.models?.map((m: any) => m.name) || []
-          if (models.length > 0) {
-            setOllamaModels(models)
-            if (!localStorage.getItem("aiBuddyOllamaModel")) {
-              setSelectedOllamaModel(models[0])
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("[AI Buddy] Error parsing Ollama models", err)
+        console.log('[AI Buddy] Local Ollama not available')
       }
     }
     fetchModels()
@@ -348,24 +332,13 @@ export function AiBuddyChat() {
       }
     };
     
-    let res;
-    try {
-      // 1. Try Next.js proxy route first (Docker environment compatible)
-      res = await fetch("/api/ai/ollama/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error("Proxy request failed");
-    } catch {
-      // 2. Fallback to client browser direct access (localhost)
-      res = await fetch("http://localhost:11434/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error("Local Ollama direct request failed");
-    }
+    // Hit localhost directly (proxy won't work if frontend is hosted in the cloud)
+    const res = await fetch("http://localhost:11434/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error("Local Ollama direct request failed");
     return res.json();
   };
 
@@ -428,12 +401,10 @@ export function AiBuddyChat() {
       return
     }
     try {
-      const res = await fetch("/api/ai/key", {
+      await apiFetch("/ai/key", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiKey: key }),
+        body: { apiKey: key },
       })
-      if (!res.ok) throw new Error("Failed to secure key on server.")
       
       localStorage.setItem("gf_gemini_key_mode", "custom")
       localStorage.setItem("gf_gemini_custom_key_saved", "true")
@@ -449,18 +420,16 @@ export function AiBuddyChat() {
 
   const handleUseAppKey = async () => {
     try {
-      const res = await fetch("/api/ai/key", { method: "DELETE" })
-      if (!res.ok) throw new Error("Failed to clear key on server.")
-
+      await apiFetch("/ai/key", { method: "DELETE" })
       localStorage.setItem("gf_gemini_key_mode", "app")
-      localStorage.removeItem("gf_gemini_custom_key_saved")
+      localStorage.setItem("gf_gemini_custom_key_saved", "false")
       setGeminiKeyModeState("app")
       setCustomKeyInput("")
-      setKeySaveMessage("Using the app Gemini key.")
+      setKeySaveMessage("Cleared. Now using App Default Key.")
       setTimeout(() => setKeySaveMessage(""), 3000)
       window.dispatchEvent(new Event(GEMINI_KEY_CHANGED_EVENT))
     } catch (err: any) {
-      setKeySaveMessage(`Failed to clear key: ${err.message}`)
+      setKeySaveMessage(`Failed to clear custom key: ${err.message}`)
     }
   }
 

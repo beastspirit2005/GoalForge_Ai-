@@ -1,5 +1,5 @@
-from __future__ import annotations
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -47,20 +47,46 @@ async def copilot_context(
 
 
 @router.post("/copilot", response_model=CopilotResponse)
-async def copilot(data: CopilotRequest, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def copilot(data: CopilotRequest, request: Request, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Chat with Ai Buddy."""
     context = data.context
     if not context:
         context = await get_copilot_context(db, current_user)
+        
+    custom_key = request.cookies.get("custom_gemini_key")
+    active_key = data.api_key or custom_key
         
     result = await ai_buddy_chat(
         data.query,
         context,
         provider=data.provider,
         model=data.model,
-        api_key=data.api_key
+        api_key=active_key
     )
     return CopilotResponse(**result)
+
+class CustomKeyRequest(BaseModel):
+    apiKey: str
+
+@router.post("/key")
+async def save_custom_key(data: CustomKeyRequest, response: Response):
+    if not data.apiKey:
+        raise HTTPException(status_code=400, detail="Invalid Gemini API key format.")
+    response.set_cookie(
+        key="custom_gemini_key",
+        value=data.apiKey.strip(),
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        max_age=60 * 60 * 24 * 30, # 30 days
+        path="/"
+    )
+    return {"success": True, "message": "API key successfully secured in an httpOnly cookie."}
+
+@router.delete("/key")
+async def delete_custom_key(response: Response):
+    response.delete_cookie(key="custom_gemini_key", path="/")
+    return {"success": True, "message": "API key cookie cleared successfully."}
 
 
 @router.get("/dynamic-guidance/{goal_id}")
