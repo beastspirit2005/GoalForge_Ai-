@@ -6,6 +6,11 @@ from dotenv import load_dotenv
 # Force override OS environment variables with .env values
 load_dotenv(Path(__file__).resolve().parents[2] / ".env", override=True)
 
+import sys
+backend_dir = Path(__file__).resolve().parents[1]
+if str(backend_dir) not in sys.path:
+    sys.path.insert(0, str(backend_dir))
+
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
