@@ -4,6 +4,7 @@
 
 import { API_URL } from "@/lib/api"
 import { getStoredToken } from "@/services/auth.service"
+import { getGeminiKeyMode, getCustomGeminiKey } from "@/lib/gemini-storage"
 
 async function apiFetchRaw<T = unknown>(path: string): Promise<T> {
   const token = getStoredToken()
@@ -32,6 +33,10 @@ async function apiPostRaw<T = unknown>(path: string, body?: unknown): Promise<T>
   const token = getStoredToken()
   const headers: Record<string, string> = { "Content-Type": "application/json" }
   if (token) headers["Authorization"] = `Bearer ${token}`
+  if (getGeminiKeyMode() === "custom") {
+    const customKey = getCustomGeminiKey()
+    if (customKey) headers["X-Gemini-Key"] = customKey
+  }
 
   const res = await fetch(`${API_URL}${path}`, {
     method: "POST",
@@ -167,15 +172,19 @@ export const getImpactAnalysis = (taskId: number) =>
   apiFetchRaw<any>(`/dependencies/impact-analysis/${taskId}`)
 
 // ── Skill Intelligence ──────────────────────────────────────────────
-export const uploadResume = (file: File) => {
+export const uploadResume = (file: File, aiProvider = "gemini", aiModel = "gemini-2.5-flash") => {
   const formData = new FormData()
   formData.append("file", file)
 
   const token = getStoredToken()
   const headers: Record<string, string> = {}
   if (token) headers["Authorization"] = `Bearer ${token}`
+  if (getGeminiKeyMode() === "custom") {
+    const customKey = getCustomGeminiKey()
+    if (customKey) headers["X-Gemini-Key"] = customKey
+  }
 
-  return fetch(`${API_URL}/skills/upload-resume`, {
+  return fetch(`${API_URL}/skills/upload-resume?ai_provider=${aiProvider}&ai_model=${aiModel}`, {
     method: "POST",
     credentials: "include",
     headers,

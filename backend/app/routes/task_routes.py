@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -157,6 +157,7 @@ async def auto_assign_task(
     task_id: int,
     ai_provider: str = Query("gemini", description="AI Provider (gemini/ollama)"),
     ai_model: str = Query("gemini-2.5-flash", description="AI Model"),
+    x_gemini_key: str | None = Header(None, description="Custom Gemini API Key"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -201,8 +202,13 @@ async def auto_assign_task(
         "required_skills": ", ".join(required_skills_list) if required_skills_list else "None"
     }
 
-    assignment = await generate_auto_assignment(task_data, available_users, ai_provider=ai_provider, ai_model=ai_model)
-    
+    assignment = await generate_auto_assignment(
+        task_data, 
+        available_users, 
+        api_key=x_gemini_key,
+        ai_provider=ai_provider, 
+        ai_model=ai_model
+    )
     if assignment.get("assigned_user_id"):
         task.assigned_to = assignment["assigned_user_id"]
         task.status = "assigned"

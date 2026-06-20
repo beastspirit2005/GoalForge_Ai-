@@ -1,7 +1,7 @@
 from __future__ import annotations
 """Skill Intelligence Routes — skill profiles, resume upload, learning recommendations."""
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, Header
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +19,9 @@ router = APIRouter(prefix="/skills", tags=["Skill Intelligence"])
 @router.post("/upload-resume")
 async def upload_resume(
     file: UploadFile = File(...),
+    ai_provider: str = Query("gemini", description="AI Provider (gemini/ollama)"),
+    ai_model: str = Query("gemini-2.5-flash", description="AI Model"),
+    x_gemini_key: str | None = Header(None, description="Custom Gemini API Key"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -29,16 +32,13 @@ async def upload_resume(
     if len(file_bytes) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="File size exceeds the 5MB limit.")
 
-    # Resolve AI settings from current user
-    provider = getattr(current_user, "preferred_ai_provider", "gemini")
-    model = getattr(current_user, "preferred_ai_model", "gemini-2.5-flash")
-
-    # Parse resume
+    # Parse resume using the requested provider
     parsed = await parse_resume(
         content=file_bytes,
         filename=file.filename,
-        provider=provider,
-        model=model
+        provider=ai_provider,
+        model=ai_model,
+        api_key=x_gemini_key
     )
 
     # Store extracted text

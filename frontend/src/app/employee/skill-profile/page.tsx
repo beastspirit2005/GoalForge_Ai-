@@ -2,26 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { Cpu, FileText, Search, Star, Trash2, TrendingUp, UploadCloud, ChevronRight, Briefcase, GraduationCap, BarChart3, BookOpen, CheckCircle2, Target, AlertCircle, AlertTriangle, Paperclip } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   getSkillProfile,
   uploadResume,
   getLearningRecommendations,
 } from "@/services/enterprise.service";
-import {
-  GraduationCap,
-  BarChart3,
-  FileText,
-  BookOpen,
-  Search,
-  CheckCircle2,
-  Target,
-  AlertCircle,
-  AlertTriangle,
-  UploadCloud,
-  Trash2,
-  Paperclip,
-} from "lucide-react";
 
 type SkillEntry = {
   skill_name: string;
@@ -51,6 +39,9 @@ export default function SkillProfilePage() {
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<string | null>(null);
+  
+  const [aiProvider, setAiProvider] = useState("gemini");
+  const [aiModel, setAiModel] = useState("gemini-2.5-flash");
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"skills" | "resume" | "learning">("skills");
 
@@ -120,8 +111,8 @@ export default function SkillProfilePage() {
     setUploading(true);
     setUploadResult(null);
     try {
-      const result = await uploadResume(selectedFile);
-      setUploadResult(`✅ Extracted ${result.skills_extracted} skills: ${result.skills_added.join(", ")}`);
+      const result = await uploadResume(selectedFile, aiProvider, aiModel);
+      setUploadResult(`Successfully parsed! Found ${result.skill_count} skills.`);
       setSelectedFile(null);
       const profile = await getSkillProfile(userId);
       setSkills(profile.skills || []);
@@ -312,7 +303,42 @@ export default function SkillProfilePage() {
               )}
             </div>
 
-            <div className="flex items-center gap-3 mt-6">
+            <div className="flex flex-wrap items-center gap-3 mt-6">
+              <Select value={aiProvider} onValueChange={(val) => {
+                setAiProvider(val)
+                if (val === 'gemini') setAiModel('gemini-2.5-flash')
+                else if (val === 'ollama') setAiModel('llama3:8b')
+              }}>
+                <SelectTrigger className="h-10 w-36 dark:bg-white/[0.04] dark:border-white/[0.08] text-white">
+                  <SelectValue placeholder="AI Provider" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gemini">Gemini</SelectItem>
+                  <SelectItem value="ollama">Ollama</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={aiModel} onValueChange={setAiModel}>
+                <SelectTrigger className="h-10 w-44 dark:bg-white/[0.04] dark:border-white/[0.08] text-white">
+                  <SelectValue placeholder="Model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {aiProvider === 'gemini' ? (
+                    <>
+                      <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+                      <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                      <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="llama3:8b">Llama 3 (8B)</SelectItem>
+                      <SelectItem value="mistral:latest">Mistral</SelectItem>
+                      <SelectItem value="qwen3.6:latest">Qwen 3.6</SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+
               <button
                 onClick={handleUploadResume}
                 disabled={uploading || !selectedFile}
@@ -322,7 +348,7 @@ export default function SkillProfilePage() {
                 {uploading ? "Processing with AI..." : "Analyze Resume"}
               </button>
               {uploadResult && (
-                <span className="text-sm text-white/70">{uploadResult}</span>
+                <span className="text-sm text-white/70 ml-2">{uploadResult}</span>
               )}
             </div>
           </div>
