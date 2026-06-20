@@ -68,10 +68,10 @@ export default function GamificationPage() {
   };
 
   const rankStyle = (rank: number) => {
-    if (rank === 1) return "bg-gradient-to-br from-yellow-500/20 to-amber-600/10 border-yellow-500/30";
-    if (rank === 2) return "bg-gradient-to-br from-slate-300/20 to-slate-400/10 border-slate-300/30";
-    if (rank === 3) return "bg-gradient-to-br from-amber-700/20 to-amber-800/10 border-amber-700/30";
-    return "bg-white/[0.02] border-white/[0.06]";
+    if (rank === 1) return "bg-gradient-to-br from-yellow-100 to-amber-50 dark:from-yellow-500/20 dark:to-amber-600/10 border-yellow-200 dark:border-yellow-500/30";
+    if (rank === 2) return "bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-300/20 dark:to-slate-400/10 border-slate-200 dark:border-slate-300/30";
+    if (rank === 3) return "bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-700/20 dark:to-amber-800/10 border-amber-200 dark:border-amber-700/30";
+    return "bg-white dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.06]";
   };
 
   return (
@@ -144,7 +144,7 @@ export default function GamificationPage() {
               leaderboard.map((entry) => (
                 <div
                   key={entry.user_id}
-                  className={`glass-card-hover flex items-center gap-4 rounded-xl border p-4 transition-all hover:border-white/[0.15] ${rankStyle(entry.rank)}`}
+                  className={`glass-card-hover flex items-center gap-4 rounded-xl border p-4 transition-all hover:border-slate-300 dark:hover:border-white/[0.15] ${rankStyle(entry.rank)} text-slate-800 dark:text-white`}
                 >
                   <div className="w-10 text-center text-2xl font-bold">
                     {rankIcon(entry.rank)}
@@ -157,16 +157,16 @@ export default function GamificationPage() {
                       .slice(0, 2)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold text-white/90">
+                    <p className="truncate font-semibold text-slate-900 dark:text-white/90">
                       {entry.name}
                     </p>
-                    <p className="text-xs text-white/30">{entry.department}</p>
+                    <p className="text-xs text-slate-500 dark:text-white/30">{entry.department}</p>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className="bg-gradient-to-r from-yellow-400 to-amber-500 bg-clip-text text-xl font-bold text-transparent">
+                    <p className="bg-gradient-to-r from-yellow-500 to-amber-600 dark:from-yellow-400 dark:to-amber-500 bg-clip-text text-xl font-bold text-transparent">
                       {entry.work_points.toLocaleString()}
                     </p>
-                    <p className="text-[10px] text-white/30">points</p>
+                    <p className="text-[10px] text-slate-400 dark:text-white/30">points</p>
                   </div>
                 </div>
               ))

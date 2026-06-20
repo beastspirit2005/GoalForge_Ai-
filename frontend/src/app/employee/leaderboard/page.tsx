@@ -85,7 +85,7 @@ export default function LeaderboardPage() {
                 <div className={`grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br ${podiumColors[1].bg} text-lg font-bold text-slate-900 shadow-xl ${podiumColors[1].shadow} ring-2 ${podiumColors[1].ring}`}>
                   {top3[1].avatar}
                 </div>
-                <span className="absolute -bottom-1 -right-1 rounded-full bg-card px-1.5 py-0.5 text-[10px] font-bold text-foreground ring-1 ring-border">
+                <span className="absolute -bottom-1 -right-1 rounded-full bg-slate-100 dark:bg-card px-1.5 py-0.5 text-[10px] font-bold text-slate-800 dark:text-foreground ring-1 ring-slate-200 dark:ring-border">
                   {podiumColors[1].label}
                 </span>
               </div>
@@ -112,10 +112,10 @@ export default function LeaderboardPage() {
 
             <div className="flex flex-col items-center">
               <div className="relative">
-                <div className={`grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br ${podiumColors[2].bg} text-base font-bold text-amber-100 shadow-xl ${podiumColors[2].shadow} ring-2 ${podiumColors[2].ring}`}>
+                <div className={`grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br ${podiumColors[2].bg} text-base font-bold text-white shadow-xl ${podiumColors[2].shadow} ring-2 ${podiumColors[2].ring}`}>
                   {top3[2].avatar}
                 </div>
-                <span className="absolute -bottom-1 -right-1 rounded-full bg-card px-1.5 py-0.5 text-[10px] font-bold text-foreground ring-1 ring-border">
+                <span className="absolute -bottom-1 -right-1 rounded-full bg-slate-100 dark:bg-card px-1.5 py-0.5 text-[10px] font-bold text-slate-800 dark:text-foreground ring-1 ring-slate-200 dark:ring-border">
                   {podiumColors[2].label}
                 </span>
               </div>
