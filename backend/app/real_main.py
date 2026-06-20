@@ -50,8 +50,13 @@ from app.middleware.rate_limit import RateLimitMiddleware
 async def lifespan(app: FastAPI):
     """Create DB tables on startup."""
     import os
-    app.state.env = os.getenv("ENV", "development")
-    await create_tables()
+    app.state.env = os.getenv("VERCEL_ENV", os.getenv("ENV", "development"))
+    try:
+        # Vercel environments are 'production', 'preview', or 'development'
+        if app.state.env not in ["production", "preview"]:
+            await create_tables()
+    except Exception as e:
+        print(f"Skipping create_tables: {e}")
     yield
 
 
