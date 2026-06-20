@@ -9,8 +9,9 @@ const proxyTarget =
 
 const nextConfig: NextConfig = {
   async rewrites() {
-    // Vercel monorepo: /api is routed to the Python service via vercel.json — no Next proxy.
-    if (process.env.VERCEL && !externalBackend && !process.env.API_PROXY_TARGET) {
+    const isVercel = process.env.VERCEL === "1" || !!process.env.VERCEL_URL || !!process.env.VERCEL_ENV;
+    if (isVercel && !externalBackend && !process.env.API_PROXY_TARGET) {
+      // In Vercel serverless environment, if we don't have an explicit external backend
       return [];
     }
 
