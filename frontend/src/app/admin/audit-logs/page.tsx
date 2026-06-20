@@ -8,6 +8,7 @@ import { FileText, Search, Calendar, RefreshCw, SlidersHorizontal } from "lucide
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { getLocalAuditLogs, AuditLog } from "@/lib/local-audit-logs"
+import { format } from "date-fns"
 
 const actionColors: Record<string, string> = {
   goal_approved: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
@@ -23,6 +24,15 @@ const actionColors: Record<string, string> = {
   escalation_created: "bg-rose-500/10 text-rose-400 border border-rose-500/20",
   escalation_acknowledged: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
   escalation_resolved: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+  target_created: "bg-[var(--gf-indigo)]/10 text-[var(--gf-indigo)] border-[var(--gf-indigo)]/20",
+  target_updated: "bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20",
+  target_deleted: "bg-rose-500/10 text-rose-400 border border-rose-500/20",
+  task_created: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
+  task_updated: "bg-teal-500/10 text-teal-400 border border-teal-500/20",
+  task_deleted: "bg-red-500/10 text-red-400 border border-red-500/20",
+  task_assigned: "bg-[var(--gf-cyan)]/10 text-[var(--gf-cyan)] border-[var(--gf-cyan)]/20",
+  user_created: "bg-green-500/10 text-green-400 border border-green-500/20",
+  user_deleted: "bg-red-500/10 text-red-400 border border-red-500/20",
 }
 
 export default function AuditLogsPage() {
@@ -91,14 +101,8 @@ export default function AuditLogsPage() {
   const resetFilters = () => {
     setSearchQuery("")
     setFilterDate("")
-    setSortBy("alphabetical")
+    setSortBy("latest")
   }
-
-  const userAccountLogs = filteredAndSortedLogs.filter(log => ["user_created", "user_updated", "user_deleted"].includes(log.action))
-  const goalCreatedLogs = filteredAndSortedLogs.filter(log => ["goal_created", "goal_submitted"].includes(log.action))
-  const goalRejectedLogs = filteredAndSortedLogs.filter(log => ["goal_rejected", "goal_rejected_after_edit"].includes(log.action))
-  const goalApprovedLogs = filteredAndSortedLogs.filter(log => ["goal_approved", "goal_approved_after_edit", "goal_unlocked"].includes(log.action))
-  const escalationLogs = filteredAndSortedLogs.filter(log => ["escalation_created", "escalation_acknowledged", "escalation_resolved"].includes(log.action) || log.entity === "escalation")
 
   return (
     <DashboardLayout>
@@ -168,67 +172,57 @@ export default function AuditLogsPage() {
           )}
         </div>
 
-        {/* 5-Column Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
-          <ColumnCard title="User Accounts" logs={userAccountLogs} />
-          <ColumnCard title="Goal Created" logs={goalCreatedLogs} />
-          <ColumnCard title="Goal Rejected" logs={goalRejectedLogs} />
-          <ColumnCard title="Goal Approved" logs={goalApprovedLogs} />
-          <ColumnCard title="Escalations" logs={escalationLogs} />
-        </div>
+        {/* Unified Timeline Layout */}
+        <Card className="product-surface rounded-xl border border-white/[0.06] bg-white/[0.02]">
+          <div className="p-4 border-b border-slate-100 dark:border-white/[0.04] bg-slate-50/50 dark:bg-white/[0.01]">
+            <h3 className="font-semibold text-slate-900 dark:text-white flex items-center justify-between">
+              Event Timeline
+              <span className="text-slate-500 font-normal bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-xs">
+                {filteredAndSortedLogs.length} Records
+              </span>
+            </h3>
+          </div>
+          <CardContent className="p-0">
+            <div className="divide-y divide-slate-100 dark:divide-white/[0.04]">
+              {filteredAndSortedLogs.map((log) => (
+                <div
+                  key={log.id}
+                  className="flex items-start gap-4 p-5 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.01]"
+                >
+                  <div className="mt-1 grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/[0.05] text-slate-600 dark:text-slate-400">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                      <span className="text-sm font-bold text-slate-950 dark:text-white">
+                        {log.user}
+                      </span>
+                      <Badge
+                        className={`text-[10px] uppercase font-bold py-0.5 px-2 tracking-wide rounded-md border-0 ${
+                          actionColors[log.action] || "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                        }`}
+                      >
+                        {log.action.replace(/_/g, " ")}
+                      </Badge>
+                      <span className="ml-auto text-xs text-slate-400 dark:text-slate-500 font-medium whitespace-nowrap">
+                        {format(new Date(log.date), "MMM d, yyyy h:mm a")}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                      {log.detail}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {filteredAndSortedLogs.length === 0 && (
+                <div className="p-16 text-center text-sm text-slate-500">
+                  No audit logs found matching your criteria.
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   )
 }
-
-const ColumnCard = ({ title, logs }: { title: string; logs: AuditLog[] }) => (
-  <Card className="product-surface rounded-xl border border-white/[0.06] bg-white/[0.02] flex flex-col max-h-[800px]">
-    <div className="p-4 border-b border-slate-100 dark:border-white/[0.04] bg-slate-50/50 dark:bg-white/[0.01]">
-      <h3 className="font-semibold text-slate-900 dark:text-white text-sm flex items-center justify-between">
-        {title}
-        <span className="text-slate-400 font-normal bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-xs">
-          {logs.length}
-        </span>
-      </h3>
-    </div>
-    <CardContent className="p-0 overflow-y-auto flex-1 custom-scrollbar">
-      <div className="divide-y divide-slate-100 dark:divide-white/[0.04]">
-        {logs.map((log) => (
-          <div
-            key={log.id}
-            className="flex items-start gap-3 p-4 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.01]"
-          >
-            <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-              <FileText className="h-3.5 w-3.5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                <span className="text-xs font-semibold text-slate-950 dark:text-white">
-                  {log.user}
-                </span>
-                <Badge
-                  className={`text-[9px] uppercase font-bold py-0 px-1.5 tracking-wide rounded-md border-0 ${
-                    actionColors[log.action] || "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                  }`}
-                >
-                  {log.action.replace(/_/g, " ")}
-                </Badge>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-snug">
-                {log.detail}
-              </p>
-              <p className="mt-1.5 text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-                {log.date}
-              </p>
-            </div>
-          </div>
-        ))}
-        {logs.length === 0 && (
-          <div className="p-8 text-center text-xs text-slate-500">
-            No logs found in this category.
-          </div>
-        )}
-      </div>
-    </CardContent>
-  </Card>
-)

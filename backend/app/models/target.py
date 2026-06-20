@@ -33,6 +33,7 @@ class Target(Base):
 
     tasks = relationship("Task", back_populates="target", cascade="all, delete-orphan")
     required_skills = relationship("TargetRequiredSkill", cascade="all, delete-orphan")
+    manager = relationship("User", foreign_keys=[manager_id])
 
 
 class Task(Base):
@@ -53,6 +54,7 @@ class Task(Base):
 
     target = relationship("Target", back_populates="tasks")
     required_skills = relationship("TaskRequiredSkill", cascade="all, delete-orphan")
+    assignee = relationship("User", foreign_keys=[assigned_to])
 
 
 class RecommendationFeedback(Base):

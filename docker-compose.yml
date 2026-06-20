@@ -36,6 +36,14 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
       REDIS_URL: redis://redis:6379
+      DEBUG: "True"
+      CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000"
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

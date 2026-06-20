@@ -15,6 +15,13 @@ async function apiFetchRaw<T = unknown>(path: string): Promise<T> {
     cache: "no-store",
     headers,
   })
+  if (res.status === 401) {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token")
+      window.location.href = "/login"
+    }
+    throw new Error(`API error ${res.status}: Unauthorized`)
+  }
   if (!res.ok) {
     throw new Error(`API error ${res.status}`)
   }
@@ -32,10 +39,63 @@ async function apiPostRaw<T = unknown>(path: string, body?: unknown): Promise<T>
     headers,
     body: body ? JSON.stringify(body) : undefined,
   })
+  if (res.status === 401) {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token")
+      window.location.href = "/login"
+    }
+    throw new Error(`API error ${res.status}: Unauthorized`)
+  }
   if (!res.ok) {
     throw new Error(`API error ${res.status}`)
   }
   return res.json()
+}
+
+async function apiPutRaw<T = unknown>(path: string, body?: unknown): Promise<T> {
+  const token = getStoredToken()
+  const headers: Record<string, string> = { "Content-Type": "application/json" }
+  if (token) headers["Authorization"] = `Bearer ${token}`
+
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "PUT",
+    credentials: "include",
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  if (res.status === 401) {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token")
+      window.location.href = "/login"
+    }
+    throw new Error(`API error ${res.status}: Unauthorized`)
+  }
+  if (!res.ok) {
+    throw new Error(`API error ${res.status}`)
+  }
+  return res.json()
+}
+
+async function apiDeleteRaw(path: string): Promise<void> {
+  const token = getStoredToken()
+  const headers: Record<string, string> = {}
+  if (token) headers["Authorization"] = `Bearer ${token}`
+
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "DELETE",
+    credentials: "include",
+    headers,
+  })
+  if (res.status === 401) {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token")
+      window.location.href = "/login"
+    }
+    throw new Error(`API error ${res.status}: Unauthorized`)
+  }
+  if (!res.ok) {
+    throw new Error(`API error ${res.status}`)
+  }
 }
 
 // ── AI Recommendations ──────────────────────────────────────────────
@@ -133,3 +193,31 @@ export const getSkillProfile = (userId: number) =>
 
 export const getLearningRecommendations = (userId: number) =>
   apiFetchRaw<any>(`/skills/learning-recommendations/${userId}`)
+
+// ── Targets & Tasks ─────────────────────────────────────────────────
+export const createTarget = (data: any) =>
+  apiPostRaw<any>(`/targets`, data)
+
+export const listTargets = () =>
+  apiFetchRaw<any[]>(`/targets`)
+
+export const createTask = (data: any) =>
+  apiPostRaw<any>(`/tasks`, data)
+
+export const listTasks = (targetId?: number) =>
+  apiFetchRaw<any[]>(targetId ? `/tasks?target_id=${targetId}` : `/tasks`)
+
+export const autoAssignTask = (taskId: number, aiProvider = "gemini", aiModel = "gemini-2.5-flash") =>
+  apiPostRaw<any>(`/tasks/${taskId}/auto-assign?ai_provider=${aiProvider}&ai_model=${aiModel}`)
+
+export const updateTarget = (targetId: number, data: any) =>
+  apiPutRaw<any>(`/targets/${targetId}`, data)
+
+export const deleteTarget = (targetId: number) =>
+  apiDeleteRaw(`/targets/${targetId}`)
+
+export const updateTask = (taskId: number, data: any) =>
+  apiPutRaw<any>(`/tasks/${taskId}`, data)
+
+export const deleteTask = (taskId: number) =>
+  apiDeleteRaw(`/tasks/${taskId}`)

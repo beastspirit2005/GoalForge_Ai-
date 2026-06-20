@@ -48,6 +48,7 @@ class User(Base):
     # Relationships
     goals = relationship("Goal", back_populates="owner", foreign_keys="Goal.user_id")
     managed_employees = relationship("User", backref="manager", remote_side="User.id", foreign_keys=[manager_id])
+    user_skills = relationship("UserSkill", back_populates="user", cascade="all, delete-orphan")
 
 
     def __repr__(self) -> str:

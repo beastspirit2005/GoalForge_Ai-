@@ -9,7 +9,7 @@ from app.core.auth import get_current_user
 from app.models.user import User
 from app.models.target import Target, Task, TargetRequiredSkill, TaskRequiredSkill
 from app.models.skill import UserSkill, Skill
-from app.schemas.target_schema import TargetCreate, TargetResponse, TaskCreate, TaskResponse
+from app.schemas.target_schema import TargetCreate, TargetResponse, TaskCreate, TaskResponse, TargetUpdate, TaskUpdate
 from app.ai.auto_assigner import generate_auto_assignment
 
 router = APIRouter()
@@ -21,6 +21,7 @@ def serialize_target(target: Target) -> dict:
         "description": target.description,
         "required_skills": [s.skill_name for s in getattr(target, 'required_skills', [])],
         "manager_id": target.manager_id,
+        "manager_name": getattr(target, 'manager', None).name if getattr(target, 'manager', None) else None,
         "pending_review": target.pending_review,
         "progress": target.progress,
         "deadline": target.deadline,
@@ -37,6 +38,7 @@ def serialize_task(task: Task) -> dict:
         "description": task.description,
         "required_skills": [s.skill_name for s in getattr(task, 'required_skills', [])],
         "assigned_to": task.assigned_to,
+        "assigned_user_name": getattr(task, 'assignee', None).name if getattr(task, 'assignee', None) else None,
         "pending_review": task.pending_review,
         "progress": task.progress,
         "deadline": task.deadline,
@@ -73,7 +75,7 @@ async def create_target(
                 db.add(ts)
         await db.commit()
     
-    await db.refresh(target, ["required_skills"])
+    await db.refresh(target, ["required_skills", "manager"])
     return serialize_target(target)
 
 @router.get("/targets", response_model=list[TargetResponse])
@@ -83,7 +85,7 @@ async def list_targets(
     db: AsyncSession = Depends(get_db), 
     current_user: User = Depends(get_current_user)
 ):
-    query = select(Target).options(selectinload(Target.required_skills)).order_by(Target.created_at.desc())
+    query = select(Target).options(selectinload(Target.required_skills), selectinload(Target.manager)).order_by(Target.created_at.desc())
     
     # RBAC Filter
     if current_user.role not in ("admin", "super_admin"):
@@ -129,7 +131,7 @@ async def create_task(
                 db.add(ts)
         await db.commit()
 
-    await db.refresh(task, ["required_skills"])
+    await db.refresh(task, ["required_skills", "assignee"])
     return serialize_task(task)
 
 @router.get("/tasks", response_model=list[TaskResponse])
@@ -140,7 +142,7 @@ async def list_tasks(
     db: AsyncSession = Depends(get_db), 
     current_user: User = Depends(get_current_user)
 ):
-    query = select(Task).options(selectinload(Task.required_skills)).order_by(Task.created_at.desc())
+    query = select(Task).options(selectinload(Task.required_skills), selectinload(Task.assignee)).order_by(Task.created_at.desc())
     
     if target_id:
         query = query.where(Task.target_id == target_id)
@@ -211,3 +213,93 @@ async def auto_assign_task(
         "reason": assignment.get("reason"),
         "status": "success"
     }
+
+@router.put("/targets/{target_id}", response_model=TargetResponse)
+async def update_target(
+    target_id: int,
+    data: TargetUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role not in ("admin", "super_admin"):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    res = await db.execute(select(Target).options(selectinload(Target.required_skills), selectinload(Target.manager)).where(Target.id == target_id))
+    target = res.scalar_one_or_none()
+    if not target:
+        raise HTTPException(status_code=404, detail="Target not found")
+    
+    if data.title is not None: target.title = data.title
+    if data.description is not None: target.description = data.description
+    if data.manager_id is not None: target.manager_id = data.manager_id
+    if data.deadline is not None: target.deadline = data.deadline
+    
+    if data.required_skills is not None:
+        await db.execute(delete(TargetRequiredSkill).where(TargetRequiredSkill.target_id == target.id))
+        for skill_name in data.required_skills:
+            if skill_name.strip():
+                db.add(TargetRequiredSkill(target_id=target.id, skill_name=skill_name.strip()))
+                
+    await db.commit()
+    await db.refresh(target, ["required_skills", "manager"])
+    return serialize_target(target)
+
+@router.delete("/targets/{target_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_target(
+    target_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role not in ("admin", "super_admin"):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    res = await db.execute(select(Target).where(Target.id == target_id))
+    target = res.scalar_one_or_none()
+    if not target:
+        raise HTTPException(status_code=404, detail="Target not found")
+    await db.delete(target)
+    await db.commit()
+    return None
+
+@router.put("/tasks/{task_id}", response_model=TaskResponse)
+async def update_task(
+    task_id: int,
+    data: TaskUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role not in ("admin", "super_admin", "manager"):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    res = await db.execute(select(Task).options(selectinload(Task.required_skills), selectinload(Task.assignee)).where(Task.id == task_id))
+    task = res.scalar_one_or_none()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    if data.title is not None: task.title = data.title
+    if data.description is not None: task.description = data.description
+    if data.assigned_to is not None: task.assigned_to = data.assigned_to
+    if data.deadline is not None: task.deadline = data.deadline
+    
+    if data.required_skills is not None:
+        await db.execute(delete(TaskRequiredSkill).where(TaskRequiredSkill.task_id == task.id))
+        for skill_name in data.required_skills:
+            if skill_name.strip():
+                db.add(TaskRequiredSkill(task_id=task.id, skill_name=skill_name.strip()))
+                
+    await db.commit()
+    await db.refresh(task, ["required_skills", "assignee"])
+    return serialize_task(task)
+
+@router.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_task(
+    task_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role not in ("admin", "super_admin", "manager"):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    res = await db.execute(select(Task).where(Task.id == task_id))
+    task = res.scalar_one_or_none()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    await db.delete(task)
+    await db.commit()
+    return None

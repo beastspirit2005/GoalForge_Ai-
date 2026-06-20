@@ -28,6 +28,7 @@ class UserSkill(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     skill = relationship("Skill", back_populates="user_skills")
+    user = relationship("User", back_populates="user_skills")
 
     def __repr__(self) -> str:
         return f"<UserSkill User:{self.user_id} Skill:{self.skill_id}>"

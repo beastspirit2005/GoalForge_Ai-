@@ -26,6 +26,7 @@ import {
   Gamepad2,
   PieChart,
   Cpu,
+  ListTodo,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
@@ -41,6 +42,7 @@ type NavLink = {
 const links: NavLink[] = [
   // Employee
   { title: "Dashboard", href: "/employee/dashboard", icon: LayoutDashboard, section: "Employee" },
+  { title: "Assigned Tasks", href: "/employee/tasks", icon: ListTodo, section: "Employee" },
   { title: "Goals", href: "/employee/goals", icon: Target, section: "Employee" },
   { title: "Check-ins", href: "/employee/checkins", icon: CalendarDays, section: "Employee" },
   { title: "AI Insights", href: "/employee/ai-insights", icon: Brain, section: "Employee" },
@@ -50,6 +52,7 @@ const links: NavLink[] = [
   { title: "Leaderboard", href: "/employee/leaderboard", icon: Trophy, section: "Employee" },
   // Manager
   { title: "Manager", href: "/manager/dashboard", icon: Users, section: "Manager" },
+  { title: "Tasks", href: "/manager/tasks", icon: ListTodo, section: "Manager" },
   { title: "Team Progress", href: "/manager/team-progress", icon: TrendingUp, section: "Manager" },
   { title: "Approvals", href: "/manager/approvals", icon: ClipboardCheck, section: "Manager" },
   { title: "Comments", href: "/manager/comments", icon: MessageSquare, section: "Manager" },
@@ -58,6 +61,7 @@ const links: NavLink[] = [
   { title: "Capacity Simulator", href: "/manager/simulator", icon: Cpu, section: "Manager" },
   // Admin
   { title: "Admin Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, section: "Admin" },
+  { title: "Targets", href: "/admin/targets", icon: Target, section: "Admin" },
   { title: "Analytics", href: "/admin/org-analytics", icon: BarChart3, section: "Admin" },
   { title: "Users", href: "/admin/users", icon: Users, section: "Admin" },
   { title: "Talent Search", href: "/admin/talent-search", icon: Search, section: "Admin" },
