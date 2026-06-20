@@ -107,8 +107,26 @@ export const getImpactAnalysis = (taskId: number) =>
   apiFetchRaw<any>(`/dependencies/impact-analysis/${taskId}`)
 
 // ── Skill Intelligence ──────────────────────────────────────────────
-export const uploadResume = (resumeText: string) =>
-  apiPostRaw<any>(`/skills/upload-resume`, { resume_text: resumeText })
+export const uploadResume = (file: File) => {
+  const formData = new FormData()
+  formData.append("file", file)
+
+  const token = getStoredToken()
+  const headers: Record<string, string> = {}
+  if (token) headers["Authorization"] = `Bearer ${token}`
+
+  return fetch(`${API_URL}/skills/upload-resume`, {
+    method: "POST",
+    credentials: "include",
+    headers,
+    body: formData,
+  }).then((res) => {
+    if (!res.ok) {
+      throw new Error(`API error ${res.status}`)
+    }
+    return res.json()
+  })
+}
 
 export const getSkillProfile = (userId: number) =>
   apiFetchRaw<any>(`/skills/profile/${userId}`)

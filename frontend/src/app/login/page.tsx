@@ -91,19 +91,25 @@ export default function LoginPage() {
           <div className="mt-8 space-y-4">
             {authMode === "PASSWORD" && (
               <>
-                <Input
-                  className="h-11 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-[14px] text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 focus-visible:ring-2"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email address"
-                />
-                <Input
-                  className="h-11 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-[14px] text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 focus-visible:ring-2"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
-                  type="password"
-                />
+                <div className="space-y-1.5">
+                  <label className="text-[13px] font-semibold text-slate-700 dark:text-slate-300">Email Address</label>
+                  <Input
+                    className="h-11 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-[14px] text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 focus-visible:ring-2"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email address"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[13px] font-semibold text-slate-700 dark:text-slate-300">Password</label>
+                  <Input
+                    className="h-11 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-[14px] text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 focus-visible:ring-2"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    type="password"
+                  />
+                </div>
                 {error && <p className="text-[13px] text-rose-600 font-medium">{error}</p>}
                 <Button
                   className="h-11 w-full rounded-lg bg-indigo-600 hover:bg-indigo-500 text-[14px] font-semibold text-white shadow-md shadow-indigo-600/10 transition-all mt-2"

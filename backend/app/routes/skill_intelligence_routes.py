@@ -1,6 +1,6 @@
 """Skill Intelligence Routes — skill profiles, resume upload, learning recommendations."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,31 +15,43 @@ from app.services.skill_confidence_calculator import compute_verified_confidence
 router = APIRouter(prefix="/skills", tags=["Skill Intelligence"])
 
 
-class ResumeUploadRequest(BaseModel):
-    resume_text: str
-
-
 @router.post("/upload-resume")
 async def upload_resume(
-    data: ResumeUploadRequest,
+    file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Upload resume text, parse skills, and store encrypted."""
-    # Parse resume
-    parsed = parse_resume(data.resume_text)
+    """Upload resume file, parse skills semantically using AI, and store extracted text."""
+    # Validate file size (max 5MB)
+    MAX_FILE_SIZE = 5 * 1024 * 1024
+    file_bytes = await file.read()
+    if len(file_bytes) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File size exceeds the 5MB limit.")
 
-    # Encrypt and store resume text
-    resume_bytes = data.resume_text.encode("utf-8")
-    current_user.resume_text_encrypted = resume_bytes
+    # Resolve AI settings from current user
+    provider = getattr(current_user, "preferred_ai_provider", "gemini")
+    model = getattr(current_user, "preferred_ai_model", "gemini-2.5-flash")
+
+    # Parse resume
+    parsed = await parse_resume(
+        content=file_bytes,
+        filename=file.filename,
+        provider=provider,
+        model=model
+    )
+
+    # Store extracted text
+    extracted_text = parsed.get("extracted_text", "")
+    if extracted_text:
+        current_user.resume_text_encrypted = extracted_text.encode("utf-8")
 
     # Update experience years if found
-    if parsed["experience_years"] is not None:
+    if parsed.get("experience_years") is not None:
         current_user.experience_years = parsed["experience_years"]
 
     # Add extracted skills
     skills_added = []
-    for skill_data in parsed["extracted_skills"]:
+    for skill_data in parsed.get("extracted_skills", []):
         # Find or create skill
         skill_result = await db.execute(
             select(Skill).where(Skill.name.ilike(skill_data["name"]))
@@ -81,9 +93,10 @@ async def upload_resume(
 
     return {
         "message": "Resume processed successfully",
-        "skills_extracted": len(parsed["extracted_skills"]),
+        "skills_extracted": len(parsed.get("extracted_skills", [])),
         "skills_added": skills_added,
-        "experience_years": parsed["experience_years"],
+        "experience_years": parsed.get("experience_years"),
+        "parsed_by": parsed.get("parsed_by"),
     }
 
 

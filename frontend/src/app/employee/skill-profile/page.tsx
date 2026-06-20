@@ -18,6 +18,9 @@ import {
   Target,
   AlertCircle,
   AlertTriangle,
+  UploadCloud,
+  Trash2,
+  Paperclip,
 } from "lucide-react";
 
 type SkillEntry = {
@@ -44,7 +47,8 @@ export default function SkillProfilePage() {
   const { user } = useAuth();
   const [skills, setSkills] = useState<SkillEntry[]>([]);
   const [learningRecs, setLearningRecs] = useState<LearningRec[]>([]);
-  const [resumeText, setResumeText] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,13 +68,61 @@ export default function SkillProfilePage() {
       .finally(() => setLoading(false));
   }, [userId]);
 
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      const validTypes = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "text/plain"
+      ];
+      if (validTypes.includes(file.type) || file.name.endsWith(".pdf") || file.name.endsWith(".docx") || file.name.endsWith(".txt")) {
+        if (file.size <= 5 * 1024 * 1024) {
+          setSelectedFile(file);
+          setUploadResult(null);
+        } else {
+          setUploadResult("❌ File size exceeds 5MB limit.");
+        }
+      } else {
+        setUploadResult("❌ Invalid file format. Only PDF, DOCX, and TXT are supported.");
+      }
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.size <= 5 * 1024 * 1024) {
+        setSelectedFile(file);
+        setUploadResult(null);
+      } else {
+        setUploadResult("❌ File size exceeds 5MB limit.");
+      }
+    }
+  };
+
   const handleUploadResume = async () => {
-    if (!resumeText.trim()) return;
+    if (!selectedFile) return;
     setUploading(true);
     setUploadResult(null);
     try {
-      const result = await uploadResume(resumeText);
+      const result = await uploadResume(selectedFile);
       setUploadResult(`✅ Extracted ${result.skills_extracted} skills: ${result.skills_added.join(", ")}`);
+      setSelectedFile(null);
       const profile = await getSkillProfile(userId);
       setSkills(profile.skills || []);
     } catch {
@@ -197,23 +249,77 @@ export default function SkillProfilePage() {
               <FileText className="h-5 w-5 text-[var(--gf-cyan)]" />
               <h2 className="text-lg font-semibold text-white/90">Upload Resume</h2>
             </div>
-            <p className="text-sm text-white/30 mb-4">
-              Paste your resume text below. AI will extract skills automatically and calculate confidence scores.
+            <p className="text-sm text-white/30 mb-6">
+              Upload your resume (.pdf, .docx, or .txt). The AI engine will parse the document semantically, extract your skills, and update your profile automatically.
             </p>
-            <textarea
-              value={resumeText}
-              onChange={(e) => setResumeText(e.target.value)}
-              placeholder={"Paste your resume text here...\n\nExample: Experienced software engineer with 5 years of experience in Python, React, Docker, and AWS. Built microservices using FastAPI and PostgreSQL..."}
-              className="w-full h-48 rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 text-sm outline-none transition-all placeholder:text-white/20 focus:border-[var(--gf-indigo)]/50 focus:ring-2 focus:ring-[var(--gf-indigo)]/20 resize-none"
-            />
-            <div className="flex items-center gap-3 mt-4">
+
+            <div
+              onDragEnter={handleDrag}
+              onDragOver={handleDrag}
+              onDragLeave={handleDrag}
+              onDrop={handleDrop}
+              className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-all ${
+                dragActive
+                  ? "border-[var(--gf-indigo)] bg-[var(--gf-indigo)]/5"
+                  : selectedFile
+                  ? "border-[var(--gf-emerald)]/50 bg-[var(--gf-emerald)]/5"
+                  : "border-white/[0.08] bg-white/[0.02] hover:border-white/[0.16] hover:bg-white/[0.04]"
+              }`}
+            >
+              <input
+                type="file"
+                id="resume-file-input"
+                className="hidden"
+                accept=".pdf,.docx,.txt"
+                onChange={handleChange}
+              />
+
+              {!selectedFile ? (
+                <label
+                  htmlFor="resume-file-input"
+                  className="flex flex-col items-center justify-center cursor-pointer w-full h-full"
+                >
+                  <div className="rounded-full bg-white/[0.04] p-4 mb-3 border border-white/[0.06] transition-transform group-hover:scale-110">
+                    <UploadCloud className="h-6 w-6 text-white/40" />
+                  </div>
+                  <p className="text-sm font-medium text-white/80">
+                    Drag and drop your file here, or{" "}
+                    <span className="text-[var(--gf-cyan)] hover:underline">browse</span>
+                  </p>
+                  <p className="text-xs text-white/20 mt-1.5">
+                    Supports PDF, DOCX, and TXT up to 5MB
+                  </p>
+                </label>
+              ) : (
+                <div className="flex flex-col items-center w-full">
+                  <div className="rounded-full bg-[var(--gf-emerald)]/10 p-4 mb-3 border border-[var(--gf-emerald)]/20">
+                    <Paperclip className="h-6 w-6 text-[var(--gf-emerald)]" />
+                  </div>
+                  <p className="text-sm font-semibold text-white/90 truncate max-w-xs">
+                    {selectedFile.name}
+                  </p>
+                  <p className="text-xs text-white/30 mt-1">
+                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                  <button
+                    onClick={() => setSelectedFile(null)}
+                    className="mt-4 flex items-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-all"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Remove File
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 mt-6">
               <button
                 onClick={handleUploadResume}
-                disabled={uploading || !resumeText.trim()}
+                disabled={uploading || !selectedFile}
                 className="flex items-center gap-2 rounded-xl bg-[var(--gf-indigo)] px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-[var(--gf-indigo)]/25 transition-all hover:shadow-[var(--gf-indigo)]/40 disabled:opacity-50"
               >
                 <Search className="h-4 w-4" />
-                {uploading ? "Processing..." : "Analyze Resume"}
+                {uploading ? "Processing with AI..." : "Analyze Resume"}
               </button>
               {uploadResult && (
                 <span className="text-sm text-white/70">{uploadResult}</span>
