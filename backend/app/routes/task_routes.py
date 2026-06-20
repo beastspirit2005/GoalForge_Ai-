@@ -156,7 +156,7 @@ async def list_tasks(
 async def auto_assign_task(
     task_id: int,
     ai_provider: str = Query("gemini", description="AI Provider (gemini/ollama)"),
-    ai_model: str = Query("gemini-2.5-flash", description="AI Model"),
+    ai_model: str = Query("gemini-1.5-flash", description="AI Model"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
