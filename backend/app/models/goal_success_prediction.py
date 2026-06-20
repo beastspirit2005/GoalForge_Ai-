@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Goal Success Prediction model — tracks AI-predicted goal completion probabilities."""
 
 from datetime import datetime

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Impact Analysis model — tracks ripple effects of task delays."""
 
 from datetime import datetime

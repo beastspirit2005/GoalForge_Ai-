@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Capacity Planning Routes — demand vs capacity forecasting."""
 
 from fastapi import APIRouter, Depends, Query

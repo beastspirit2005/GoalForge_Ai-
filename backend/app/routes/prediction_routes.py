@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Prediction API routes — completion, burnout, delayed goals, team outlook."""
 
 from fastapi import APIRouter, Depends

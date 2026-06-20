@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Learning Recommendation model — AI-suggested learning paths for skill gaps."""
 
 from datetime import datetime

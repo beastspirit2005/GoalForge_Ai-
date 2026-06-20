@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Escalation model — tracks auto-escalated at-risk goals."""
 
 from datetime import datetime

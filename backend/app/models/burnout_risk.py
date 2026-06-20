@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Burnout Risk model — tracks burnout risk assessments per user."""
 
 from datetime import datetime

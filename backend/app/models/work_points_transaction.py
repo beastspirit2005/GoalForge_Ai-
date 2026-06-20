@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Work Points Transaction model — ledger for gamification point changes."""
 
 from datetime import datetime

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Team Health Score model — composite team health tracking."""
 
 from datetime import datetime

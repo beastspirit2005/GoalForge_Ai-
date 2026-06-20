@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Capacity Forecast model — tracks demand vs capacity forecasts."""
 
 from datetime import datetime

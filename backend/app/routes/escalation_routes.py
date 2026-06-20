@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Escalation API routes."""
 
 from fastapi import APIRouter, Depends, HTTPException

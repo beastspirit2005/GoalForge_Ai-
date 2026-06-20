@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Gamification Routes — leaderboards and point transaction ledgers."""
 
 from fastapi import APIRouter, Depends

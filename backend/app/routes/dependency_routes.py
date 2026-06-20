@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Dependency Management Routes — task dependencies and impact analysis."""
 
 from fastapi import APIRouter, Depends, HTTPException

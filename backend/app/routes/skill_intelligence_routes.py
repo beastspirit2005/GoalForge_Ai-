@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Skill Intelligence Routes — skill profiles, resume upload, learning recommendations."""
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File

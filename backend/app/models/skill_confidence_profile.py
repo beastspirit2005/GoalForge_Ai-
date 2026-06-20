@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Skill Confidence Profile model — tracks verified skill confidence per user."""
 
 from datetime import datetime

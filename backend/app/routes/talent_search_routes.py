@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Talent Search Routes — search employees by skills."""
 
 from fastapi import APIRouter, Depends, Query

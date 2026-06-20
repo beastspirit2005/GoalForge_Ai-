@@ -1,3 +1,4 @@
+from __future__ import annotations
 from app.models.user import User
 from app.models.goal import Goal
 from app.models.milestone import Milestone

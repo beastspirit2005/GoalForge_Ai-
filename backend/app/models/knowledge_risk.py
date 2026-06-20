@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Knowledge Risk model — detects single points of failure in skill coverage."""
 
 from datetime import datetime

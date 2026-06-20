@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Performance score model — tracks computed scores per employee per period."""
 
 from datetime import datetime

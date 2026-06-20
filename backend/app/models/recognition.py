@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Recognition models — badges, streaks, trophies, leaderboard entries."""
 
 from datetime import datetime

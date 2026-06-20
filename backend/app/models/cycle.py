@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Goal cycle model — Q1/Q2/Q3/Q4 with start/end dates and status."""
 
 from datetime import datetime

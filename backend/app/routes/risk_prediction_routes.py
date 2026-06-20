@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Risk Prediction Routes — burnout detection, SLA scanning."""
 
 from fastapi import APIRouter, Depends

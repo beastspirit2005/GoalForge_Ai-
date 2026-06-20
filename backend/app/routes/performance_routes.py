@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Performance Intelligence API routes."""
 
 from datetime import datetime

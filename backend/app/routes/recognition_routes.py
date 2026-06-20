@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Recognition API routes — badges, streaks, trophies."""
 
 from fastapi import APIRouter, Depends

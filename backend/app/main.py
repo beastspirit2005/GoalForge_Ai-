@@ -1,3 +1,4 @@
+from __future__ import annotations
 from contextlib import asynccontextmanager
 from pathlib import Path
 import os
@@ -199,4 +200,4 @@ app.include_router(capacity_router)
 app.include_router(gamification_router)
 app.include_router(talent_router)
 app.include_router(dependency_router)
-app.include_router(skill_intelligence_router)
+app.include_router(skill_intelligence_router)

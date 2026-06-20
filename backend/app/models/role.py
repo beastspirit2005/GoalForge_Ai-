@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Enumerations used across the application."""
 
 import enum

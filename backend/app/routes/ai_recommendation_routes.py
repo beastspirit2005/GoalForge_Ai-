@@ -1,3 +1,4 @@
+from __future__ import annotations
 """AI Recommendation Routes — manager/employee matching and team formation."""
 
 from fastapi import APIRouter, Depends
