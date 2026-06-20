@@ -114,7 +114,7 @@ async def approve_user(
                 print(f"Approval email was not sent for user {user.id}: {exc}")
 
         loop = asyncio.get_event_loop()
-        loop.run_in_executor(None, send_approval_email_safely)
+        await loop.run_in_executor(None, send_approval_email_safely)
 
         return {"id": user.id, "is_approved": user.is_approved, "message": "User approved successfully"}
     except Exception as e:
