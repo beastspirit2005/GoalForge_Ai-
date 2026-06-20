@@ -237,7 +237,7 @@ export function AiBuddyChat() {
     const fetchModels = async () => {
       try {
         // Direct browser fetch to local Ollama.
-        const res = await fetch("http://localhost:11434/api/tags")
+        const res = await fetch("http://127.0.0.1:11434/api/tags")
         if (!res.ok) throw new Error("Failed to fetch")
         const data = await res.json()
         const models = data.models?.map((m: any) => m.name) || []
@@ -333,7 +333,7 @@ export function AiBuddyChat() {
     };
     
     // Hit localhost directly (proxy won't work if frontend is hosted in the cloud)
-    const res = await fetch("http://localhost:11434/api/generate", {
+    const res = await fetch("http://127.0.0.1:11434/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
