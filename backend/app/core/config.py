@@ -76,6 +76,8 @@ class Settings(BaseSettings):
             self.DATABASE_URL_SYNC = self.DATABASE_URL.replace(
                 "postgresql+asyncpg://", "postgresql://", 1
             )
+            # asyncpg requires ssl=require instead of sslmode=require
+            self.DATABASE_URL = self.DATABASE_URL.replace("sslmode=require", "ssl=require")
             
         self.SECRET_KEY = (self.SECRET_KEY or "").strip()
         if not self.DEBUG and self.SECRET_KEY in ["goalforge-super-secret-change-in-production", "change-me-in-production", ""]:
