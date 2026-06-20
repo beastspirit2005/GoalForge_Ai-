@@ -39,9 +39,9 @@ def is_demo_mode() -> bool:
 
 
 def _send_email(to_email: str, subject: str, text: str, html: str):
-    # Skip actual email sending on Vercel to act as a pure mock/demo
-    if os.getenv("VERCEL") is not None or is_demo_mode():
-        print(f"[DEMO MODE] Skipping smtplib SMTP email sending to {to_email} on Vercel.")
+    # Skip actual email sending if DEMO_MODE is explicitly enabled
+    if is_demo_mode():
+        print(f"[DEMO MODE] Skipping smtplib SMTP email sending to {to_email}.")
         return
 
     cfg = _get_smtp_config()
