@@ -91,7 +91,7 @@ export default function AdminTargetsPage() {
         // Notify Manager
         if (targetRes.manager_id) {
            addLocalNotification({
-             userId: targetRes.manager_id.toString(),
+             recipientRole: "manager",
              title: "New Target Delegated",
              message: `You have been assigned a new target: ${title}`,
              type: "info"

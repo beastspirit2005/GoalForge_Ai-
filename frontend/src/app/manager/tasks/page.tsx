@@ -165,7 +165,7 @@ async function fetchData() {
         
         if (res.assigned_user_id) {
            addLocalNotification({
-             userId: res.assigned_user_id.toString(),
+             recipientRole: "employee",
              title: "AI Assigned You a Task",
              message: `The Engine assigned you task: ${tTitle}`,
              type: "info"
