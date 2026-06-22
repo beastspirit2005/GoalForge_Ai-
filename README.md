@@ -27,7 +27,7 @@ What sets GoalForge AI apart is its Dual-Engine Hybrid AI System. You can levera
 GoalForge AI operates on a strictly isolated tier system. The FastAPI backend securely handles business logic, state persistence, and proxies cloud AI requests. Meanwhile, the Next.js frontend communicates directly with your local Ollama engine for private local AI tasks, entirely bypassing backend infrastructure when dealing with sensitive local queries.
 
 <p align="center">
-  <img src="pictures/System-Architecture.png" alt="System Architecture">
+  <img src="SYSTEM%20ARCHITECTURE.png" alt="System Architecture">
 </p>
 
 
