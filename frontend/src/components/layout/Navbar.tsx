@@ -284,6 +284,7 @@ export default function Navbar({ user, onOpenMobileMenu }: NavbarProps) {
         <div className="flex items-center gap-3 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 backdrop-blur-lg">
           <div className="grid h-8 w-8 place-items-center overflow-hidden rounded-lg bg-gradient-to-br from-[var(--gf-cyan)] to-[var(--gf-indigo)] text-[11px] font-bold text-white shadow-lg shadow-[var(--gf-indigo)]/20">
             {user.profile_picture_url || user.avatar ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img src={user.profile_picture_url || user.avatar} alt="Avatar" className="h-full w-full object-cover" />
             ) : (
               user.name.split(" ").map(n => n[0]).join("")
@@ -311,6 +312,7 @@ export default function Navbar({ user, onOpenMobileMenu }: NavbarProps) {
         <ThemeToggle />
         <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-lg bg-gradient-to-br from-[var(--gf-cyan)] to-[var(--gf-indigo)] text-[11px] font-bold text-white">
           {user.profile_picture_url || user.avatar ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
             <img src={user.profile_picture_url || user.avatar} alt="Avatar" className="h-full w-full object-cover" />
           ) : (
             user.name.split(" ").map(n => n[0]).join("")

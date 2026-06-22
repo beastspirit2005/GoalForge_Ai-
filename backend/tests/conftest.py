@@ -3,6 +3,8 @@ import os
 os.environ["DEBUG"] = "True"
 os.environ["SECRET_KEY"] = "goalforge-dev-secret-key-12345678"
 os.environ["CORS_ORIGINS"] = "http://localhost:3000"
+os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///./test_goalforge.db"
+os.environ["DATABASE_URL_SYNC"] = "sqlite:///./test_goalforge.db"
 
 import asyncio
 import pytest

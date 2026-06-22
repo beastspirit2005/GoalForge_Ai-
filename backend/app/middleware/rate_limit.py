@@ -77,7 +77,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         
         # 1. Protect expensive AI Copilot chat endpoints -> Max 10 requests / minute
-        if "/ai/copilot" in path or "/ai/chat" in path:
+        if "/ai/copilot" in path or "/ai/chat" in path or "/ai/generate-plan" in path or "/ai/refine-goal" in path:
             is_limited = await self._is_rate_limited(
                 client_ip=client_ip,
                 limit=10,

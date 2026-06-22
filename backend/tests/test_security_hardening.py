@@ -44,22 +44,38 @@ def clean_and_seed_db():
 
 def test_request_otp_demo_mode_active():
     """Verify that request-otp returns the code in response body when DEMO_MODE is active."""
-    os.environ["DEMO_MODE"] = "true"
-    response = client.post("/auth/request-otp", json={"email": "test_sec_emp@example.com"})
-    assert response.status_code == 200
-    data = response.json()
-    assert "Demo Mode" in data["message"]
-    assert "Use code" in data["message"]
+    from app.core.config import settings
+    original = settings.DEMO_MODE
+    settings.DEMO_MODE = True
+    try:
+        response = client.post("/auth/request-otp", json={"email": "test_sec_emp@example.com"})
+        assert response.status_code == 200
+        data = response.json()
+        assert "Demo Mode" in data["message"]
+        assert "Use code" in data["message"]
+    finally:
+        settings.DEMO_MODE = original
 
 
 def test_request_otp_demo_mode_inactive_no_smtp():
     """Verify that request-otp returns an HTTP 500 when DEMO_MODE is inactive and SMTP is unconfigured."""
-    os.environ["DEMO_MODE"] = "false"
-    # Ensure SMTP_PASSWORD is empty
-    os.environ["SMTP_PASSWORD"] = ""
-    response = client.post("/auth/request-otp", json={"email": "test_sec_emp@example.com"})
-    assert response.status_code == 500
-    assert "Mailing service (SMTP) is not configured" in response.json()["detail"]
+    from app.core.config import settings
+    original_demo = settings.DEMO_MODE
+    settings.DEMO_MODE = False
+    
+    # Temporarily hide SMTP_HOST to force is_email_configured() to return False
+    original_smtp = os.environ.get("SMTP_HOST")
+    os.environ["SMTP_HOST"] = ""
+    try:
+        response = client.post("/auth/request-otp", json={"email": "test_sec_emp@example.com"})
+        assert response.status_code == 500
+        assert "Mailing service (SMTP) is not configured" in response.json()["detail"]
+    finally:
+        settings.DEMO_MODE = original_demo
+        if original_smtp is not None:
+            os.environ["SMTP_HOST"] = original_smtp
+        else:
+            del os.environ["SMTP_HOST"]
 
 
 def test_secure_cookie_login():
@@ -72,7 +88,9 @@ def test_secure_cookie_login():
 
 def test_secure_cookie_logout():
     """Verify that logout deletes the access_token cookie."""
-    response = client.post("/auth/logout")
+    res = client.post("/auth/login", json={"email": "test_sec_emp@example.com", "password": "password123"})
+    token = res.cookies.get("access_token")
+    response = client.post("/auth/logout", cookies={"access_token": token})
     assert response.status_code == 200
     cookie = response.cookies.get("access_token")
     assert cookie is None or cookie == ""

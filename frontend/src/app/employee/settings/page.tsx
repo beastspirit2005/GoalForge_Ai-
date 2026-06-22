@@ -169,6 +169,7 @@ export default function SettingsPage() {
               <div className="flex items-center gap-4 mb-6">
                 <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 dark:bg-white/[0.04] border border-slate-300 dark:border-white/[0.08] overflow-hidden">
                   {profilePic ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={profilePic} alt="Profile" className="h-full w-full object-cover" />
                   ) : (
                     <UserIcon className="h-8 w-8 text-slate-400 dark:text-white/40" />

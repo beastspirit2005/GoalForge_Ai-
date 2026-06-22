@@ -14,19 +14,19 @@ export default function EmployeeTasksPage() {
   const [tasks, setTasks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-async function fetchData() {
-    setLoading(true)
-    try {
-      const tData = await listTasks()
-      setTasks(tData.filter(t => t.assigned_to === user?.id))
-    } catch (error) {
-      console.error("Error fetching data:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
+    async function fetchData() {
+      setLoading(true)
+      try {
+        const tData = await listTasks()
+        setTasks(tData.filter(t => t.assigned_to === user?.id))
+      } catch (error) {
+        console.error("Error fetching data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
     if (user?.id) {
       fetchData()
     }

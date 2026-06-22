@@ -45,6 +45,7 @@ class User(Base):
     preferred_ai_model: Mapped[str] = mapped_column(String(50), nullable=False, default="gemini-2.5-flash", server_default="gemini-2.5-flash")
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    token_version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
 
     # Relationships
     goals = relationship("Goal", back_populates="owner", foreign_keys="Goal.user_id")

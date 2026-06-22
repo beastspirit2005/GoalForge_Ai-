@@ -35,7 +35,7 @@ def is_email_configured() -> bool:
 
 
 def is_demo_mode() -> bool:
-    return os.getenv("DEMO_MODE", "false").lower() == "true"
+    return settings.DEMO_MODE
 
 
 def _send_email(to_email: str, subject: str, text: str, html: str):

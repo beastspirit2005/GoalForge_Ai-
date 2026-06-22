@@ -28,7 +28,40 @@ def fallback_ai_plan(goal_data: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def generate_ai_plan(goal_data, api_key: str | None = None):
+async def generate_ai_plan(goal_data, provider: str = "gemini", model: str | None = None, api_key: str | None = None):
+    prompt = milestone_prompt(
+        goal_data.get("title", ""),
+        goal_data.get("description", ""),
+        goal_data.get("target", ""),
+        goal_data.get("deadline", ""),
+    )
+    
+    if provider == "ollama":
+        selected_model = model
+        if not selected_model:
+            selected_model = await get_ollama_model()
+        try:
+            raw_response = await call_ollama(prompt, selected_model)
+            clean = raw_response
+            if clean.startswith("```"):
+                clean = clean.split("\n", 1)[1] if "\n" in clean else clean[3:]
+            if clean.endswith("```"):
+                clean = clean[:-3]
+            clean = clean.strip()
+            parsed = json.loads(clean)
+            return {
+                "milestones": parsed.get("milestones", [])[:5],
+                "recommendation": parsed.get("recommendation", ""),
+                "risk": parsed.get("risk", "Medium"),
+                "source": f"ollama ({selected_model})",
+                "raw_response": raw_response,
+            }
+        except Exception as exc:
+            plan = fallback_ai_plan(goal_data)
+            plan["raw_response"] = str(exc)
+            return plan
+
+    # Default to gemini
     active_key = api_key or settings.GEMINI_API_KEY
     if not active_key:
         import logging
@@ -38,19 +71,12 @@ def generate_ai_plan(goal_data, api_key: str | None = None):
         )
         return fallback_ai_plan(goal_data)
 
-    prompt = milestone_prompt(
-        goal_data.get("title", ""),
-        goal_data.get("description", ""),
-        goal_data.get("target", ""),
-        goal_data.get("deadline", ""),
-    )
-
     try:
         import google.generativeai as genai
 
         genai.configure(api_key=active_key)
-        model = genai.GenerativeModel("gemini-2.5-flash")
-        response = model.generate_content(prompt)
+        gemini_model = genai.GenerativeModel("gemini-2.5-flash")
+        response = await asyncio.to_thread(gemini_model.generate_content, prompt)
         raw_response = response.text.strip()
 
         # Strip markdown code fences if present
@@ -76,8 +102,37 @@ def generate_ai_plan(goal_data, api_key: str | None = None):
         return plan
 
 
-def refine_goal(raw_goal: str, api_key: str | None = None) -> dict:
+async def refine_goal(raw_goal: str, provider: str = "gemini", model: str | None = None, api_key: str | None = None) -> dict:
     """Refine a vague goal into a measurable enterprise goal."""
+    prompt = refine_goal_prompt(raw_goal)
+    
+    if provider == "ollama":
+        selected_model = model
+        if not selected_model:
+            selected_model = await get_ollama_model()
+        try:
+            raw = await call_ollama(prompt, selected_model)
+            clean = raw
+            if clean.startswith("```"):
+                clean = clean.split("\n", 1)[1] if "\n" in clean else clean[3:]
+            if clean.endswith("```"):
+                clean = clean[:-3]
+            clean = clean.strip()
+            parsed = json.loads(clean)
+            return {
+                "refined_title": parsed.get("refined_title", raw_goal[:80]),
+                "refined_description": parsed.get("refined_description", ""),
+                "suggested_target": parsed.get("suggested_target", ""),
+                "source": f"ollama ({selected_model})",
+            }
+        except Exception:
+            return {
+                "refined_title": raw_goal.strip()[:80],
+                "refined_description": f"Achieve measurable progress on: {raw_goal}",
+                "suggested_target": "Define a specific quantifiable target",
+                "source": "fallback",
+            }
+
     active_key = api_key or settings.GEMINI_API_KEY
     if not active_key:
         return {
@@ -87,14 +142,12 @@ def refine_goal(raw_goal: str, api_key: str | None = None) -> dict:
             "source": "fallback",
         }
 
-    prompt = refine_goal_prompt(raw_goal)
-
     try:
         import google.generativeai as genai
 
         genai.configure(api_key=active_key)
-        model = genai.GenerativeModel("gemini-2.5-flash")
-        response = model.generate_content(prompt)
+        gemini_model = genai.GenerativeModel("gemini-2.5-flash")
+        response = await asyncio.to_thread(gemini_model.generate_content, prompt)
         raw = response.text.strip()
 
         # Strip markdown code fences

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import require_role
+from app.core.auth import require_role, require_write_role
 from app.core.database import get_db
 from app.models.user import User
 from app.services.audit_service import log_action
@@ -43,7 +43,7 @@ async def list_escalations(
 @router.post("/scan")
 async def scan_escalations(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_write_role("admin")),
 ):
     """Admin: scan and auto-escalate at-risk goals."""
     new_escalations = await check_and_escalate(db)
@@ -57,7 +57,7 @@ async def scan_escalations(
 async def acknowledge(
     escalation_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("manager", "admin")),
+    current_user: User = Depends(require_write_role("manager", "admin")),
 ):
     """Acknowledge an escalation."""
     result = await acknowledge_escalation(db, escalation_id)
@@ -71,7 +71,7 @@ async def resolve(
     escalation_id: int,
     data: ResolveRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("manager", "admin")),
+    current_user: User = Depends(require_write_role("manager", "admin")),
 ):
     """Resolve an escalation."""
     result = await resolve_escalation(db, escalation_id, data.note)
@@ -91,7 +91,7 @@ async def update_escalation_endpoint(
     escalation_id: int,
     data: EscalationUpdateRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_write_role("admin")),
 ):
     """Admin: Update an escalation with remarks, status, etc."""
     result = await update_escalation(

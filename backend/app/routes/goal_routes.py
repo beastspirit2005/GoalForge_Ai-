@@ -232,7 +232,11 @@ async def generate_plan(
     goal = await get_goal_by_id(db, goal_id)
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
-    plan = await generate_and_store_plan(db, goal)
+    plan = await generate_and_store_plan(
+        db, goal,
+        provider=current_user.preferred_ai_provider,
+        model=current_user.preferred_ai_model
+    )
     return plan
 
 

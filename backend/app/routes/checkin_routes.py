@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, require_non_impersonated_user
 from app.core.database import get_db
 from app.models.checkin import Checkin
 from app.models.user import User
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/checkins", tags=["Check-ins"])
 async def create_checkin(
     data: CheckinCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_non_impersonated_user),
 ):
     from app.services.goal_service import get_goal_by_id
     goal = await get_goal_by_id(db, data.goal_id)
@@ -67,7 +67,7 @@ async def update_checkin(
     checkin_id: int,
     data: CheckinUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_non_impersonated_user),
 ):
     checkin = await _get_or_404(db, checkin_id, current_user)
 

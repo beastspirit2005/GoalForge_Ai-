@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, require_role, require_critical_otp
 from app.core.database import get_db
 from app.models.goal import Goal
 from app.models.milestone import Milestone
@@ -17,15 +17,29 @@ router = APIRouter(prefix="/ai", tags=["AI"])
 
 
 @router.post("/generate-plan")
-async def generate_plan(data: AIGeneratePlanRequest):
+async def generate_plan(
+    data: AIGeneratePlanRequest,
+    current_user: User = Depends(get_current_user)
+):
     """Public endpoint – generate a plan without persisting."""
-    return generate_plan_stateless(data.model_dump())
+    return await generate_plan_stateless(
+        data.model_dump(),
+        provider=data.provider,
+        model=data.model
+    )
 
 
 @router.post("/refine-goal")
-async def refine(data: AIRefineGoalRequest):
+async def refine(
+    data: AIRefineGoalRequest,
+    current_user: User = Depends(get_current_user)
+):
     """Refine a vague goal into a measurable enterprise goal."""
-    return refine_goal(data.raw_goal)
+    return await refine_goal(
+        data.raw_goal,
+        provider=data.provider,
+        model=data.model
+    )
 
 
 @router.get("/models")
@@ -204,3 +218,47 @@ async def team_summary(
         "team_size": len(team),
         "source": result["source"],
     }
+
+
+class ActionExecutionRequest(BaseModel):
+    action: str
+    params: dict = {}
+
+@router.post("/execute-action", dependencies=[Depends(require_critical_otp)])
+async def execute_action(
+    data: ActionExecutionRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("super_admin")),
+):
+    """Execute an administrative action prepared by AI Buddy."""
+    action = data.action
+    params = data.params
+    
+    if action == "disable_inactive_users":
+        from app.models.user import User
+        from app.services.audit_service import log_action
+        from datetime import datetime, timedelta
+        
+        days = params.get("days", 90)
+        cutoff = datetime.now() - timedelta(days=days)
+        
+        stmt = select(User).where(User.is_active == True, User.created_at < cutoff, User.role != "super_admin")
+        res = await db.execute(stmt)
+        users = res.scalars().all()
+        
+        disabled_emails = []
+        for u in users:
+            u.is_active = False
+            disabled_emails.append(u.email)
+            
+        await db.flush()
+        await db.commit()
+        
+        await log_action(
+            db, user_id=current_user.id, action="disable_inactive_users",
+            entity_type="system", entity_id=0,
+            new_value={"disabled_count": len(disabled_emails), "emails": disabled_emails}
+        )
+        return {"success": True, "message": f"Successfully disabled {len(disabled_emails)} inactive accounts.", "details": disabled_emails}
+        
+    raise HTTPException(status_code=400, detail=f"Unknown admin action: {action}")

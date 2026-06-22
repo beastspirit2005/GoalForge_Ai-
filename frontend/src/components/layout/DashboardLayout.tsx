@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import Sidebar from "./Sidebar"
 import Navbar from "./Navbar"
 import { useAuth } from "@/hooks/useAuth"
+import { logoutUser } from "@/services/auth.service"
 import { isRoleAllowed, roleHome } from "@/lib/mock-auth"
 import { X } from "lucide-react"
 import { AiBuddyChat } from "../copilot/AiBuddyChat"
@@ -49,6 +50,47 @@ export default function DashboardLayout({
     window.addEventListener("resize", handleResize)
     return () => window.removeEventListener("resize", handleResize)
   }, [])
+
+  // Session Security: Idle & Absolute Timeout
+  useEffect(() => {
+    if (!ready || !user) return
+
+    let idleTimeout: NodeJS.Timeout
+    let absoluteTimeout: NodeJS.Timeout
+
+    const handleTimeout = async () => {
+      try {
+        await logoutUser()
+      } catch { }
+      router.replace("/login")
+    }
+
+    const resetIdleTimer = () => {
+      clearTimeout(idleTimeout)
+      idleTimeout = setTimeout(handleTimeout, 30 * 60 * 1000) // 30 minutes
+    }
+
+    const checkAbsoluteTimeout = () => {
+      const loginTime = sessionStorage.getItem("gf_login_timestamp")
+      if (loginTime && Date.now() - parseInt(loginTime, 10) > 8 * 60 * 60 * 1000) {
+        handleTimeout()
+      } else {
+        absoluteTimeout = setTimeout(checkAbsoluteTimeout, 60 * 1000) // Check every minute
+      }
+    }
+
+    resetIdleTimer()
+    checkAbsoluteTimeout()
+
+    const events = ["mousedown", "keydown", "touchstart", "mousemove"]
+    events.forEach((evt) => window.addEventListener(evt, resetIdleTimer))
+
+    return () => {
+      clearTimeout(idleTimeout)
+      clearTimeout(absoluteTimeout)
+      events.forEach((evt) => window.removeEventListener(evt, resetIdleTimer))
+    }
+  }, [ready, user, router])
 
   if (!ready || !user || !isRoleAllowed(pathname, user.role)) {
     return (

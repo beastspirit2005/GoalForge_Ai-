@@ -39,8 +39,9 @@ async def log_action(
     )
     db.add(entry)
     
-    # 3. Flush to generate id and created_at from database
+    # 3. Flush to generate id and created_at from database, then refresh to load them into the Python object
     await db.flush()
+    await db.refresh(entry)
 
     # 4. Compute unique hash chain signature in Python (database-agnostic)
     payload = f"{entry.id}:{entry.action}:{entry.user_id}:{entry.created_at}:{entry.prev_hash or ''}"

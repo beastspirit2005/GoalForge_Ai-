@@ -31,19 +31,16 @@ const API_TIMEOUT_MS =
 type RequestOptions = {
   method?: string
   body?: unknown
-  token?: string | null
+  token?: string
+  headers?: Headers | Record<string, string>
 }
 
 export async function apiFetch<T = unknown>(
   path: string,
-  { method = "GET", body, token }: RequestOptions = {},
+  { method = "GET", body }: RequestOptions = {},
 ): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-  }
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`
   }
 
   const controller = new AbortController()
@@ -63,6 +60,14 @@ export async function apiFetch<T = unknown>(
     clearTimeout(timeoutId)
 
     if (!res.ok) {
+      if (res.status === 401) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token")
+          if (window.location.pathname !== "/login") {
+            window.location.href = "/login"
+          }
+        }
+      }
       const err = await res.json().catch(() => ({ detail: res.statusText }))
       const detail = err.detail
       const message =

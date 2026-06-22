@@ -1,5 +1,7 @@
 "use client"
 
+import Image from "next/image"
+
 type BrandLogoProps = {
   size?: "sm" | "md" | "lg"
   hideSubtitle?: boolean
@@ -41,10 +43,11 @@ export default function BrandLogo({ size = "md", hideSubtitle = false }: BrandLo
         <div className={`relative overflow-hidden border border-white/10 bg-black/90 shadow-md shadow-black/40 transition-all duration-300 group-hover:border-cyan-400/50 group-hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] ${containerClasses}`}>
           
           {/* Cropped Logo Image (Focused exactly on the gorgeous target/flames icon) */}
-          <img
+          <Image
             src="/logo.jpg"
             alt="GoalForge AI Icon"
-            className="h-full w-full object-cover scale-[1.3] transition-transform duration-500 ease-out group-hover:scale-[1.42] group-hover:rotate-3"
+            fill
+            className="object-cover scale-[1.3] transition-transform duration-500 ease-out group-hover:scale-[1.42] group-hover:rotate-3"
             style={{ 
               objectPosition: "8% 50%" 
             }}

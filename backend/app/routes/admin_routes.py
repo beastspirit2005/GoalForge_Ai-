@@ -66,11 +66,19 @@ async def edit_user(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("admin")),
 ):
+    if data.role is not None and current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can modify roles.")
+
     from sqlalchemy import select
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    if data.role is not None and data.role != "super_admin" and user.role == "super_admin":
+        super_admins = await db.execute(select(User).where(User.role == "super_admin", User.is_active == True))
+        if len(super_admins.scalars().all()) <= 1:
+            raise HTTPException(status_code=400, detail="Cannot demote the last super_admin.")
 
     user = await update_user(db, user, **data.model_dump(exclude_unset=True))
     await log_action(
@@ -85,7 +93,7 @@ async def edit_user(
 async def approve_user(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role("super_admin")),
 ):
     print("APPROVE_USER ROUTE HIT!")
     try:
@@ -122,11 +130,13 @@ async def approve_user(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.delete("/users/{user_id}")
+from app.core.auth import require_critical_otp
+
+@router.delete("/users/{user_id}", dependencies=[Depends(require_critical_otp)])
 async def delete_user(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role("super_admin")),
 ):
     from sqlalchemy import select
     from sqlalchemy.exc import IntegrityError
@@ -135,6 +145,11 @@ async def delete_user(
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+        
+    if user.role == "super_admin":
+        super_admins = await db.execute(select(User).where(User.role == "super_admin", User.is_active == True))
+        if len(super_admins.scalars().all()) <= 1:
+            raise HTTPException(status_code=400, detail="Cannot delete the last super_admin.")
         
     try:
         await db.delete(user)
@@ -214,3 +229,75 @@ async def audit_logs(
         }
         for l in logs
     ]
+
+from pydantic import BaseModel
+from app.services.settings_service import SystemSettingsCache
+
+class SettingUpdate(BaseModel):
+    key: str
+    value: str
+    is_public: bool = False
+
+@router.get("/settings")
+async def get_settings(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("admin", "super_admin")),
+):
+    await SystemSettingsCache.load_all()
+    return SystemSettingsCache._cache
+
+@router.put("/settings", dependencies=[Depends(require_critical_otp)])
+async def update_settings(
+    updates: list[SettingUpdate],
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("super_admin")),
+):
+    for update in updates:
+        await SystemSettingsCache.set(update.key, update.value, update.is_public)
+    
+    await log_action(
+        db, user_id=current_user.id, action="settings_updated",
+        entity_type="system", entity_id=0,
+        new_value=[u.model_dump() for u in updates]
+    )
+    return {"message": "Settings updated successfully"}
+
+@router.post("/impersonate/{user_id}")
+async def impersonate_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("super_admin")),
+):
+    from sqlalchemy import select
+    from app.services.auth_service import create_access_token
+    
+    result = await db.execute(select(User).where(User.id == user_id))
+    target_user = result.scalar_one_or_none()
+    
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Target user not found")
+        
+    if target_user.role == "super_admin":
+        raise HTTPException(status_code=403, detail="Cannot impersonate another super_admin")
+
+    # Generate token with impersonation claims
+    access_token = create_access_token(
+        data={
+            "sub": str(target_user.id),
+            "v": target_user.token_version,
+            "impersonating": True,
+            "actor_id": current_user.id
+        }
+    )
+    
+    await log_action(
+        db, user_id=current_user.id, action="impersonated_user",
+        entity_type="user", entity_id=target_user.id
+    )
+
+    return {"access_token": access_token, "token_type": "bearer", "user": {
+        "id": target_user.id,
+        "name": target_user.name,
+        "email": target_user.email,
+        "role": target_user.role
+    }}

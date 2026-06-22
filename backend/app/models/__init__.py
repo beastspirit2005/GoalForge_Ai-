@@ -25,3 +25,32 @@ from app.models.impact_analysis import ImpactAnalysis
 from app.models.work_points_transaction import PointTransaction
 from app.models.skill_confidence_profile import SkillConfidenceProfile
 from app.models.learning_recommendation import LearningRecommendation
+from app.models.system_setting import SystemSetting
+
+__all__ = [
+    "User",
+    "Goal",
+    "Milestone",
+    "Checkin",
+    "AuditLog",
+    "Escalation",
+    "Notification",
+    "Cycle",
+    "Target",
+    "SharedGoal",
+    "ImpactAnalysis",
+    "Skill",
+    "SkillConfidenceProfile",
+    "BurnoutRisk",
+    "KnowledgeRisk",
+    "TeamHealthScore",
+    "CapacityForecast",
+    "LearningRecommendation",
+    "Badge",
+    "Streak",
+    "LeaderboardEntry",
+    "PerformanceScore",
+    "GoalSuccessPrediction",
+    "PointTransaction",
+    "SystemSetting",
+]

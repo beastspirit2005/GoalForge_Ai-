@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import require_role
+from app.core.auth import require_role, require_write_role
 from app.core.database import get_db
 from app.models.checkin import Checkin
 from app.models.user import User
@@ -53,7 +53,7 @@ async def approve(
     goal_id: int,
     data: GoalApprovalRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("manager", "admin")),
+    current_user: User = Depends(require_write_role("manager", "admin")),
 ):
     goal = await get_goal_by_id(db, goal_id)
     if not goal:
@@ -101,7 +101,7 @@ async def approve(
 async def lock(
     goal_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("manager", "admin")),
+    current_user: User = Depends(require_write_role("manager", "admin")),
 ):
     goal = await get_goal_by_id(db, goal_id)
     if not goal:
@@ -116,7 +116,7 @@ async def add_comment(
     checkin_id: int,
     comment: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("manager", "admin")),
+    current_user: User = Depends(require_write_role("manager", "admin")),
 ):
     result = await db.execute(select(Checkin).where(Checkin.id == checkin_id))
     checkin = result.scalar_one_or_none()

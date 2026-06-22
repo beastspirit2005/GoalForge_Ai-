@@ -9,7 +9,7 @@ BACKEND_DIR = Path(__file__).resolve().parents[2]
 ROOT_DIR = BACKEND_DIR.parent
 
 for env_path in (BACKEND_DIR / ".env", ROOT_DIR / ".env"):
-    load_dotenv(env_path, override=True)
+    load_dotenv(env_path)
 
 
 def _normalize_async_db_url(url: str) -> str:
@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     # Base Application Config
     APP_NAME: str = "GoalForge AI"
     DEBUG: bool = False
+    DEMO_MODE: bool = False
 
     # SMTP Configurations
     SMTP_HOST: str = ""
@@ -92,6 +93,9 @@ class Settings(BaseSettings):
         
         if not self.DEBUG and (not self.CORS_ORIGINS or "*" in [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]):
             raise ValueError("CORS_ORIGINS must be set to an explicit whitelist in production (DEBUG=False). Wildcard '*' is not permitted.")
+            
+        if not self.DEBUG and self.DEMO_MODE:
+            raise ValueError("DEMO_MODE=True is not permitted in production (DEBUG=False).")
             
         return self
 

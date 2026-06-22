@@ -36,7 +36,8 @@ export function useAuth() {
     await loginUser({ email, password })
     const u = await getCurrentUser()
     setUser(u)
-    return `/${u.role}/dashboard`
+    const baseRole = u.role === "super_admin" ? "admin" : u.role
+    return `/${baseRole}/dashboard`
   }, [])
 
   const requestOtpCode = useCallback(async (email: string) => {
@@ -47,7 +48,8 @@ export function useAuth() {
     await verifyOtp(email, code)
     const u = await getCurrentUser()
     setUser(u)
-    return `/${u.role}/dashboard`
+    const baseRole = u.role === "super_admin" ? "admin" : u.role
+    return `/${baseRole}/dashboard`
   }, [])
 
   const logout = useCallback(() => {

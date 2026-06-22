@@ -14,10 +14,11 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.models.mixins import AuditMixin
 from app.models.role import GoalRisk, GoalStatus
 
 
-class Goal(Base):
+class Goal(AuditMixin, Base):
     __tablename__ = "goals"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

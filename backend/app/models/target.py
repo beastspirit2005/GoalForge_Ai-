@@ -4,6 +4,7 @@ from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Te
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.models.mixins import AuditMixin
 
 class TargetRequiredSkill(Base):
     __tablename__ = "target_required_skills"
@@ -17,7 +18,7 @@ class TaskRequiredSkill(Base):
     skill_name: Mapped[str] = mapped_column(String(100), primary_key=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-class Target(Base):
+class Target(AuditMixin, Base):
     __tablename__ = "targets"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

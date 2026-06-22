@@ -14,6 +14,16 @@ class UserRole(str, enum.Enum):
     ADMIN = "admin"
 
 
+ROLE_HIERARCHY = {
+    UserRole.SUPER_ADMIN: 100,
+    UserRole.ADMIN: 90,
+    UserRole.HR: 80,
+    UserRole.DEPARTMENT_HEAD: 70,
+    UserRole.MANAGER: 60,
+    UserRole.TEAM_LEAD: 50,
+    UserRole.EMPLOYEE: 10,
+}
+
 class GoalStatus(str, enum.Enum):
     DRAFT = "draft"
     PENDING = "pending"

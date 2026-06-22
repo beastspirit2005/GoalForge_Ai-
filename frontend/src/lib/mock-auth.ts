@@ -1,4 +1,4 @@
-export type DemoRole = "employee" | "manager" | "admin"
+export type DemoRole = "employee" | "manager" | "admin" | "super_admin"
 
 export type DemoUser = {
   name: string
@@ -34,6 +34,14 @@ export const demoUsers: Record<DemoRole, DemoUser> = {
     role: "admin",
     avatar: "RK",
     department: "HR",
+    profile_picture_url: null,
+  },
+  super_admin: {
+    name: "System Admin",
+    email: "superadmin@example.com",
+    role: "super_admin",
+    avatar: "SA",
+    department: "IT",
     profile_picture_url: null,
   },
 }
@@ -95,7 +103,7 @@ export function roleHome(role: DemoRole) {
     return "/manager/dashboard"
   }
 
-  if (role === "admin") {
+  if (role === "admin" || role === "super_admin") {
     return "/admin/org-analytics"
   }
 
@@ -103,16 +111,18 @@ export function roleHome(role: DemoRole) {
 }
 
 export function isRoleAllowed(pathname: string, role: DemoRole) {
+  if (role === "super_admin") return true;
+
   if (pathname === "/employee/settings" || pathname.startsWith("/employee/settings/")) {
     return role === "employee" || role === "manager" || role === "admin"
   }
 
   if (pathname.startsWith("/employee")) {
-    return role === "employee" || role === "admin"
+    return role === "employee"
   }
 
   if (pathname.startsWith("/manager")) {
-    return role === "manager" || role === "admin"
+    return role === "manager"
   }
 
   if (pathname.startsWith("/admin")) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Cpu, FileText, Search, Star, Trash2, TrendingUp, UploadCloud, ChevronRight, Briefcase, GraduationCap, BarChart3, BookOpen, CheckCircle2, Target, AlertCircle, AlertTriangle, Paperclip } from "lucide-react";
+import { FileText, Search, Trash2, UploadCloud, GraduationCap, BarChart3, BookOpen, CheckCircle2, Target, AlertCircle, AlertTriangle, Paperclip } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {

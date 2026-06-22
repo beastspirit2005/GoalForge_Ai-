@@ -18,7 +18,6 @@ async def test_integration_goal_lifecycle_flow():
     # 0. Clean up pre-existing test data from previous runs to ensure a clean slate
     async with async_session() as db:
         await db.execute(text("DELETE FROM notifications WHERE user_id IN (901, 902);"))
-        await db.execute(text("DELETE FROM audit_logs WHERE user_id IN (901, 902) OR entity_id IN (SELECT id FROM goals WHERE user_id IN (901, 902));"))
         await db.execute(text("DELETE FROM escalations WHERE user_id IN (901, 902) OR goal_id IN (SELECT id FROM goals WHERE user_id IN (901, 902));"))
         await db.execute(text("DELETE FROM milestones WHERE goal_id IN (SELECT id FROM goals WHERE user_id IN (901, 902));"))
         await db.execute(text("DELETE FROM goals WHERE user_id IN (901, 902);"))
@@ -115,9 +114,6 @@ async def test_integration_goal_lifecycle_flow():
         assert "goal_submitted" in actions
         assert "goal_approved" in actions
         
-        # Verify the chain integrity in detail
-        for i, log in enumerate(logs):
-            assert log.entry_hash is not None
-            assert len(log.entry_hash) == 64
-            if i > 0:
-                assert log.prev_hash == logs[i - 1].entry_hash
+        from app.services.audit_service import verify_audit_chain
+        is_valid = await verify_audit_chain(db)
+        assert is_valid is True

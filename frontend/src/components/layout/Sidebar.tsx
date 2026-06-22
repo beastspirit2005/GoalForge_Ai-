@@ -70,6 +70,8 @@ const links: NavLink[] = [
   { title: "Audit Logs", href: "/admin/audit-logs", icon: FileText, section: "Admin" },
   { title: "Cycles", href: "/admin/cycles", icon: CalendarDays, section: "Admin" },
   { title: "Escalations", href: "/admin/escalations", icon: Shield, section: "Admin" },
+  { title: "System Settings", href: "/admin/system-settings", icon: Settings, section: "Admin" },
+  { title: "Platform Health", href: "/admin/platform-health", icon: Activity, section: "Admin" },
   // Account
   { title: "Settings", href: "/settings", icon: Settings, section: "Account" },
 ]
@@ -88,7 +90,8 @@ export default function Sidebar({ onClose, isMobile }: SidebarProps = {}) {
   const visibleLinks = links.filter((link) => {
     if (!role) return false
     if (link.section === "Account") return true
-    if (role === "admin") return true
+    if (role === "super_admin") return true
+    if (role === "admin" && link.section === "Admin") return true
     if (role === "manager" && link.section === "Manager") return true
     if (role === "employee" && link.section === "Employee") return true
     return false
@@ -155,9 +158,14 @@ export default function Sidebar({ onClose, isMobile }: SidebarProps = {}) {
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-900 dark:text-white/90">{user.name}</p>
-              <p className="text-[11px] capitalize text-slate-500 dark:text-white/35">
-                {"role" in user ? user.role : ""}
-              </p>
+              <div className="flex items-center gap-2 text-[11px] capitalize text-slate-500 dark:text-white/35">
+                {"role" in user ? (user.role as string).replace("_", " ") : ""}
+                {role === "super_admin" && (
+                  <span className="rounded-[4px] border border-rose-500/50 bg-gradient-to-r from-amber-500/20 to-amber-600/20 px-1.5 py-[1px] text-[9px] font-bold uppercase tracking-wider text-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.2)]">
+                    SUPER ADMIN
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>

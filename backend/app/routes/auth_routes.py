@@ -52,7 +52,6 @@ async def login(response: Response, data: LoginRequest, db: AsyncSession = Depen
         httponly=True,
         secure=True,
         samesite="strict",
-        max_age=60 * 60 * 24, # 24 hours
     )
     return TokenResponse(access_token=token)
 
@@ -138,7 +137,6 @@ async def request_otp(data: OTPRequest, db: AsyncSession = Depends(get_db)):
     from app.services.email_service import EmailDeliveryError, is_demo_mode, is_email_configured, _get_smtp_config
     
     demo_mode = is_demo_mode()
-    print("DEBUG SMTP CONFIG:", _get_smtp_config())
     if not demo_mode and not is_email_configured():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -172,13 +170,18 @@ async def verify_otp(response: Response, data: OTPVerify, db: AsyncSession = Dep
         httponly=True,
         secure=True,
         samesite="strict",
-        max_age=60 * 60 * 24, # 24 hours
     )
     return TokenResponse(access_token=token)
 
 
 @router.post("/logout")
-async def logout(response: Response):
+async def logout(
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    current_user.token_version += 1
+    await db.commit()
     response.delete_cookie(
         key="access_token",
         httponly=True,

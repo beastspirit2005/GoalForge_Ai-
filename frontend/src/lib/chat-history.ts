@@ -19,7 +19,7 @@ export type ChatStore = {
   sessions: ChatSession[]
 }
 
-const ROLES = ["employee", "manager", "admin"] as const
+const ROLES = ["employee", "manager", "admin", "super_admin"] as const
 export type AppRole = (typeof ROLES)[number]
 
 function storageKey(email: string, role: string): string {
@@ -76,7 +76,7 @@ export function deleteChatStore(email: string, role: string): void {
 
 /** List session index keys for all roles (for settings / privacy UI). */
 export function listRoleSessionCounts(email: string): Record<AppRole, number> {
-  const counts: Record<AppRole, number> = { employee: 0, manager: 0, admin: 0 }
+  const counts: Record<AppRole, number> = { employee: 0, manager: 0, admin: 0, super_admin: 0 }
   for (const role of ROLES) {
     const store = loadChatStore(email, role, "")
     counts[role] = store.sessions.length

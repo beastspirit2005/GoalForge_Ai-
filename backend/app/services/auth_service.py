@@ -41,6 +41,7 @@ async def authenticate_user(db: AsyncSession, email: str, password: str) -> User
     user = result.scalar_one_or_none()
     if user and verify_password(password, user.password_hash):
         if not user.is_approved:
+
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account pending admin approval")
         return user
@@ -48,7 +49,7 @@ async def authenticate_user(db: AsyncSession, email: str, password: str) -> User
 
 
 def create_token_for_user(user: User) -> str:
-    return create_access_token({"sub": str(user.id), "role": user.role})
+    return create_access_token({"sub": str(user.id), "role": user.role, "v": user.token_version})
 
 
 async def get_all_users(db: AsyncSession, skip: int = 0, limit: int = 100) -> list[User]:
@@ -223,6 +224,7 @@ async def change_user_password(
         )
 
     user.password_hash = hash_password(new_password)
+    user.token_version += 1
     user.otp_code = None
     user.otp_expires_at = None
     user.otp_failed_attempts = 0
@@ -232,5 +234,4 @@ async def change_user_password(
     await db.commit()
     await db.refresh(user)
     return user
-
 

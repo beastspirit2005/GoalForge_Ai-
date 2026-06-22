@@ -12,7 +12,6 @@ import {
 import {
   Cpu,
   Activity,
-  AlertTriangle,
   CheckCircle2,
   Settings,
   Brain,

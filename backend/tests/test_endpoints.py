@@ -83,3 +83,28 @@ def test_ai_copilot_fallback_mocked():
     assert "Offline Fallback Advice" in data["response"]
     assert data["source"] == "fallback"
 
+
+def test_ai_generate_plan_unauthenticated():
+    """Verify that /ai/generate-plan blocks unauthenticated access."""
+    if get_current_user in app.dependency_overrides:
+        del app.dependency_overrides[get_current_user]
+    response = client.post(
+        "/ai/generate-plan",
+        json={"title": "Test Goal", "description": "Test", "target": "100", "deadline": "2024-12-31"}
+    )
+    assert response.status_code == 401
+    app.dependency_overrides[get_current_user] = mock_get_current_user
+
+
+def test_ai_refine_goal_unauthenticated():
+    """Verify that /ai/refine-goal blocks unauthenticated access."""
+    if get_current_user in app.dependency_overrides:
+        del app.dependency_overrides[get_current_user]
+    response = client.post(
+        "/ai/refine-goal",
+        json={"raw_goal": "Test Goal"}
+    )
+    assert response.status_code == 401
+    app.dependency_overrides[get_current_user] = mock_get_current_user
+
+

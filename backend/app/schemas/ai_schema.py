@@ -7,6 +7,8 @@ class AIGeneratePlanRequest(BaseModel):
     description: str = ""
     target: str = ""
     deadline: str = ""
+    provider: str = "gemini"
+    model: str | None = None
 
 
 class AIGeneratePlanResponse(BaseModel):
@@ -19,6 +21,8 @@ class AIGeneratePlanResponse(BaseModel):
 
 class AIRefineGoalRequest(BaseModel):
     raw_goal: str
+    provider: str = "gemini"
+    model: str | None = None
 
 
 class AIRefineGoalResponse(BaseModel):

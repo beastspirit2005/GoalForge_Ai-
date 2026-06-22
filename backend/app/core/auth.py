@@ -46,6 +46,13 @@ async def get_current_user(
     if user is None or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
 
+    token_version = payload.get("v")
+    if token_version is not None and token_version != user.token_version:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been revoked")
+
+    user.actor_id = payload.get("actor_id")
+    user.impersonating = payload.get("impersonating", False)
+
     return user
 
 
@@ -53,6 +60,9 @@ def require_role(*allowed_roles: str):
     """Return a dependency that checks the user's role against a whitelist."""
 
     async def _check(current_user: User = Depends(get_current_user)) -> User:
+        if current_user.role == "super_admin":
+            return current_user
+            
         if current_user.role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -61,3 +71,47 @@ def require_role(*allowed_roles: str):
         return current_user
 
     return _check
+
+
+def require_write_role(*allowed_roles: str):
+    """Return a dependency that checks role and explicitly blocks impersonated users from write actions."""
+
+    async def _check(current_user: User = Depends(require_role(*allowed_roles))) -> User:
+        if getattr(current_user, "impersonating", False):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Write actions are not permitted while impersonating.",
+            )
+        return current_user
+
+    return _check
+
+
+def require_non_impersonated_user(current_user: User = Depends(get_current_user)) -> User:
+    """Dependency for standard authenticated routes that perform write actions."""
+    if getattr(current_user, "impersonating", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Write actions are not permitted while impersonating.",
+        )
+    return current_user
+
+
+async def require_critical_otp(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Require an OTP in the X-Critical-OTP header for sensitive operations."""
+    otp = request.headers.get("X-Critical-OTP")
+    if not otp:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Critical action requires OTP verification.",
+            headers={"X-OTP-Required": "true"}
+        )
+    
+    from app.services.auth_service import verify_otp_and_login
+    # This will raise an HTTPException if the OTP is invalid or expired
+    await verify_otp_and_login(db, current_user.email, otp)
+    return current_user
