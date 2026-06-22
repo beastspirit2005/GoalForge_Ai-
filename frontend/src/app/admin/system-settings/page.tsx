@@ -10,6 +10,7 @@ export default function SystemSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [impersonateUserId, setImpersonateUserId] = useState("")
+  const [usersList, setUsersList] = useState<any[]>([])
 
   const fetchSettings = async () => {
     try {
@@ -22,8 +23,18 @@ export default function SystemSettingsPage() {
     }
   }
 
+  const fetchUsers = async () => {
+    try {
+      const data = await apiFetch<any[]>("/admin/users")
+      setUsersList(data)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   useEffect(() => {
     fetchSettings()
+    fetchUsers()
   }, [])
 
   const handleSave = async () => {
@@ -144,14 +155,21 @@ export default function SystemSettingsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[12px] font-medium text-slate-500 dark:text-white/60 uppercase tracking-wider">Target User ID</label>
-                  <input 
-                    type="number"
+                  <label className="text-[12px] font-medium text-slate-500 dark:text-white/60 uppercase tracking-wider">Target User</label>
+                  <select 
                     value={impersonateUserId}
                     onChange={(e) => setImpersonateUserId(e.target.value)}
-                    placeholder="Enter user ID..."
                     className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#090d16] px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-amber-500/50"
-                  />
+                  >
+                    <option value="" disabled>-- Select a User to Impersonate --</option>
+                    {usersList
+                      .filter(u => u.role !== "super_admin")
+                      .map(u => (
+                        <option key={u.id} value={u.id}>
+                          {u.name} ({u.role.toUpperCase()}) - {u.email}
+                        </option>
+                      ))}
+                  </select>
                 </div>
 
                 <Button 
