@@ -323,3 +323,46 @@ async def get_available_gemini_models(
     except Exception as e:
         print("Error fetching Gemini models:", e)
         return ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-1.5-flash", "gemini-1.5-pro"]
+
+import psutil
+import time
+from sqlalchemy import text
+
+BOOT_TIME = time.time()
+
+@router.get("/health")
+async def get_platform_health(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("super_admin")),
+):
+    try:
+        # Check DB
+        await db.execute(text("SELECT 1"))
+        db_status = "Healthy"
+    except Exception:
+        db_status = "Disconnected"
+
+    # Get active sessions roughly (users updated in last hour)
+    try:
+        # Since we just have token_version or auth logs, let's just query total active users as a mock/proxy for now if we don't track active sessions
+        result = await db.execute(select(User).where(User.is_active == True))
+        active_sessions = len(result.scalars().all())
+    except Exception:
+        active_sessions = 0
+
+    uptime_seconds = int(time.time() - BOOT_TIME)
+    days = uptime_seconds // 86400
+    hours = (uptime_seconds % 86400) // 3600
+    minutes = (uptime_seconds % 3600) // 60
+    
+    uptime_str = f"{days}d {hours}h {minutes}m" if days > 0 else f"{hours}h {minutes}m"
+
+    return {
+        "status": "Operational" if db_status == "Healthy" else "Degraded",
+        "db_connection": db_status,
+        "version": "v2.1.0-enterprise",
+        "active_sessions": active_sessions,
+        "uptime": uptime_str,
+        "cpu_percent": psutil.cpu_percent(interval=0.1),
+        "memory_percent": psutil.virtual_memory().percent
+    }

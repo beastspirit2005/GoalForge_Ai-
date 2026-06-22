@@ -83,7 +83,11 @@ class CustomKeyRequest(BaseModel):
     apiKey: str
 
 @router.post("/key")
-async def save_custom_key(data: CustomKeyRequest, response: Response):
+async def save_custom_key(
+    data: CustomKeyRequest, 
+    response: Response,
+    current_user: User = Depends(get_current_user)
+):
     if not data.apiKey:
         raise HTTPException(status_code=400, detail="Invalid Gemini API key format.")
     response.set_cookie(
@@ -98,9 +102,15 @@ async def save_custom_key(data: CustomKeyRequest, response: Response):
     return {"success": True, "message": "API key successfully secured in an httpOnly cookie."}
 
 @router.delete("/key")
-async def delete_custom_key(response: Response):
-    response.delete_cookie(key="custom_gemini_key", path="/")
-    return {"success": True, "message": "API key cookie cleared successfully."}
+async def delete_custom_key(
+    response: Response,
+    current_user: User = Depends(get_current_user)
+):
+    response.delete_cookie(
+        key="custom_gemini_key",
+        path="/"
+    )
+    return {"success": True, "message": "API key cleared successfully."}
 
 
 @router.get("/dynamic-guidance/{goal_id}")
