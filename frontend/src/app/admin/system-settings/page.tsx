@@ -76,7 +76,8 @@ export default function SystemSettingsPage() {
       await apiFetch<{access_token: string}>(`/admin/impersonate/${impersonateUserId}`, {
         method: "POST"
       })
-      alert("Impersonation token received. Use this token to impersonate.")
+      alert("Impersonation token received. Redirecting...")
+      window.location.href = "/" // Force a full app reload to re-fetch user session
     } catch (err) {
       console.error(err)
       alert("Failed to impersonate.")

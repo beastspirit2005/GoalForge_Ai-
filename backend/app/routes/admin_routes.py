@@ -265,6 +265,7 @@ async def update_settings(
 @router.post("/impersonate/{user_id}")
 async def impersonate_user(
     user_id: int,
+    response: Response,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("super_admin")),
 ):
@@ -293,6 +294,14 @@ async def impersonate_user(
     await log_action(
         db, user_id=current_user.id, action="impersonated_user",
         entity_type="user", entity_id=target_user.id
+    )
+
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=True,
+        samesite="strict",
     )
 
     return {"access_token": access_token, "token_type": "bearer", "user": {
