@@ -1,7 +1,7 @@
 # GoalForge AI
 
 <p align="center">
-  <strong>The Intelligent OKR and Performance Management Platform</strong>
+  <strong>The AI-Powered Workforce Intelligence &<br>Performance Management Platform</strong>
 </p>
 
 <p align="center">
