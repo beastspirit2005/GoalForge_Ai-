@@ -37,10 +37,15 @@ type RequestOptions = {
 
 export async function apiFetch<T = unknown>(
   path: string,
-  { method = "GET", body }: RequestOptions = {},
+  { method = "GET", body, token, headers: customHeaders }: RequestOptions = {},
 ): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    ...(customHeaders as Record<string, string>),
+  }
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`
   }
 
   const controller = new AbortController()

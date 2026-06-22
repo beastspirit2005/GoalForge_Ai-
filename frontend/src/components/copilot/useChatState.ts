@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { apiFetch } from "@/lib/api"
 import { getStoredToken } from "@/services/auth.service"
 import { useAuth } from "@/hooks/useAuth"
-import { GEMINI_KEY_CHANGED_EVENT, type GeminiKeyMode } from "@/lib/gemini-storage"
+import { GEMINI_KEY_CHANGED_EVENT, getGeminiKeyMode, getCustomGeminiKey, type GeminiKeyMode } from "@/lib/gemini-storage"
 import {
   type ChatMessage,
   type ChatStore,
@@ -281,7 +281,7 @@ export function useChatState() {
         query,
         context: "",
         provider,
-        model: provider === "ollama" ? model : undefined,
+        model: model || undefined,
         api_key: apiKey || undefined,
       },
     })
@@ -470,10 +470,12 @@ Respond in a helpful, conversational, and professional tone. Keep it concise, ac
         const data = await queryOllama(prompt, selectedOllamaModel || ollamaModels[0] || "llama3")
         res = { response: data.response, source: `ollama (${selectedOllamaModel || "llama3"})` }
       } else {
+        const customKey = getGeminiKeyMode() === "custom" ? getCustomGeminiKey() : undefined
         res = await runBackendCopilot(
           userMessage,
           activeProvider,
-          undefined
+          undefined,
+          customKey
         )
       }
 
@@ -562,10 +564,12 @@ Respond in a helpful, conversational, and professional tone. Keep it concise, ac
         const data = await queryOllama(prompt, localModel || "llama3")
         res = { response: data.response, source: `ollama (${localModel || "llama3"})` }
       } else {
+        const customKey = getGeminiKeyMode() === "custom" ? getCustomGeminiKey() : undefined
         res = await runBackendCopilot(
           lastQuery,
           newProvider,
-          undefined
+          undefined,
+          customKey
         )
       }
       applyMessages([...messages, { role: "assistant", content: res.response, source: res.source }])

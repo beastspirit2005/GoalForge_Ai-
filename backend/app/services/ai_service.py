@@ -67,7 +67,7 @@ async def get_copilot_context(db: AsyncSession, user: User) -> str:
         from app.models.goal import Goal
         from app.models.cycle import Cycle
         from app.models.user import User
-        from datetime import datetime, timedelta
+        from datetime import datetime, timedelta, timezone
 
         # Fetch Executive Brief Data
         user_res = await db.execute(select(User))
@@ -141,7 +141,14 @@ async def get_copilot_context(db: AsyncSession, user: User) -> str:
 
         # Inactive users older than 90 days (for command prep)
         cutoff_90d = datetime.now() - timedelta(days=90)
-        inactive_old_users = [u for u in all_users if u.is_active and u.created_at < cutoff_90d and u.role != "super_admin"]
+        
+        def _to_naive(dt):
+            return dt.replace(tzinfo=None) if dt else None
+
+        inactive_old_users = [
+            u for u in all_users 
+            if u.is_active and u.created_at and _to_naive(u.created_at) < cutoff_90d and u.role != "super_admin"
+        ]
 
         # Build context string
         context = [

@@ -74,7 +74,7 @@ async def copilot(data: CopilotRequest, request: Request, db: AsyncSession = Dep
         data.query,
         context,
         provider=data.provider,
-        model=data.model,
+        model=data.model or current_user.preferred_ai_model,
         api_key=active_key
     )
     return CopilotResponse(**result)
@@ -90,11 +90,12 @@ async def save_custom_key(
 ):
     if not data.apiKey:
         raise HTTPException(status_code=400, detail="Invalid Gemini API key format.")
+    from app.core.config import settings
     response.set_cookie(
         key="custom_gemini_key",
         value=data.apiKey.strip(),
         httponly=True,
-        secure=True,
+        secure=not settings.DEBUG,
         samesite="strict",
         max_age=60 * 60 * 24 * 30, # 30 days
         path="/"
