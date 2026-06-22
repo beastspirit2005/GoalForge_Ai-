@@ -214,9 +214,10 @@ To allow the browser frontend to make local inference calls directly to your mac
 
 Get started instantly using our pre-seeded simulation profiles:
 
-*   **Administrator**: `admin@example.com` | `password123`
-*   **L1 Manager**: `manager@example.com` | `password123`
-*   **Employee**: `employee@example.com` | `password123`
+*   **Super Administrator**: `harshit2005sharma@gmail.com` | `[Hidden for Security]`
+*   **Administrator**: `admin1@goalforge.ai` | `password123`
+*   **L1 Manager**: `manager1@goalforge.ai` | `password123`
+*   **Employee**: `employee1@goalforge.ai` | `password123`
 
 ---
 
