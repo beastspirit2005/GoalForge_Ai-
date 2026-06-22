@@ -86,6 +86,21 @@ graph TD
 
 ---
 
+## Platform Previews
+
+Get a visual feel for the GoalForge AI experience. *(Note: Replace these placeholder images with actual screenshots from your deployment)*
+
+### 1. Employee Dashboard & AI Buddy
+![Employee Dashboard showing active goals and AI chat interface](https://placehold.co/800x450/1e1e2e/cdd6f4?text=Employee+Dashboard+Preview)
+
+### 2. Manager Workload & Escalations
+![Manager view highlighting risk predictions and workload](https://placehold.co/800x450/1e1e2e/cdd6f4?text=Manager+Dashboard+Preview)
+
+### 3. Super Administrator Live Telemetry
+![Super Administrator live server metrics](https://placehold.co/800x450/1e1e2e/cdd6f4?text=Live+Telemetry+Preview)
+
+---
+
 ## Core Features
 
 ### 1. Role-Based Workspaces
