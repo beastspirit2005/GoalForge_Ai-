@@ -34,7 +34,7 @@ export function useAuth() {
 
   const loginWithApi = useCallback(async (email: string, password: string) => {
     await loginUser({ email, password })
-    const u = await getCurrentUser()
+    const u = await getCurrentUser(true)
     setUser(u)
     const baseRole = u.role === "super_admin" ? "admin" : u.role
     return `/${baseRole}/dashboard`
@@ -46,7 +46,7 @@ export function useAuth() {
 
   const loginWithOtp = useCallback(async (email: string, code: string) => {
     await verifyOtp(email, code)
-    const u = await getCurrentUser()
+    const u = await getCurrentUser(true)
     setUser(u)
     const baseRole = u.role === "super_admin" ? "admin" : u.role
     return `/${baseRole}/dashboard`
