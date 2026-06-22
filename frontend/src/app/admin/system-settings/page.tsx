@@ -73,11 +73,12 @@ export default function SystemSettingsPage() {
   const handleImpersonate = async () => {
     if (!impersonateUserId) return
     try {
-      await apiFetch<{access_token: string}>(`/admin/impersonate/${impersonateUserId}`, {
+      const response = await apiFetch<{access_token: string, user: {role: string}}>(`/admin/impersonate/${impersonateUserId}`, {
         method: "POST"
       })
       alert("Impersonation token received. Redirecting...")
-      window.location.href = "/" // Force a full app reload to re-fetch user session
+      const baseRole = response.user.role === "super_admin" ? "admin" : response.user.role
+      window.location.href = `/${baseRole}/dashboard` // Force a full app reload to correct dashboard
     } catch (err) {
       console.error(err)
       alert("Failed to impersonate.")

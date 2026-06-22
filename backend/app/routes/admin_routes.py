@@ -302,6 +302,7 @@ async def impersonate_user(
         httponly=True,
         secure=True,
         samesite="strict",
+        path="/"
     )
 
     return {"access_token": access_token, "token_type": "bearer", "user": {
