@@ -10,6 +10,11 @@ from app.models.user import User
 from app.models.cycle import Cycle
 from app.models.escalation import Escalation
 from app.models.recognition import LeaderboardEntry
+from app.models.burnout_risk import BurnoutRisk
+from app.models.team_health_score import TeamHealthScore
+from app.models.skill_confidence_profile import SkillConfidenceProfile
+from app.models.audit_log import AuditLog
+from datetime import datetime, timedelta, timezone
 from app.services.milestone_service import bulk_create_milestones
 
 
@@ -60,14 +65,6 @@ async def get_copilot_context(db: AsyncSession, user: User) -> str:
     
     # 0. SUPER ADMIN ROLE
     if user.role == "super_admin":
-        from app.models.burnout_risk import BurnoutRisk
-        from app.models.team_health_score import TeamHealthScore
-        from app.models.skill_confidence_profile import SkillConfidenceProfile
-        from app.models.audit_log import AuditLog
-        from app.models.goal import Goal
-        from app.models.cycle import Cycle
-        from app.models.user import User
-        from datetime import datetime, timedelta, timezone
 
         # Fetch Executive Brief Data
         user_res = await db.execute(select(User))
