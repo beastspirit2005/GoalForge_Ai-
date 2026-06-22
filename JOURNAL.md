@@ -96,4 +96,9 @@ The platform backend has undergone a series of critical security, architectural,
    * **AI Performance Narrative Safeguards**: Added role and reportee verification in `ai_routes.py` (`/ai/performance-narrative`) ensuring users can only run narratives on their own records, managers on their direct reportees, and admins system-wide.
    * **Vercel Deployability Assurance**: Retained standard proxy and config settings to preserve "plug-and-play" compatibility for Vercel and serverless architectures.
 
-
+6. **Enterprise RBAC & Security Finalization:**
+   * **Strict Frontend RBAC**: Implemented a `RequireRole` React Higher-Order Component to strictly gate UI pages. Unauthorized users attempting to access Super Admin or Manager pages are immediately intercepted and redirected to their designated dashboard.
+   * **Live Platform Telemetry**: Integrated `psutil` to power a genuine `GET /admin/health` endpoint, replacing mocked data. The Platform Health page now reports real-time CPU/Memory usage, active session counts, database connection status, and absolute server uptime.
+   * **AI Configuration Security**: Fortified the `POST /ai/key` and `DELETE /ai/key` endpoints with strict session authentication (`Depends(get_current_user)`), preventing anonymous manipulation of system-wide AI credentials.
+   * **Secure Identity Impersonation**: Overhauled the impersonation engine to properly scope generated HTTP-only cookies with `path="/"` and enforce a hard reload (`window.location.href`), allowing administrators to seamlessly assume user identities and be directly routed to the target's dashboard without being erroneously challenged for authentication.
+   * **Repository Hygiene**: Executed a `git-filter-repo` sweep to permanently purge sensitive development scripts (e.g., `drop_db.py`, `fast_drop.py`) from the entire Git history, neutralizing the risk of credential leakage.
