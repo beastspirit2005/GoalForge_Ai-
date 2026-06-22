@@ -11,6 +11,7 @@ export default function SystemSettingsPage() {
   const [saving, setSaving] = useState(false)
   const [impersonateUserId, setImpersonateUserId] = useState("")
   const [usersList, setUsersList] = useState<any[]>([])
+  const [modelsList, setModelsList] = useState<string[]>([])
 
   const fetchSettings = async () => {
     try {
@@ -20,6 +21,15 @@ export default function SystemSettingsPage() {
       console.error(err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchModels = async () => {
+    try {
+      const data = await apiFetch<string[]>("/admin/gemini/models")
+      if (Array.isArray(data)) setModelsList(data)
+    } catch (err) {
+      console.error(err)
     }
   }
 
@@ -35,6 +45,7 @@ export default function SystemSettingsPage() {
   useEffect(() => {
     fetchSettings()
     fetchUsers()
+    fetchModels()
   }, [])
 
   const handleSave = async () => {
@@ -117,12 +128,19 @@ export default function SystemSettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-[12px] font-medium text-slate-500 dark:text-white/60 uppercase tracking-wider">Default Model</label>
-                  <input 
-                    type="text"
+                  <select
                     value={settings.DEFAULT_AI_MODEL || "gemini-2.5-flash"}
                     onChange={(e) => setSettings({...settings, DEFAULT_AI_MODEL: e.target.value})}
                     className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#090d16] px-3 py-2 text-sm text-slate-900 dark:text-white"
-                  />
+                  >
+                    {modelsList.length === 0 ? (
+                      <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                    ) : (
+                      modelsList.map(model => (
+                        <option key={model} value={model}>{model}</option>
+                      ))
+                    )}
+                  </select>
                 </div>
                 
                 <Button 

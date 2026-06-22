@@ -301,3 +301,25 @@ async def impersonate_user(
         "email": target_user.email,
         "role": target_user.role
     }}
+
+@router.get("/gemini/models")
+async def get_available_gemini_models(
+    current_user: User = Depends(require_role("super_admin")),
+):
+    try:
+        import google.generativeai as genai
+        from app.services.settings_service import SystemSettingsCache
+        from app.core.config import settings
+        
+        db_key = await SystemSettingsCache.get("GEMINI_API_KEY")
+        api_key = db_key or settings.GEMINI_API_KEY
+        
+        if not api_key:
+            return ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-1.5-flash", "gemini-1.5-pro"]
+            
+        genai.configure(api_key=api_key)
+        models = genai.list_models()
+        return [m.name.replace("models/", "") for m in models if "generateContent" in m.supported_generation_methods]
+    except Exception as e:
+        print("Error fetching Gemini models:", e)
+        return ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-1.5-flash", "gemini-1.5-pro"]
