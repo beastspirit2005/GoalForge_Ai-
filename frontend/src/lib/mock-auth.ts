@@ -126,6 +126,9 @@ export function isRoleAllowed(pathname: string, role: DemoRole) {
   }
 
   if (pathname.startsWith("/admin")) {
+    if (pathname === "/admin/system-settings" || pathname === "/admin/platform-health") {
+      return false // super_admin already returned true on line 114
+    }
     return role === "admin"
   }
 

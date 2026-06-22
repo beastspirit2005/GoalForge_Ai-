@@ -70,8 +70,9 @@ const links: NavLink[] = [
   { title: "Audit Logs", href: "/admin/audit-logs", icon: FileText, section: "Admin" },
   { title: "Cycles", href: "/admin/cycles", icon: CalendarDays, section: "Admin" },
   { title: "Escalations", href: "/admin/escalations", icon: Shield, section: "Admin" },
-  { title: "System Settings", href: "/admin/system-settings", icon: Settings, section: "Admin" },
-  { title: "Platform Health", href: "/admin/platform-health", icon: Activity, section: "Admin" },
+  // Super Admin
+  { title: "System Settings", href: "/admin/system-settings", icon: Settings, section: "SuperAdmin" },
+  { title: "Platform Health", href: "/admin/platform-health", icon: Activity, section: "SuperAdmin" },
   // Account
   { title: "Settings", href: "/settings", icon: Settings, section: "Account" },
 ]
