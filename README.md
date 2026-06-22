@@ -30,39 +30,7 @@ GoalForge AI operates on a strictly isolated tier system. The FastAPI backend se
   <img src="pictures/System-Architecture.png" alt="System Architecture">
 </p>
 
----
 
-## Platform Previews
-
-Get a visual feel for the GoalForge AI experience. 
-
-<details>
-<summary><b>Click to expand and view Platform Screenshots</b></summary>
-<br>
-<p align="center">
-  <img src="pictures/Screenshot%202026-06-22%20013313.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20013511.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20013633.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20014520.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20022219.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20022759.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20023216.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20124402.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20125809.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20130616.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20133701.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20141733.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20141746.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20141806.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20141856.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20142038.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20142050.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20142113.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20142122.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20142132.png" width="32%" />
-  <img src="pictures/Screenshot%202026-06-22%20142302.png" width="32%" />
-</p>
-</details>
 
 ---
 
