@@ -26,78 +26,43 @@ What sets GoalForge AI apart is its Dual-Engine Hybrid AI System. You can levera
 
 GoalForge AI operates on a strictly isolated tier system. The FastAPI backend securely handles business logic, state persistence, and proxies cloud AI requests. Meanwhile, the Next.js frontend communicates directly with your local Ollama engine for private local AI tasks, entirely bypassing backend infrastructure when dealing with sensitive local queries.
 
-```mermaid
-graph TD
-    subgraph Client_Browser [Client Web Browser]
-        UI[Next.js Frontend]
-        Chat[AiBuddyChat]
-        Dashboards[Role Dashboards & Leaderboards]
-    end
-
-    subgraph Local_Machine [User Local Machine]
-        Ollama[Local Ollama Engine]
-    end
-
-    subgraph Backend_Services [Backend Infrastructure]
-        Backend[FastAPI Backend Server]
-        DB[(PostgreSQL Database)]
-        
-        subgraph Enterprise_Engines [Enterprise Intelligence V2]
-            TargetCascade[Target -> Task -> Goal Cascade]
-            WorkforceAI[AI Workforce Intelligence]
-            SkillGraph[Dynamic Skill Graph]
-            Workload[Workload & Capacity Planner]
-            RiskPred[Risk Prediction & Escalations]
-            Gamification[Gamification & Work Points]
-        end
-        
-        Backend --> Enterprise_Engines
-        Enterprise_Engines --> DB
-    end
-
-    subgraph Cloud_APIs [External SaaS Cloud]
-        Gemini[Google Gemini API]
-        Brevo[Brevo SMTP / Auth]
-    end
-
-    %% Client Interactions
-    UI --> Backend
-    Chat --> Ollama
-    Dashboards --> Backend
-    
-    %% Backend Connections
-    Backend --> DB
-    Backend --> Gemini
-    Backend --> Brevo
-    
-    %% Styles
-    classDef client fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
-    classDef local fill:#181825,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4;
-    classDef backend fill:#11111b,stroke:#cba6f7,stroke-width:2px,color:#cdd6f4;
-    classDef cloud fill:#313244,stroke:#f9e2af,stroke-width:2px,color:#cdd6f4;
-    classDef engine fill:#585b70,stroke:#f38ba8,stroke-width:2px,color:#cdd6f4;
-    
-    class UI,Chat,Dashboards client;
-    class Ollama local;
-    class Backend,DB backend;
-    class Gemini,Brevo cloud;
-    class TargetCascade,WorkforceAI,SkillGraph,Workload,RiskPred,Gamification engine;
-```
+<p align="center">
+  <img src="pictures/System-Architecture.png" alt="System Architecture">
+</p>
 
 ---
 
 ## Platform Previews
 
-Get a visual feel for the GoalForge AI experience. *(Note: Replace these placeholder images with actual screenshots from your deployment)*
+Get a visual feel for the GoalForge AI experience. 
 
-### 1. Employee Dashboard & AI Buddy
-![Employee Dashboard showing active goals and AI chat interface](https://placehold.co/800x450/1e1e2e/cdd6f4?text=Employee+Dashboard+Preview)
-
-### 2. Manager Workload & Escalations
-![Manager view highlighting risk predictions and workload](https://placehold.co/800x450/1e1e2e/cdd6f4?text=Manager+Dashboard+Preview)
-
-### 3. Super Administrator Live Telemetry
-![Super Administrator live server metrics](https://placehold.co/800x450/1e1e2e/cdd6f4?text=Live+Telemetry+Preview)
+<details>
+<summary><b>Click to expand and view Platform Screenshots</b></summary>
+<br>
+<p align="center">
+  <img src="pictures/Screenshot%202026-06-22%20013313.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20013511.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20013633.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20014520.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20022219.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20022759.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20023216.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20124402.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20125809.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20130616.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20133701.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20141733.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20141746.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20141806.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20141856.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20142038.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20142050.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20142113.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20142122.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20142132.png" width="32%" />
+  <img src="pictures/Screenshot%202026-06-22%20142302.png" width="32%" />
+</p>
+</details>
 
 ---
 
