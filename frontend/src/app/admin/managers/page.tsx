@@ -329,7 +329,7 @@ export default function AdminManagersPage() {
                             <div key={mgrId} className="mb-10">
                               {isSuperAdmin && manager && (
                                 <div className="mb-4 pb-2 border-b border-slate-200 dark:border-white/[0.05]">
-                                  <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200">{manager.name}'s Team</h4>
+                                  <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200">{manager.name}&apos;s Team</h4>
                                   <p className="text-xs text-slate-500">Manager • {manager.department}</p>
                                 </div>
                               )}
@@ -474,7 +474,7 @@ export default function AdminManagersPage() {
                   <Users className="w-12 h-12 text-slate-300 dark:text-slate-700 mb-4" />
                   <h4 className="text-base font-semibold text-slate-900 dark:text-white">No Selection Made</h4>
                   <p className="text-sm text-slate-500 mt-1 max-w-sm">
-                    Select an entry from the portfolio index to analyze the team's reporting structure and stats.
+                    Select an entry from the portfolio index to analyze the team&apos;s reporting structure and stats.
                   </p>
                 </div>
               )}
