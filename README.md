@@ -24,7 +24,7 @@ What sets GoalForge AI apart is its Dual-Engine Hybrid AI System. You can levera
 
 ## System Architecture
 
-GoalForge AI operates on a strictly isolated tier system. The FastAPI backend securely handles business logic, state persistence, and proxies cloud AI requests. Meanwhile, the Next.js frontend communicates directly with your local Ollama engine for private local AI tasks, entirely bypassing backend infrastructure when dealing with sensitive local queries.
+GoalForge AI operates as a unified platform. The FastAPI backend is deployed directly onto Vercel as Serverless Functions, seamlessly integrated with the Next.js frontend. This creates a highly performant, zero-config monorepo architecture. Meanwhile, the Next.js frontend communicates directly with your local Ollama engine for private local AI tasks, entirely bypassing backend infrastructure when dealing with sensitive local queries.
 
 <p align="center">
   <img src="SYSTEM%20ARCHITECTURE.png" alt="System Architecture">
@@ -39,24 +39,28 @@ GoalForge AI operates on a strictly isolated tier system. The FastAPI backend se
 ### 1. Role-Based Workspaces
 Every user receives a tailored experience based on their permissions. Employees can draft goals, track milestones, and converse with their AI Coach. Managers are provided a dedicated portal to approve goals, escalate risks, and monitor workload. Administrators retain full control over the directory, security settings, and system metrics.
 
-### 2. Intelligent Goal Lifecycle
+### 2. Unified Team Hierarchy & Stats
+A rigid, deeply integrated reporting structure (Super Admin -> Admin -> Manager -> Employee). Super Admins securely govern administrative domains, Admins organize managerial portfolios, and Managers oversee their direct reports. The **Teams Hub** aggregates real-time metrics—goals, assigned tasks, progression statistics, and 'Idle' tracking—giving leadership absolute visibility into organizational performance at every level.
+
+### 3. Intelligent Goal Lifecycle
 Create dynamic goals with defined priorities, deadlines, and alignment weights. Break them down into interactive milestones that automatically calculate progress. A strict approval pipeline ensures teams stay perfectly aligned with management expectations.
 
-### 3. Dual-Engine Hybrid AI Coach
+### 4. Dual-Engine Hybrid AI Coach
 A powerful performance assistant built with flexibility in mind. 
 *   **Cloud Mode (Google Gemini)**: Refine goals, create action plans, parse resumes, and auto-assign tasks using the fast Gemini 2.5 models. Requests are securely routed through the backend or passed end-to-end securely from the browser.
 *   **Local Mode (Ollama)**: Communicate directly from the browser to your local machine. We bypass strict browser CORS preflight restrictions using text/plain payload streaming, allowing secure localhost connections even from production environments. 
 *   **Bring Your Own Key**: Users can securely store their own Gemini API keys in the browser. This key is end-to-end encrypted in transit and seamlessly overrides the application default, allowing individual team members to utilize their personal AI quotas for tasks like Skill Parsing and Auto Assignment directly from the UI.
 *   **Anti-Spam Rate-Limiter**: Enforces a strict 12-second client-side cooldown between consecutive local requests to protect local hardware from high-load spikes.
 
-### 4. Enterprise Workforce Intelligence
+### 5. Enterprise Workforce Intelligence
 *   **Target to Goal Cascades**: Seamlessly break down large organizational targets into manager tasks, and further into employee goals, with automatic upward progress synchronization.
+*   **Multi-Assignee Tasks**: Break silos by assigning critical tasks to multiple cross-functional team members simultaneously, with unified progress tracking.
 *   **AI Auto-Assignment**: Explainable AI evaluates historic completion rates, current workload, and required skills to intelligently match managers to targets and employees to tasks.
 *   **Dynamic Skill Graph**: Skills evolve based on completed tasks, resulting in a verified confidence score for every capability an employee holds.
 *   **Automated Resume Parsing**: Instantly extract baseline skills and experience from uploaded PDFs or DOCX files natively into the skill profile using your choice of local or cloud AI models.
 *   **Predictive Analytics**: The system evaluates update frequency, milestone density, and deadlines to calculate the likelihood of success. The Burnout Risk Detection system scans for over-allocation and high-priority concentrations, alerting managers proactively.
 
-### 5. Enterprise-Grade Security
+### 6. Enterprise-Grade Security
 Engineered to adhere to high-grade corporate security standards:
 *   Secure passwordless email authentication via SMTP, protected by brute-force progressive lockouts.
 *   All routes are guarded by Dual-Enforced Role Isolation (RBAC) checking JWT signatures at multiple layers, powered by a strict `RequireRole` React Higher-Order Component on the frontend.
@@ -83,7 +87,8 @@ Engineered to adhere to high-grade corporate security standards:
 ### Infrastructure
 *   **Database**: PostgreSQL 16
 *   **Orchestration**: Multi-stage Docker Compose
-*   **Production Hosting**: Next.js (Vercel), FastAPI (Render), PostgreSQL (Neon / Supabase)
+*   **CI/CD Pipeline**: Fully automated GitHub Actions workflow executing ESLint verifications, Pytest backend coverage, Docker dry-runs, and Continuous Deployment on pushes to `main`.
+*   **Production Hosting**: Unified Monorepo via Vercel (Next.js Frontend + FastAPI Serverless Functions).
 
 ---
 
