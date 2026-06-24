@@ -258,14 +258,14 @@ def test_production_cors_origins_validator():
     
     # Empty CORS
     with pytest.raises(ValueError, match="CORS_ORIGINS must be set to an explicit whitelist in production"):
-        Settings(DEBUG=False, CORS_ORIGINS="", SECRET_KEY="secure-prod-key-123", DATABASE_URL="postgresql+asyncpg://u:p@localhost/db")
+        Settings(DEBUG=False, CORS_ORIGINS="", SECRET_KEY="secure-prod-key-123", METRICS_TOKEN="test-token", DATABASE_URL="postgresql+asyncpg://u:p@localhost/db")
         
     # Wildcard CORS
     with pytest.raises(ValueError, match="CORS_ORIGINS must be set to an explicit whitelist in production"):
-        Settings(DEBUG=False, CORS_ORIGINS="*", SECRET_KEY="secure-prod-key-123", DATABASE_URL="postgresql+asyncpg://u:p@localhost/db")
+        Settings(DEBUG=False, CORS_ORIGINS="*", SECRET_KEY="secure-prod-key-123", METRICS_TOKEN="test-token", DATABASE_URL="postgresql+asyncpg://u:p@localhost/db")
         
     # Valid CORS
-    settings = Settings(DEBUG=False, CORS_ORIGINS="https://goalforge.ai", SECRET_KEY="secure-prod-key-123", DATABASE_URL="postgresql+asyncpg://u:p@localhost/db")
+    settings = Settings(DEBUG=False, CORS_ORIGINS="https://goalforge.ai", SECRET_KEY="secure-prod-key-123", METRICS_TOKEN="test-token", DATABASE_URL="postgresql+asyncpg://u:p@localhost/db")
     assert settings.CORS_ORIGINS == "https://goalforge.ai"
 
 
@@ -279,6 +279,7 @@ def test_production_sqlite_blocked():
             DEBUG=False,
             CORS_ORIGINS="https://goalforge.ai",
             SECRET_KEY="secure-prod-key-123",
+            METRICS_TOKEN="test-token",
             DATABASE_URL="sqlite+aiosqlite:///./goalforge.db",
         )
 
@@ -319,3 +320,41 @@ def test_metrics_endpoint_local_protection():
         
     status = asyncio.run(run_asgi())
     assert status == 403
+
+
+def test_metrics_endpoint_remote_access_with_token():
+    """Verify that /metrics endpoint allows remote access when correct Bearer token is provided."""
+    from starlette.requests import Request
+    from starlette.types import Scope
+    import asyncio
+    from app.main import app
+    from app.core.config import settings
+    
+    scope: Scope = {
+        "type": "http",
+        "method": "GET",
+        "path": "/metrics",
+        "client": ("203.0.113.195", 12345),
+        "headers": [(b"authorization", f"Bearer {settings.METRICS_TOKEN or settings.SECRET_KEY}".encode("utf-8"))],
+        "query_string": b""
+    }
+    
+    async def run_asgi():
+        async def receive(): return {"type": "http.request"}
+        response_status = None
+        async def send(message):
+            nonlocal response_status
+            if message["type"] == "http.response.start":
+                response_status = message["status"]
+        await app(scope, receive, send)
+        return response_status
+        
+    status = asyncio.run(run_asgi())
+    assert status == 200
+
+
+def test_ai_models_endpoint_auth():
+    """Verify that /ai/models requires authentication."""
+    response = client.get("/ai/models")
+    assert response.status_code == 401
+    assert "Not authenticated" in response.json().get("detail", "")

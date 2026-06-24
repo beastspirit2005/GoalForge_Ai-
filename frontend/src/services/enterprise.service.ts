@@ -18,7 +18,6 @@ async function apiFetchRaw<T = unknown>(path: string): Promise<T> {
   })
   if (res.status === 401) {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("token")
       window.location.href = "/login"
     }
     throw new Error(`API error ${res.status}: Unauthorized`)
@@ -46,7 +45,6 @@ async function apiPostRaw<T = unknown>(path: string, body?: unknown): Promise<T>
   })
   if (res.status === 401) {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("token")
       window.location.href = "/login"
     }
     throw new Error(`API error ${res.status}: Unauthorized`)
@@ -70,7 +68,6 @@ async function apiPutRaw<T = unknown>(path: string, body?: unknown): Promise<T> 
   })
   if (res.status === 401) {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("token")
       window.location.href = "/login"
     }
     throw new Error(`API error ${res.status}: Unauthorized`)
@@ -93,7 +90,6 @@ async function apiDeleteRaw(path: string): Promise<void> {
   })
   if (res.status === 401) {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("token")
       window.location.href = "/login"
     }
     throw new Error(`API error ${res.status}: Unauthorized`)

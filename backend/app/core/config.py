@@ -30,6 +30,9 @@ class Settings(BaseSettings):
 
     # Authentication & JWT Config
     SECRET_KEY: str = "goalforge-super-secret-change-in-production"
+    JWT_SECRET_KEY: str = ""
+    AUDIT_HMAC_KEY: str = ""
+    METRICS_TOKEN: str = ""
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
 
@@ -83,6 +86,18 @@ class Settings(BaseSettings):
         self.SECRET_KEY = (self.SECRET_KEY or "").strip()
         if not self.DEBUG and self.SECRET_KEY in ["goalforge-super-secret-change-in-production", "change-me-in-production", ""]:
             raise ValueError("SECRET_KEY must be set to a secure value in production (DEBUG=False).")
+
+        self.JWT_SECRET_KEY = (self.JWT_SECRET_KEY or "").strip()
+        if not self.JWT_SECRET_KEY:
+            self.JWT_SECRET_KEY = self.SECRET_KEY
+
+        self.AUDIT_HMAC_KEY = (self.AUDIT_HMAC_KEY or "").strip()
+        if not self.AUDIT_HMAC_KEY:
+            self.AUDIT_HMAC_KEY = self.SECRET_KEY
+
+        self.METRICS_TOKEN = (self.METRICS_TOKEN or "").strip()
+        if not self.DEBUG and not self.METRICS_TOKEN:
+            raise ValueError("METRICS_TOKEN must be set to a secure value in production (DEBUG=False).")
 
         if not self.DEBUG and self.DATABASE_URL.startswith("sqlite"):
             raise ValueError("SQLite is not supported in production (DEBUG=False). Configure a PostgreSQL DATABASE_URL.")

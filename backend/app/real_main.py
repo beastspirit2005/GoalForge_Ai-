@@ -146,19 +146,25 @@ async def health():
 
 @app.get("/metrics")
 def metrics(request: Request):
-    # Block proxy-forwarded requests to prevent IP spoofing
-    if request.headers.get("x-forwarded-for") or request.headers.get("x-real-ip"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Metrics endpoint cannot be accessed through a proxy.",
-        )
-    client_host = request.client.host if request.client else None
+    # Consistent trust in proxy headers behind Vercel/Render
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        client_host = real_ip.split(",")[0].strip()
+    else:
+        forwarded_for = request.headers.get("x-forwarded-for")
+        if forwarded_for:
+            client_host = forwarded_for.split(",")[0].strip()
+        else:
+            client_host = request.client.host if request.client else None
+
     allowed_hosts = ("127.0.0.1", "::1", "localhost", "testserver", "testclient")
     if client_host not in allowed_hosts:
         # External access requires Bearer token authentication
         auth_header = request.headers.get("authorization", "")
-        expected = f"Bearer {settings.SECRET_KEY}"
-        if auth_header != expected:
+        metrics_token = settings.METRICS_TOKEN or settings.SECRET_KEY
+        expected = f"Bearer {metrics_token}"
+        import hmac
+        if not hmac.compare_digest(auth_header, expected):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied. Metrics endpoint is only available locally or with valid authorization.",

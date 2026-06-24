@@ -96,7 +96,6 @@ async def approve_user(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("super_admin")),
 ):
-    print("APPROVE_USER ROUTE HIT!")
     try:
         from sqlalchemy import select
         from app.services.email_service import EmailDeliveryError, send_approval_email

@@ -62,13 +62,16 @@ A powerful performance assistant built with flexibility in mind.
 
 ### 6. Enterprise-Grade Security
 Engineered to adhere to high-grade corporate security standards:
+*   **Cryptographic Key Separation**: Distinct `JWT_SECRET_KEY` and `AUDIT_HMAC_KEY` configurations ensure that credential rotations do not break the immutability of historic database audit logs.
+*   **Timing-Attack Resistance**: Critical authentication endpoints (e.g., Prometheus metrics) utilize `hmac.compare_digest()` for secure token evaluation.
+*   **Consistent Reverse Proxy Trust**: Safely resolves client IPs via `X-Forwarded-For` and `X-Real-IP` behind trusted edge networks (Vercel/Render) to accurately enforce Redis sliding-window rate limits on AI models.
 *   Secure passwordless email authentication via SMTP, protected by brute-force progressive lockouts.
 *   All routes are guarded by Dual-Enforced Role Isolation (RBAC) checking JWT signatures at multiple layers, powered by a strict `RequireRole` React Higher-Order Component on the frontend.
 *   Explicit protections against IDOR vulnerabilities and stringent data-ownership checks across milestones, check-ins, and performance narratives.
 *   Secure identity impersonation allowing administrators to seamlessly assume user identities for debugging, utilizing strict cookie path scoping and role-based redirection.
-*   Live platform telemetry endpoints powered by `psutil` reporting real-time system metrics.
+*   Live platform telemetry endpoints powered by `psutil` reporting real-time system metrics, heavily guarded by Bearer token access.
 *   Pydantic data validation with aggressive input sanitization to prevent XSS.
-*   Cryptographic audit trails for all critical operations.
+*   Cryptographic audit trails for all critical operations, aggressively blocking unauthorized `UPDATE` or `DELETE` manipulations at the database level.
 
 ---
 

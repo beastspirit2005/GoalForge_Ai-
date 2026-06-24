@@ -46,7 +46,7 @@ async def log_action(
     # 4. Compute unique hash chain signature in Python (database-agnostic)
     payload = f"{entry.id}:{entry.action}:{entry.user_id}:{entry.created_at}:{entry.prev_hash or ''}"
     entry.entry_hash = hmac.new(
-        settings.SECRET_KEY.encode("utf-8"),
+        settings.AUDIT_HMAC_KEY.encode("utf-8"),
         payload.encode("utf-8"),
         hashlib.sha256
     ).hexdigest()
@@ -79,7 +79,7 @@ async def verify_audit_chain(db: AsyncSession) -> bool:
     for log in logs:
         payload = f"{log.id}:{log.action}:{log.user_id}:{log.created_at}:{prev_hash or ''}"
         expected = hmac.new(
-            settings.SECRET_KEY.encode("utf-8"),
+            settings.AUDIT_HMAC_KEY.encode("utf-8"),
             payload.encode("utf-8"),
             hashlib.sha256
         ).hexdigest()

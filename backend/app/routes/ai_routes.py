@@ -43,7 +43,7 @@ async def refine(
 
 
 @router.get("/models")
-async def get_models():
+async def get_models(current_user: User = Depends(get_current_user)):
     """Get list of active pulled local models in Ollama."""
     from app.ai.gemini_client import get_ollama_models
     models = await get_ollama_models()
