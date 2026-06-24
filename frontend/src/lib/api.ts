@@ -19,14 +19,14 @@ export function getApiUrl(): string {
     return `https://${process.env.VERCEL_URL}/api`
   }
 
-  return "http://localhost:8000"
+  return "http://127.0.0.1:8000"
 }
 
 const API_URL = getApiUrl()
 
 const API_TIMEOUT_MS =
   Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS) ||
-  (isVercelDeployment() ? 25000 : 10000)
+  (isVercelDeployment() ? 25000 : 60000)
 
 type RequestOptions = {
   method?: string

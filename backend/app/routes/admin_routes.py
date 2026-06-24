@@ -18,9 +18,9 @@ async def list_users(
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role("admin", "super_admin")),
 ):
-    users = await get_all_users(db, skip, limit)
+    users = await get_all_users(db, skip, limit, current_user)
     # Filter out soft-deleted users so they disappear from the UI after deletion
     users = [u for u in users if u.is_active]
     return [
@@ -31,6 +31,7 @@ async def list_users(
             "role": u.role,
             "department": u.department,
             "manager_id": u.manager_id,
+            "admin_id": u.admin_id,
             "is_active": u.is_active,
             "is_approved": u.is_approved,
         }
@@ -189,9 +190,9 @@ async def all_goals(
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role("admin", "super_admin")),
 ):
-    goals = await get_all_goals(db, skip, limit)
+    goals = await get_all_goals(db, skip, limit, current_user)
     return [
         {
             "id": g.id,
@@ -354,8 +355,9 @@ async def get_platform_health(
 
     # Get active sessions roughly (users updated in last hour)
     try:
-        # Since we just have token_version or auth logs, let's just query total active users as a mock/proxy for now if we don't track active sessions
-        result = await db.execute(select(User).where(User.is_active == True))
+        from datetime import datetime, timedelta, timezone
+        one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+        result = await db.execute(select(User).where(User.is_active == True, User.last_login_at >= one_hour_ago))
         active_sessions = len(result.scalars().all())
     except Exception:
         active_sessions = 0

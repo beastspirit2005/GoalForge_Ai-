@@ -42,7 +42,7 @@ class Goal(AuditMixin, Base):
 
     # Relationships
     owner = relationship("User", back_populates="goals", foreign_keys=[user_id])
-    task = relationship("Task", backref="goals")
+    task = relationship("Task", back_populates="goals")
     milestones = relationship("Milestone", back_populates="goal", cascade="all, delete-orphan", lazy="selectin")
     checkins = relationship("Checkin", back_populates="goal", cascade="all, delete-orphan", lazy="selectin")
 

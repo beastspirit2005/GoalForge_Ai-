@@ -1,4 +1,4 @@
-export type GoalStatus = "draft" | "pending" | "approved" | "rejected" | "locked" | "completed"
+export type GoalStatus = "draft" | "pending" | "approved" | "rejected" | "locked" | "completed" | "on hold"
 export type GoalRisk = "Low" | "Medium" | "High"
 
 export interface Milestone {
@@ -29,6 +29,8 @@ export interface Goal {
   owner_name: string | null
   department: string | null
   milestones: Milestone[]
+  task_id?: number | null
+  escalations?: Array<{ id: number; goal_id: number; reason: string; severity: string; status: string; admin_remarks?: string; resolution_note?: string; created_at?: string; resolved_at?: string }>
 }
 
 export interface GoalCreatePayload {
@@ -38,6 +40,7 @@ export interface GoalCreatePayload {
   uom?: string
   weightage: number
   deadline?: string
+  task_id?: number
 }
 
 export interface GoalUpdatePayload {

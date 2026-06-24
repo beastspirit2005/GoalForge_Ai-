@@ -9,17 +9,20 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { listTargets, listTasks, createTask, updateTask, deleteTask, autoAssignTask } from "@/services/enterprise.service"
+import { listTargets, listTasks, createTask, updateTask, deleteTask, autoAssignTask, getTeamMembers } from "@/services/enterprise.service"
 import { format } from "date-fns"
-import { Bot, Sparkles, Target, Zap, Clock, User, CheckCircle2, Edit, Trash2 } from "lucide-react"
+import { Bot, Sparkles, Target, Zap, Clock, User, CheckCircle2, Edit, Trash2, Users } from "lucide-react"
 import DashboardLayout from "@/components/layout/DashboardLayout"
 import { addLocalAuditLog } from "@/lib/local-audit-logs"
 import { addLocalNotification } from "@/lib/local-notifications"
+import { getTeamGoals } from "@/services/goal.service"
 
 export default function ManagerTasksPage() {
   const { user } = useAuth()
   const [targets, setTargets] = useState<any[]>([])
   const [tasksByTarget, setTasksByTarget] = useState<Record<number, any[]>>({})
+  const [teamMembers, setTeamMembers] = useState<any[]>([])
+  const [teamGoals, setTeamGoals] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   // Task Creation Form
@@ -29,6 +32,7 @@ export default function ManagerTasksPage() {
   const [description, setDescription] = useState("")
   const [deadline, setDeadline] = useState("")
   const [skills, setSkills] = useState("")
+  const [assigneeIds, setAssigneeIds] = useState<number[]>([])
   const [editTaskId, setEditTaskId] = useState<number | null>(null)
 
   // AI Assignment state
@@ -47,6 +51,16 @@ async function fetchData() {
     try {
       const tData = await listTargets()
       setTargets(tData)
+      
+      const members = await getTeamMembers()
+      setTeamMembers(members)
+
+      try {
+        const goals = await getTeamGoals()
+        setTeamGoals(goals)
+      } catch (err) {
+        console.warn("Could not fetch team goals:", err)
+      }
       
       const tasksMap: Record<number, any[]> = {}
       await Promise.all(tData.map(async (t) => {
@@ -73,7 +87,8 @@ async function fetchData() {
         title,
         description,
         deadline: deadline ? new Date(deadline).toISOString() : null,
-        required_skills: skills.split(",").map(s => s.trim()).filter(Boolean)
+        required_skills: skills.split(",").map(s => s.trim()).filter(Boolean),
+        assignee_ids: assigneeIds.length > 0 ? assigneeIds : null
       }
       
       if (editTaskId) {
@@ -132,6 +147,11 @@ async function fetchData() {
     setDescription("")
     setDeadline("")
     setSkills("")
+    setAssigneeIds([])
+  }
+
+  const toggleAssignee = (id: number) => {
+    setAssigneeIds(prev => prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id])
   }
 
   const openEdit = (task: any, targetId: number) => {
@@ -141,6 +161,7 @@ async function fetchData() {
     setDescription(task.description || "")
     setDeadline(task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : "")
     setSkills(task.required_skills ? task.required_skills.join(", ") : "")
+    setAssigneeIds(task.assignees ? task.assignees.map((a: any) => a.id) : [])
     setOpen(true)
   }
 
@@ -196,6 +217,54 @@ async function fetchData() {
         </div>
       </div>
 
+      {/* Team & Active Goals Section */}
+      <div className="glass-card p-6 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white/50 dark:bg-white/[0.02] backdrop-blur-md shadow-sm">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <Users className="w-5 h-5 text-[var(--gf-indigo)]" /> My Team & Active Goals
+        </h2>
+        {teamMembers.length === 0 ? (
+          <p className="text-sm text-slate-500">No team members report to you directly.</p>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {teamMembers.map(member => {
+              const memberGoals = teamGoals.filter(g => g.user_id === member.id)
+              return (
+                <div key={member.id} className="p-4 rounded-xl border border-slate-100 dark:border-white/[0.04] bg-white dark:bg-white/[0.01] hover:border-[var(--gf-indigo)]/20 transition-all flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <div className="w-8 h-8 rounded-full bg-[var(--gf-indigo)]/10 text-[var(--gf-indigo)] font-bold text-sm flex items-center justify-center">
+                        {member.name.charAt(0)}
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">{member.name}</h3>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">{member.email}</p>
+                      </div>
+                    </div>
+                    {memberGoals.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic mt-2">No active goals created.</p>
+                    ) : (
+                      <div className="space-y-3 mt-2 pt-2 border-t border-slate-100 dark:border-white/[0.04] max-h-48 overflow-y-auto custom-scrollbar">
+                        {memberGoals.map(g => (
+                          <div key={g.id} className="space-y-1">
+                            <div className="flex justify-between text-xs font-medium">
+                              <span className="truncate text-slate-700 dark:text-slate-300 pr-2" title={g.title}>{g.title}</span>
+                              <span className="text-[var(--gf-indigo)] shrink-0">{g.progress}%</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-[var(--gf-indigo)] to-[var(--gf-cyan)]" style={{ width: `${g.progress}%` }}></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
       <Dialog open={open} onOpenChange={(val) => {
         setOpen(val)
         if (!val) resetForm()
@@ -225,6 +294,23 @@ async function fetchData() {
                 <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Required Skills</label>
                 <Input className="bg-slate-50 dark:bg-black/20" value={skills} onChange={(e) => setSkills(e.target.value)} placeholder="React, Node.js" />
               </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Manual Assignment (Optional)</label>
+              <div className="flex flex-wrap gap-2">
+                {teamMembers.map(member => (
+                  <Button
+                    key={member.id}
+                    variant={assigneeIds.includes(member.id) ? "default" : "outline"}
+                    size="sm"
+                    className={`text-xs ${assigneeIds.includes(member.id) ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
+                    onClick={() => toggleAssignee(member.id)}
+                  >
+                    {member.name}
+                  </Button>
+                ))}
+              </div>
+              <p className="text-[10px] text-slate-400">Leave unassigned to use AI auto-assignment later.</p>
             </div>
             <Button onClick={handleSaveTask} className="w-full bg-gradient-to-r from-[var(--gf-indigo)] to-[var(--gf-cyan)] hover:opacity-90 text-white mt-6 h-11 rounded-xl shadow-lg shadow-[var(--gf-indigo)]/25" disabled={!title}>
               {editTaskId ? "Save Changes" : "Generate Task"}
@@ -330,7 +416,35 @@ async function fetchData() {
                           </div>
                           
                           <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/[0.05]">
-                            {task.assigned_to ? (
+                            {task.assignees && task.assignees.length > 0 ? (
+                              <div className="w-full">
+                                <div className="flex flex-wrap gap-2 mb-3">
+                                  {task.assignees.map((a: any) => (
+                                    <div key={a.id} className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-100 dark:border-emerald-500/20">
+                                      <User className="w-3.5 h-3.5" /> {a.name}
+                                    </div>
+                                  ))}
+                                </div>
+                                {task.goals && task.goals.length > 0 && (
+                                  <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                    <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-2">Assigned Goals</div>
+                                    <div className="space-y-1.5 max-h-24 overflow-y-auto custom-scrollbar">
+                                      {task.goals.map((g: any) => (
+                                        <div key={g.id} className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded text-xs">
+                                          <div className="flex flex-col min-w-0">
+                                            <span className="truncate max-w-[150px] font-medium text-slate-700 dark:text-slate-200" title={g.title}>{g.title}</span>
+                                            <span className="text-[9px] text-slate-400 font-medium">By: {g.owner_name || 'Unknown'}</span>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-[10px] text-emerald-600 font-bold">{g.progress}%</span>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ) : task.assigned_to ? (
                               <div className="flex items-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-500/20">
                                 <User className="w-4 h-4" /> {task.assigned_user_name || `ID: ${task.assigned_to}`}
                               </div>

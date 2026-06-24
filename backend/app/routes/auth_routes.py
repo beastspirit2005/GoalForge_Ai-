@@ -44,6 +44,10 @@ async def login(response: Response, data: LoginRequest, db: AsyncSession = Depen
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
         )
+    # Track login timestamp for active session reporting
+    from datetime import datetime, timezone
+    user.last_login_at = datetime.now(timezone.utc)
+    await db.commit()
     token = create_token_for_user(user)
     
     response.set_cookie(

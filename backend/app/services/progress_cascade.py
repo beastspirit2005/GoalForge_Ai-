@@ -27,6 +27,8 @@ async def cascade_goal_progress(db: AsyncSession, goal_id: int):
         # Auto-complete goal if all milestones done
         if completed == len(milestones) and goal.status not in ("completed", "archived"):
             goal.status = "completed"
+        elif completed < len(milestones) and goal.status == "completed":
+            goal.status = "approved"
 
     await db.flush()
 

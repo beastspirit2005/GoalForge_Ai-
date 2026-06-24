@@ -27,6 +27,8 @@ async def create_milestone(db: AsyncSession, goal_id: int, data: MilestoneCreate
     db.add(milestone)
     await db.flush()
     await db.refresh(milestone)
+    from app.services.progress_cascade import cascade_goal_progress
+    await cascade_goal_progress(db, goal_id)
     return milestone
 
 
@@ -47,6 +49,8 @@ async def bulk_create_milestones(
     await db.flush()
     for m in milestones:
         await db.refresh(m)
+    from app.services.progress_cascade import cascade_goal_progress
+    await cascade_goal_progress(db, goal_id)
     return milestones
 
 
@@ -70,12 +74,17 @@ async def toggle_milestone(db: AsyncSession, milestone: Milestone, current_user:
     milestone.is_completed = not milestone.is_completed
     await db.flush()
     await db.refresh(milestone)
+    from app.services.progress_cascade import cascade_goal_progress
+    await cascade_goal_progress(db, milestone.goal_id)
     return milestone
 
 
 async def delete_milestone(db: AsyncSession, milestone: Milestone) -> None:
+    goal_id = milestone.goal_id
     await db.delete(milestone)
     await db.flush()
+    from app.services.progress_cascade import cascade_goal_progress
+    await cascade_goal_progress(db, goal_id)
 
 
 async def get_milestone_by_id(db: AsyncSession, milestone_id: int) -> Milestone | None:

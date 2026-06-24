@@ -33,6 +33,27 @@ async def register_user(db: AsyncSession, data: RegisterRequest) -> User:
     db.add(user)
     await db.flush()
     await db.refresh(user)
+
+    # Notify super admins of pending approval
+    try:
+        from app.models.role import UserRole
+        from app.services.email_service import send_pending_approval_notification
+        sa_result = await db.execute(select(User).where(User.role == UserRole.SUPER_ADMIN.value))
+        super_admins = sa_result.scalars().all()
+        for sa in super_admins:
+            try:
+                send_pending_approval_notification(
+                    to_email=sa.email,
+                    superadmin_name=sa.name,
+                    new_user_name=user.name,
+                    new_user_email=user.email,
+                    new_user_role=user.role,
+                )
+            except Exception as mail_err:
+                print(f"Failed to send pending approval email to {sa.email}: {mail_err}")
+    except Exception as err:
+        print(f"Failed to notify super admins of new registration: {err}")
+
     return user
 
 
@@ -52,8 +73,21 @@ def create_token_for_user(user: User) -> str:
     return create_access_token({"sub": str(user.id), "role": user.role, "v": user.token_version})
 
 
-async def get_all_users(db: AsyncSession, skip: int = 0, limit: int = 100) -> list[User]:
-    result = await db.execute(select(User).order_by(User.created_at.desc()).offset(skip).limit(limit))
+async def get_all_users(db: AsyncSession, skip: int = 0, limit: int = 100, current_user: User | None = None) -> list[User]:
+    stmt = select(User)
+    if current_user and current_user.role == "admin":
+        from sqlalchemy import or_
+        # Admins see themselves, their directly assigned users (managers/employees), and users managed by those managers
+        stmt = stmt.where(
+            or_(
+                User.id == current_user.id,
+                User.admin_id == current_user.id,
+                User.manager_id.in_(
+                    select(User.id).where(User.admin_id == current_user.id)
+                )
+            )
+        )
+    result = await db.execute(stmt.order_by(User.created_at.desc()).offset(skip).limit(limit))
     return list(result.scalars().all())
 
 
@@ -200,6 +234,7 @@ async def verify_otp_and_login(db: AsyncSession, email: str, code: str) -> User:
         user.otp_failed_attempts = 0
         user.otp_lockout_count = 0
         user.otp_locked_until = None
+        user.last_login_at = datetime.now(timezone.utc)
         await db.commit()
 
         return user

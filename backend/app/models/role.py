@@ -31,7 +31,7 @@ class GoalStatus(str, enum.Enum):
     REJECTED = "rejected"
     LOCKED = "locked"
     COMPLETED = "completed"
-
+    ON_HOLD = "on hold"
 
 class GoalRisk(str, enum.Enum):
     LOW = "Low"

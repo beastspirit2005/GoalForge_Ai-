@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_current_user
@@ -12,6 +12,7 @@ from app.schemas.goal_schema import (
     GoalUpdate,
     MilestoneCreate,
     MilestoneResponse,
+    GeneratePlanRequest,
 )
 from app.services.audit_service import log_action
 from app.services.goal_service import (
@@ -187,6 +188,19 @@ async def update(
         db, user_id=current_user.id, action="goal_updated", entity_type="goal", entity_id=goal.id,
         old_value={"status": old_status}, new_value=data.model_dump(exclude_unset=True),
     )
+
+    # Notify employee if manager/admin edited their goal
+    if current_user.id != goal.user_id:
+        from app.services.notification_service import create_notification
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        changes = data.model_dump(exclude_unset=True)
+        change_summary = ", ".join(f"{k}" for k in changes.keys())
+        await create_notification(
+            db, user_id=goal.user_id, title="Goal Updated by Manager",
+            message=f"Your goal '{goal.title}' was updated ({change_summary}) on {timestamp}.",
+            notif_type="goal_approved",
+        )
     # Eagerly load relationships to avoid lazy loading issues
     goal = await get_goal_by_id(db, goal.id)
     return _goal_to_response(goal)
@@ -226,16 +240,24 @@ async def submit(
 @router.post("/{goal_id}/generate-plan")
 async def generate_plan(
     goal_id: int,
+    body: GeneratePlanRequest | None = None,
+    ai_provider: str | None = Query(None, description="AI Provider override"),
+    ai_model: str | None = Query(None, description="AI Model override"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     goal = await get_goal_by_id(db, goal_id)
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
+    # Body params take precedence over query params
+    resolved_provider = (body.ai_provider if body else None) or ai_provider or current_user.preferred_ai_provider
+    resolved_model = (body.ai_model if body else None) or ai_model or current_user.preferred_ai_model
+    resolved_key = (body.api_key if body else None)  # None means use server-side key
     plan = await generate_and_store_plan(
         db, goal,
-        provider=current_user.preferred_ai_provider,
-        model=current_user.preferred_ai_model
+        provider=resolved_provider,
+        model=resolved_model,
+        api_key=resolved_key,
     )
     return plan
 

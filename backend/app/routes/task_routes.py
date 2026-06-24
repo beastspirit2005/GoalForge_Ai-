@@ -40,6 +40,19 @@ def serialize_task(task: Task) -> dict:
         "required_skills": [s.skill_name for s in getattr(task, 'required_skills', [])],
         "assigned_to": task.assigned_to,
         "assigned_user_name": getattr(task, 'assignee', None).name if getattr(task, 'assignee', None) else None,
+        "assignees": [
+            {"id": u.id, "name": u.name}
+            for u in getattr(task, 'assignees', [])
+        ],
+        "goals": [
+            {
+                "id": g.id, "title": g.title,
+                "owner_name": g.owner.name if g.owner else None,
+                "owner_id": g.user_id,
+                "progress": g.progress, "status": g.status,
+            }
+            for g in getattr(task, 'goals', [])
+        ],
         "pending_review": task.pending_review,
         "progress": task.progress,
         "deadline": task.deadline,
@@ -132,8 +145,27 @@ async def create_task(
                 db.add(ts)
         await db.commit()
 
-    await db.refresh(task, ["required_skills", "assignee"])
-    return serialize_task(task)
+    # Handle multi-assignees
+    if data.assignee_ids:
+        from app.models.target import TaskAssignee
+        task.assigned_to = data.assignee_ids[0]
+        task.status = "assigned"
+        for uid in data.assignee_ids:
+            db.add(TaskAssignee(task_id=task.id, user_id=uid))
+        await db.flush()
+
+    # Fetch fresh task with all relationships
+    from app.models.goal import Goal
+    fresh_res = await db.execute(
+        select(Task).options(
+            selectinload(Task.required_skills), 
+            selectinload(Task.assignee),
+            selectinload(Task.assignees),
+            selectinload(Task.goals).selectinload(Goal.owner)
+        ).where(Task.id == task.id)
+    )
+    fresh_task = fresh_res.scalar_one()
+    return serialize_task(fresh_task)
 
 @router.get("/tasks", response_model=list[TaskResponse])
 async def list_tasks(
@@ -143,7 +175,13 @@ async def list_tasks(
     db: AsyncSession = Depends(get_db), 
     current_user: User = Depends(get_current_user)
 ):
-    query = select(Task).options(selectinload(Task.required_skills), selectinload(Task.assignee)).order_by(Task.created_at.desc())
+    from app.models.goal import Goal
+    query = select(Task).options(
+        selectinload(Task.required_skills), 
+        selectinload(Task.assignee),
+        selectinload(Task.assignees),
+        selectinload(Task.goals).selectinload(Goal.owner)
+    ).order_by(Task.created_at.desc())
     
     if target_id:
         query = query.where(Task.target_id == target_id)
@@ -209,14 +247,28 @@ async def auto_assign_task(
         ai_provider=ai_provider, 
         ai_model=ai_model
     )
-    if assignment.get("assigned_user_id"):
-        task.assigned_to = assignment["assigned_user_id"]
+    assigned_ids = assignment.get("assigned_user_ids", [])
+    if not assigned_ids and assignment.get("assigned_user_id"):
+        assigned_ids = [assignment["assigned_user_id"]]
+    
+    if assigned_ids:
+        from app.models.target import TaskAssignee
+        # Also set legacy assigned_to for backward compat
+        task.assigned_to = assigned_ids[0]
         task.status = "assigned"
+        # Add to junction table
+        for uid in assigned_ids:
+            existing = await db.execute(
+                select(TaskAssignee).where(TaskAssignee.task_id == task.id, TaskAssignee.user_id == uid)
+            )
+            if not existing.scalar_one_or_none():
+                db.add(TaskAssignee(task_id=task.id, user_id=uid))
         await db.commit()
         
     return {
         "task_id": task.id,
-        "assigned_user_id": assignment.get("assigned_user_id"),
+        "assigned_user_ids": assigned_ids,
+        "assigned_user_id": assigned_ids[0] if assigned_ids else None,
         "reason": assignment.get("reason"),
         "status": "success"
     }
@@ -247,8 +299,15 @@ async def update_target(
                 db.add(TargetRequiredSkill(target_id=target.id, skill_name=skill_name.strip()))
                 
     await db.commit()
-    await db.refresh(target, ["required_skills", "manager"])
-    return serialize_target(target)
+    # Fetch fresh target with all relationships
+    fresh_res = await db.execute(
+        select(Target).options(
+            selectinload(Target.required_skills), 
+            selectinload(Target.manager)
+        ).where(Target.id == target.id)
+    )
+    fresh_target = fresh_res.scalar_one()
+    return serialize_target(fresh_target)
 
 @router.delete("/targets/{target_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_target(
@@ -291,9 +350,31 @@ async def update_task(
             if skill_name.strip():
                 db.add(TaskRequiredSkill(task_id=task.id, skill_name=skill_name.strip()))
                 
+    if data.assignee_ids is not None:
+        from app.models.target import TaskAssignee
+        await db.execute(delete(TaskAssignee).where(TaskAssignee.task_id == task.id))
+        for uid in data.assignee_ids:
+            db.add(TaskAssignee(task_id=task.id, user_id=uid))
+        if data.assignee_ids:
+            task.assigned_to = data.assignee_ids[0]
+            task.status = "assigned"
+        else:
+            task.assigned_to = None
+            task.status = "pending"
+
     await db.commit()
-    await db.refresh(task, ["required_skills", "assignee"])
-    return serialize_task(task)
+    # Fetch fresh task with all relationships
+    from app.models.goal import Goal
+    fresh_res = await db.execute(
+        select(Task).options(
+            selectinload(Task.required_skills), 
+            selectinload(Task.assignee),
+            selectinload(Task.assignees),
+            selectinload(Task.goals).selectinload(Goal.owner)
+        ).where(Task.id == task.id)
+    )
+    fresh_task = fresh_res.scalar_one()
+    return serialize_task(fresh_task)
 
 @router.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_task(

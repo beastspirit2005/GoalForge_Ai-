@@ -93,3 +93,10 @@ class GoalApprovalRequest(BaseModel):
     @classmethod
     def sanitize_text(cls, v, info):
         return _check_xss(v, info.field_name)
+
+
+class GeneratePlanRequest(BaseModel):
+    """Optional body for the generate-plan endpoint — allows supplying a custom API key."""
+    api_key: str | None = None
+    ai_provider: str | None = None
+    ai_model: str | None = None

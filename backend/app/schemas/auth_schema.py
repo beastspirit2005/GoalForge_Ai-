@@ -36,6 +36,7 @@ class UserResponse(BaseModel):
     role: str
     department: str | None
     manager_id: int | None
+    admin_id: int | None = None
     is_active: bool
     is_approved: bool
     profile_picture_url: str | None = None
@@ -52,6 +53,7 @@ class UserUpdate(BaseModel):
     department: str | None = None
     role: str | None = None
     manager_id: int | None = None
+    admin_id: int | None = None
     is_active: bool | None = None
     is_approved: bool | None = None
     profile_picture_url: str | None = None
@@ -66,6 +68,7 @@ class AdminUserUpdate(BaseModel):
     department: str | None = None
     role: str | None = None
     manager_id: int | None = None
+    admin_id: int | None = None
     is_active: bool | None = None
     is_approved: bool | None = None
 

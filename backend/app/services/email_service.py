@@ -1,4 +1,4 @@
-"""Email service – sends transactional emails via Brevo SMTP."""
+'''Email service – sends transactional emails via Brevo SMTP.'''
 
 import os
 import smtplib
@@ -8,7 +8,7 @@ from app.core.config import settings
 
 
 class EmailDeliveryError(RuntimeError):
-    """Raised when a transactional email cannot be sent."""
+    '''Raised when a transactional email cannot be sent.'''
 
 
 def _env_or_setting(name: str, default=None):
@@ -70,16 +70,16 @@ def _send_email(to_email: str, subject: str, text: str, html: str):
 
 
 def send_approval_email(to_email: str, user_name: str, role: str):
-    text = f"""
+    text = f'''
     Hello {user_name},
 
     Your GoalForge AI account has been approved by the administrator.
     You can now log in with the role: {role}.
 
     Welcome aboard!
-    """
+    '''
 
-    html = f"""
+    html = f'''
     <html>
       <body style="font-family: sans-serif; line-height: 1.5; color: #333;">
         <h2 style="color: #4f46e5;">Welcome to GoalForge AI</h2>
@@ -90,24 +90,25 @@ def send_approval_email(to_email: str, user_name: str, role: str):
         <p>Welcome aboard!</p>
       </body>
     </html>
-    """
+    '''
 
     _send_email(to_email, "Your GoalForge AI Account has been Approved", text, html)
 
 
+
 def send_otp_email(to_email: str, user_name: str, otp_code: str):
-    text = f"""
+    text = f'''
     Hello {user_name},
 
     Your GoalForge AI one-time login code is: {otp_code}
 
     This code will expire in 10 minutes. Do not share it with anyone.
-    """
+    '''
 
-    html = f"""
+    html = f'''
     <html>
       <body style="font-family: sans-serif; line-height: 1.5; color: #333;">
-        <h2 style="color: #4f46e5;">GoalForge AI – Login Code</h2>
+        <h2 style="color: #4f46e5;">GoalForge AI - Login Code</h2>
         <p>Hello {user_name},</p>
         <p>Your one-time login code is:</p>
         <div style="margin: 24px 0; text-align: center;">
@@ -118,6 +119,37 @@ def send_otp_email(to_email: str, user_name: str, otp_code: str):
         <p style="color: #666; font-size: 13px;">This code expires in 10 minutes. Do not share it with anyone.</p>
       </body>
     </html>
-    """
+    '''
 
     _send_email(to_email, f"Your GoalForge AI Login Code: {otp_code}", text, html)
+
+
+def send_pending_approval_notification(to_email: str, superadmin_name: str, new_user_name: str, new_user_email: str, new_user_role: str):
+    text = f'''
+    Hello {superadmin_name},
+
+    A new user has registered on GoalForge AI and is pending approval:
+
+    Name: {new_user_name}
+    Email: {new_user_email}
+    Role: {new_user_role}
+
+    Please log in to the admin panel to review and approve this account.
+    '''
+
+    html = f'''
+    <html>
+      <body style="font-family: sans-serif; line-height: 1.5; color: #333;">
+        <h2 style="color: #4f46e5;">Pending Approval Notification</h2>
+        <p>Hello {superadmin_name},</p>
+        <p>A new user has registered and is pending approval:</p>
+        <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 16px; border-radius: 8px; margin: 16px 0;">
+          <p style="margin: 4px 0;"><strong>Name:</strong> {new_user_name}</p>
+          <p style="margin: 4px 0;"><strong>Email:</strong> {new_user_email}</p>
+          <p style="margin: 4px 0;"><strong>Role:</strong> {new_user_role}</p>
+        </div>
+        <p>Please log in to the admin panel to review and approve this account.</p>
+      </body>
+    </html>
+    '''
+    _send_email(to_email, f"Pending Approval: New User Registered ({new_user_name})", text, html)

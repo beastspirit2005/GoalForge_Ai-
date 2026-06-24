@@ -38,6 +38,7 @@ class TaskCreate(BaseModel):
     description: str | None = None
     required_skills: list[str] | None = None
     assigned_to: int | None = None
+    assignee_ids: list[int] | None = None
     deadline: datetime | None = None
 
 class TaskUpdate(BaseModel):
@@ -45,7 +46,24 @@ class TaskUpdate(BaseModel):
     description: str | None = None
     required_skills: list[str] | None = None
     assigned_to: int | None = None
+    assignee_ids: list[int] | None = None
     deadline: datetime | None = None
+
+class TaskAssigneeSchema(BaseModel):
+    id: int
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+class TaskGoalSchema(BaseModel):
+    id: int
+    title: str
+    owner_name: str | None = None
+    owner_id: int
+    progress: float
+    status: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 class TaskResponse(BaseModel):
     id: int
@@ -55,6 +73,8 @@ class TaskResponse(BaseModel):
     required_skills: list[str] | None = None
     assigned_to: int | None
     assigned_user_name: str | None = None
+    assignees: list[TaskAssigneeSchema] | None = None
+    goals: list[TaskGoalSchema] | None = None
     pending_review: bool
     progress: float
     deadline: datetime | None
@@ -63,3 +83,4 @@ class TaskResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+

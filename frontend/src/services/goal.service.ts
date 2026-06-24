@@ -30,8 +30,12 @@ export async function submitGoal(id: number): Promise<Goal> {
   return apiFetch<Goal>(`/goals/${id}/submit`, { method: "POST", token: token() })
 }
 
-export async function generateGoalPlan(id: number): Promise<unknown> {
-  return apiFetch(`/goals/${id}/generate-plan`, { method: "POST", token: token() })
+export async function generateGoalPlan(id: number, provider?: string, model?: string): Promise<unknown> {
+  const params = new URLSearchParams()
+  if (provider) params.set('ai_provider', provider)
+  if (model) params.set('ai_model', model)
+  const qs = params.toString() ? `?${params.toString()}` : ''
+  return apiFetch(`/goals/${id}/generate-plan${qs}`, { method: "POST", token: token() })
 }
 
 export async function getGoalMilestones(goalId: number) {

@@ -41,7 +41,7 @@ async def generate_ai_plan(goal_data, provider: str = "gemini", model: str | Non
         if not selected_model:
             selected_model = await get_ollama_model()
         try:
-            raw_response = await call_ollama(prompt, selected_model)
+            raw_response = await call_ollama(prompt, selected_model, format="json")
             clean = raw_response
             if clean.startswith("```"):
                 clean = clean.split("\n", 1)[1] if "\n" in clean else clean[3:]
@@ -77,7 +77,7 @@ async def generate_ai_plan(goal_data, provider: str = "gemini", model: str | Non
         genai.configure(api_key=active_key)
         selected_model = model or "gemini-2.5-flash"
         gemini_model = genai.GenerativeModel(selected_model)
-        response = await asyncio.to_thread(gemini_model.generate_content, prompt)
+        response = await gemini_model.generate_content_async(prompt)
         raw_response = response.text.strip()
 
         # Strip markdown code fences if present
@@ -112,7 +112,7 @@ async def refine_goal(raw_goal: str, provider: str = "gemini", model: str | None
         if not selected_model:
             selected_model = await get_ollama_model()
         try:
-            raw = await call_ollama(prompt, selected_model)
+            raw = await call_ollama(prompt, selected_model, format="json")
             clean = raw
             if clean.startswith("```"):
                 clean = clean.split("\n", 1)[1] if "\n" in clean else clean[3:]
@@ -149,7 +149,7 @@ async def refine_goal(raw_goal: str, provider: str = "gemini", model: str | None
         genai.configure(api_key=active_key)
         selected_model = model or "gemini-2.5-flash"
         gemini_model = genai.GenerativeModel(selected_model)
-        response = await asyncio.to_thread(gemini_model.generate_content, prompt)
+        response = await gemini_model.generate_content_async(prompt)
         raw = response.text.strip()
 
         # Strip markdown code fences
@@ -203,16 +203,19 @@ async def get_ollama_model() -> str:
     return "llama3"
 
 
-async def call_ollama(prompt: str, model: str) -> str:
+async def call_ollama(prompt: str, model: str, format: str | None = None) -> str:
     """Call the local Ollama generate API."""
     url = f"{OLLAMA_HOST}/api/generate"
+    payload = {
+        "model": model,
+        "prompt": prompt,
+        "stream": False
+    }
+    if format:
+        payload["format"] = format
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
-            res = await client.post(url, json={
-                "model": model,
-                "prompt": prompt,
-                "stream": False
-            })
+            res = await client.post(url, json=payload)
             if res.status_code == 200:
                 return res.json().get("response", "").strip()
             else:
@@ -330,12 +333,10 @@ async def ai_buddy_chat(query: str, context: str, provider: str = "gemini", mode
         try:
             import google.generativeai as genai
             
-            # Use thread pool executor to prevent blocking FastAPI's event loop
-            import asyncio
             genai.configure(api_key=active_key)
             selected_model = model or "gemini-2.5-flash"
             gemini_model = genai.GenerativeModel(selected_model)
-            response = await asyncio.to_thread(gemini_model.generate_content, prompt)
+            response = await gemini_model.generate_content_async(prompt)
             
             execution_time_ms = int((time.time() - start_time) * 1000)
             logger.info(

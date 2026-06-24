@@ -40,6 +40,7 @@ from app.routes.gamification_routes import router as gamification_router
 from app.routes.talent_search_routes import router as talent_router
 from app.routes.dependency_routes import router as dependency_router
 from app.routes.skill_intelligence_routes import router as skill_intelligence_router
+from app.routes.hierarchy_routes import router as hierarchy_router
 
 
 from app.middleware.trace import TraceMiddleware
@@ -206,3 +207,4 @@ app.include_router(gamification_router)
 app.include_router(talent_router)
 app.include_router(dependency_router)
 app.include_router(skill_intelligence_router)
+app.include_router(hierarchy_router)

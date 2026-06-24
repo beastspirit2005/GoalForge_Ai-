@@ -210,7 +210,7 @@ Return ONLY a valid JSON object in this exact shape, without any markdown format
             selected_model = model or "gemini-2.0-flash"
             gemini_model = genai.GenerativeModel(selected_model)
             
-            response = await asyncio.to_thread(gemini_model.generate_content, prompt)
+            response = await gemini_model.generate_content_async(prompt)
             raw_response = response.text.strip()
             return _parse_json_response(raw_response)
         except Exception as exc:

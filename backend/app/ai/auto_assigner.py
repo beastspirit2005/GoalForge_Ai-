@@ -6,18 +6,22 @@ from pydantic import BaseModel, ValidationError
 from app.core.config import settings
 
 class AutoAssignmentResponse(BaseModel):
-    assigned_user_id: int | None
+    assigned_user_ids: List[int] | None = None
+    assigned_user_id: int | None = None
     reason: str
 
 def fallback_auto_assign(task_data: dict, available_users: list[dict]) -> dict:
     if not available_users:
-        return {"assigned_user_id": None, "reason": "No users available for assignment."}
+        return {"assigned_user_ids": [], "assigned_user_id": None, "reason": "No users available for assignment."}
     
-    # Just pick the first user for fallback
-    best_user = available_users[0]
+    # Pick top 2 users for fallback (plan spec)
+    top_users = available_users[:2]
+    top_ids = [u["id"] for u in top_users]
+    top_names = ", ".join(u["name"] for u in top_users)
     return {
-        "assigned_user_id": best_user["id"],
-        "reason": f"Fallback assignment: Selected {best_user['name']} as they were the first available."
+        "assigned_user_ids": top_ids,
+        "assigned_user_id": top_ids[0],
+        "reason": f"Fallback assignment: Selected {top_names} as they were the top available candidates."
     }
 
 async def generate_auto_assignment(
@@ -55,11 +59,11 @@ async def generate_auto_assignment(
         prompt += f"- ID: {u['id']}, Name: {u['name']}, Skills: {skills_str}\n"
         
     prompt += """
-    Based on the above, select the single best employee ID for the task.
+    Based on the above, select the best employee IDs for the task (you may assign one or multiple people if the task requires it).
     Return ONLY a valid JSON response in the following exact format:
     {
-      "assigned_user_id": 123,
-      "reason": "Explanation of why this user is the best fit."
+      "assigned_user_ids": [123, 124],
+      "reason": "Explanation of why these users are the best fit."
     }
     """
     

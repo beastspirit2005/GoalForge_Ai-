@@ -1,8 +1,8 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { Brain, CalendarDays, Loader2, Plus, Send, Target } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import MilestoneCard from "@/components/ai/MilestoneCard"
 import RecommendationBox from "@/components/ai/RecommendationBox"
 import GoalStatusBadge from "@/components/goals/GoalStatusBadge"
@@ -15,6 +15,8 @@ import { generateGoalPlan, createLocalGoalPlan, type GeneratePlanResponse } from
 import { createGoal, generateGoalPlan as generateStoredGoalPlan } from "@/services/goal.service"
 import { getStoredToken } from "@/services/auth.service"
 import { useAuth } from "@/hooks/useAuth"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
 
 const generatedMilestones = [
   { title: "Clarify measurable outcome and success metric", due: "Week 1" },
@@ -27,6 +29,9 @@ const generatedMilestones = [
 export default function GoalForm() {
   const router = useRouter()
   const { user } = useAuth()
+  const searchParams = useSearchParams()
+  const taskId = searchParams.get("task_id")
+  const taskTitle = searchParams.get("task_title")
   const isSavingRef = useRef(false)
   const [generated, setGenerated] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -34,6 +39,31 @@ export default function GoalForm() {
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
   const [plan, setPlan] = useState<GeneratePlanResponse | null>(null)
+  const [aiProvider, setAiProvider] = useState("gemini")
+  const [aiModel, setAiModel] = useState("gemini-2.5-flash")
+  const [ollamaModels, setOllamaModels] = useState<string[]>([])
+
+  useEffect(() => {
+    if (aiProvider === "ollama") {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/ai/models`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.models && data.models.length > 0) {
+            setOllamaModels(data.models)
+            if (!data.models.includes(aiModel)) {
+              setAiModel(data.models[0])
+            }
+          } else {
+            setOllamaModels(["llama3:8b", "mistral:latest", "qwen3.6:latest"])
+          }
+        })
+        .catch(err => {
+          console.warn("Could not fetch Ollama models from backend", err)
+          setOllamaModels(["llama3:8b", "mistral:latest", "qwen3.6:latest"])
+        })
+    }
+  }, [aiProvider])
+
   const [form, setForm] = useState({
     title: "Increase product activation rate",
     deadline: "2026-06-30",
@@ -47,7 +77,11 @@ export default function GoalForm() {
     setError("")
     setMessage("")
 
-    const response = await generateGoalPlan(form)
+    const response = await generateGoalPlan({
+      ...form,
+      provider: aiProvider,
+      model: aiModel
+    })
     setPlan(response)
     setGenerated(true)
     if (response.source === "fallback") {
@@ -90,8 +124,9 @@ export default function GoalForm() {
             target: form.target,
             deadline: form.deadline,
             weightage: 25,
+            task_id: taskId ? parseInt(taskId) : undefined,
           })
-          await generateStoredGoalPlan(goal.id)
+          await generateStoredGoalPlan(goal.id, aiProvider, aiModel)
         } catch (apiErr) {
           console.warn("Backend database sync bypassed: API server is offline.", apiErr)
         }
@@ -126,6 +161,12 @@ export default function GoalForm() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
+          {taskId && taskTitle && (
+            <div className="rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 p-3 mb-4">
+              <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Creating goal under task</p>
+              <p className="text-sm text-emerald-900 dark:text-emerald-200 font-medium mt-1">{taskTitle}</p>
+            </div>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-2 text-sm font-medium text-slate-700">
               Goal title
@@ -172,6 +213,60 @@ export default function GoalForm() {
               }
             />
           </label>
+          {/* AI Settings */}
+          <div className="grid gap-4 sm:grid-cols-2 p-3 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.05] rounded-lg">
+            <div className="space-y-1.5">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">AI Provider</span>
+              <Select value={aiProvider} onValueChange={(val) => {
+                setAiProvider(val)
+                if (val === "ollama") {
+                  setAiModel(ollamaModels[0] || "llama3:8b")
+                } else {
+                  setAiModel("gemini-2.5-flash")
+                }
+              }}>
+                <SelectTrigger className="h-9 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-xs">
+                  <SelectValue placeholder="Select AI Provider" />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-xs">
+                  <SelectItem value="gemini">Gemini (Cloud)</SelectItem>
+                  <SelectItem value="ollama">Ollama (Local)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">AI Model</span>
+              {aiProvider === "ollama" ? (
+                <Select value={aiModel} onValueChange={setAiModel}>
+                  <SelectTrigger className="h-9 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-xs">
+                    <SelectValue placeholder="Select Ollama Model" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-xs">
+                    {ollamaModels.length > 0 ? (
+                      ollamaModels.map((m) => (
+                        <SelectItem key={m} value={m}>
+                          {m}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="llama3:8b">llama3:8b</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Select value={aiModel} onValueChange={setAiModel}>
+                  <SelectTrigger className="h-9 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-xs">
+                    <SelectValue placeholder="Select Gemini Model" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-xs">
+                    <SelectItem value="gemini-2.5-flash">gemini-2.5-flash</SelectItem>
+                    <SelectItem value="gemini-2.5-pro">gemini-2.5-pro</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          </div>
+
           <div className="grid gap-3 sm:grid-cols-2">
             <Button
               className="h-11 gap-2 bg-slate-950 text-white text-sm shadow-lg shadow-slate-200 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
@@ -209,7 +304,9 @@ export default function GoalForm() {
             {plan ? <GoalStatusBadge risk={plan.risk} /> : null}
           </div>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            {plan?.source === "gemini"
+            {plan?.source?.includes("ollama")
+              ? `Generated by local Ollama (${plan.source.split("(")[1]?.replace(")", "") || "model"}) via backend.`
+              : plan?.source === "gemini"
               ? "Generated by Gemini through the FastAPI backend."
               : "Generated locally with the built-in fallback. No API key is required."}
           </p>

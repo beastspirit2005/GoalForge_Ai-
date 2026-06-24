@@ -3,6 +3,8 @@ export type GeneratePlanPayload = {
   description: string
   target: string
   deadline: string
+  provider?: string
+  model?: string | null
 }
 
 export type GeneratePlanResponse = {

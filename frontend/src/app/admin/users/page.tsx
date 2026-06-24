@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import DashboardLayout from "@/components/layout/DashboardLayout"
 import { apiFetch } from "@/lib/api"
-import { getStoredToken } from "@/services/auth.service"
+import { getStoredToken, getCurrentUser } from "@/services/auth.service"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -51,11 +51,14 @@ type User = {
   active: boolean;
   is_approved?: boolean;
   is_active?: boolean;
+  admin_id?: number | null;
 }
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>(defaultUsers)
   const [isMounted, setIsMounted] = useState(false)
+  const [fetchError, setFetchError] = useState(false)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
   
   // Form state
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -72,16 +75,27 @@ export default function UsersPage() {
   const [editRole, setEditRole] = useState("employee")
   const [editDept, setEditDept] = useState("")
   const [editActive, setEditActive] = useState(true)
+  const [editAdminId, setEditAdminId] = useState<number | "">("")
+  const [editManagerId, setEditManagerId] = useState<number | "">("")
 
   useEffect(() => {
     setIsMounted(true)
     const fetchUsers = async () => {
       try {
+        const user = await getCurrentUser()
+        setCurrentUser(user as unknown as User)
+      } catch (err) {
+        console.error("Failed to fetch current user", err)
+      }
+
+      try {
         const token = getStoredToken()
         const data = await apiFetch<any[]>("/admin/users", { token })
         setUsers(data)
+        setFetchError(false)
       } catch (err) {
         console.error("Failed to fetch users:", err)
+        setFetchError(true)
         const stored = window.localStorage.getItem("goalforge.admin.users")
         if (stored) {
           setUsers(JSON.parse(stored))
@@ -147,6 +161,8 @@ export default function UsersPage() {
     setEditRole(user.role || "employee")
     setEditDept(user.department || "")
     setEditActive(user.active ?? user.is_active ?? true)
+    setEditAdminId(user.admin_id ?? "")
+    setEditManagerId(user.manager_id ?? "")
     setIsEditDialogOpen(true)
   }
 
@@ -162,13 +178,24 @@ export default function UsersPage() {
           name: editName,
           role: editRole,
           department: editDept,
-          is_active: editActive
+          is_active: editActive,
+          ...(currentUser?.role === "super_admin" ? { admin_id: editAdminId === "" ? null : Number(editAdminId) } : {}),
+          manager_id: editManagerId === "" ? null : Number(editManagerId)
         }
       })
       
       const updatedUsers = users.map(u => {
         if (u.id === editingUserId) {
-          return { ...u, name: editName, role: editRole, department: editDept, active: editActive, is_active: editActive }
+          return { 
+            ...u, 
+            name: editName, 
+            role: editRole, 
+            department: editDept, 
+            active: editActive, 
+            is_active: editActive,
+            ...(currentUser?.role === "super_admin" ? { admin_id: editAdminId === "" ? null : Number(editAdminId) } : {}),
+            manager_id: editManagerId === "" ? null : Number(editManagerId)
+          }
         }
         return u
       })
@@ -247,6 +274,12 @@ export default function UsersPage() {
               Manage users, assign administrative roles, and handle onboarding or offboarding.
             </p>
           </div>
+          
+          {fetchError && (
+            <div className="w-full sm:w-auto rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">
+              Failed to connect to backend server. Using local cache.
+            </div>
+          )}
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -362,6 +395,38 @@ export default function UsersPage() {
                   />
                   <label htmlFor="editActive" className="text-sm font-medium text-slate-700 dark:text-white/70">Account Active</label>
                 </div>
+                {currentUser?.role === "super_admin" && (
+                  <div className="grid gap-2 mt-2">
+                    <label className="text-sm font-medium text-slate-700 dark:text-white/70">Assigned Admin</label>
+                    <select 
+                      value={editAdminId}
+                      onChange={(e) => setEditAdminId(e.target.value ? Number(e.target.value) : "")}
+                      className="flex h-10 w-full rounded-md border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--gf-indigo)]"
+                    >
+                      <option value="" className="dark:bg-[#0f0f13]">None</option>
+                      {users.filter(u => u.role === "admin" || u.role === "super_admin").map(a => (
+                        <option key={a.id} value={a.id} className="dark:bg-[#0f0f13]">{a.name} ({a.role})</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {(currentUser?.role === "super_admin" || currentUser?.role === "admin") && editRole === "employee" && (
+                  <div className="grid gap-2 mt-2">
+                    <label className="text-sm font-medium text-slate-700 dark:text-white/70">Assigned Manager</label>
+                    <select 
+                      value={editManagerId}
+                      onChange={(e) => setEditManagerId(e.target.value ? Number(e.target.value) : "")}
+                      className="flex h-10 w-full rounded-md border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--gf-indigo)]"
+                    >
+                      <option value="" className="dark:bg-[#0f0f13]">None</option>
+                      {users
+                        .filter(u => u.role === "manager" && (currentUser?.role === "super_admin" || u.admin_id === currentUser?.id))
+                        .map(m => (
+                          <option key={m.id} value={m.id} className="dark:bg-[#0f0f13]">{m.name} ({m.department})</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
               <DialogFooter>
                 <Button onClick={handleEditUser} className="bg-[var(--gf-indigo)] hover:bg-[var(--gf-indigo)]/90 text-white">
@@ -380,6 +445,7 @@ export default function UsersPage() {
                   <TableHead className="w-[250px] text-slate-500 dark:text-white/40">User</TableHead>
                   <TableHead className="text-slate-500 dark:text-white/40">Role</TableHead>
                   <TableHead className="text-slate-500 dark:text-white/40">Department</TableHead>
+                  {currentUser?.role === "super_admin" && <TableHead className="text-slate-500 dark:text-white/40">Assigned Admin</TableHead>}
                   <TableHead className="text-slate-500 dark:text-white/40">Approval</TableHead>
                   <TableHead className="text-slate-500 dark:text-white/40">Status</TableHead>
                   <TableHead className="text-right text-slate-500 dark:text-white/40">Actions</TableHead>
@@ -395,6 +461,11 @@ export default function UsersPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-slate-700 dark:text-white/80">{user.department}</TableCell>
+                    {currentUser?.role === "super_admin" && (
+                      <TableCell className="text-slate-700 dark:text-white/80">
+                        {user.admin_id ? users.find(u => u.id === user.admin_id)?.name || `ID: ${user.admin_id}` : "Unassigned"}
+                      </TableCell>
+                    )}
                     <TableCell>
                       <Badge className={user.is_approved !== false ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-0"}>
                         {user.is_approved !== false ? "Approved" : "Pending"}

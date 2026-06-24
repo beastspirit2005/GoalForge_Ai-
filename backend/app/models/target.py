@@ -38,6 +38,13 @@ class Target(AuditMixin, Base):
     manager = relationship("User", foreign_keys=[manager_id])
 
 
+class TaskAssignee(Base):
+    __tablename__ = "task_assignees"
+    task_id: Mapped[int] = mapped_column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    assigned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class Task(Base):
     __tablename__ = "tasks"
 
@@ -57,6 +64,8 @@ class Task(Base):
     target = relationship("Target", back_populates="tasks")
     required_skills = relationship("TaskRequiredSkill", cascade="all, delete-orphan")
     assignee = relationship("User", foreign_keys=[assigned_to])
+    assignees = relationship("User", secondary="task_assignees", backref="assigned_tasks", lazy="selectin")
+    goals = relationship("Goal", back_populates="task", lazy="selectin")
 
 
 class RecommendationFeedback(Base):

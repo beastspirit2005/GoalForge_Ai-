@@ -94,7 +94,7 @@ async def upload_resume(
 
     return {
         "message": "Resume processed successfully",
-        "skills_extracted": len(parsed.get("extracted_skills", [])),
+        "skill_count": len(parsed.get("extracted_skills", [])),
         "skills_added": skills_added,
         "experience_years": parsed.get("experience_years"),
         "parsed_by": parsed.get("parsed_by"),

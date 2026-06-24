@@ -13,7 +13,7 @@ from app.models.escalation import Escalation
 from app.models.role import UserRole, GoalStatus, GoalRisk, CheckinStatus, NotificationType
 
 from app.models.skill import Skill, UserSkill
-from app.models.target import Target, Task, RecommendationFeedback, TaskDependency
+from app.models.target import Target, Task, TaskAssignee, RecommendationFeedback, TaskDependency
 
 # Enterprise V2 models
 from app.models.team_health_score import TeamHealthScore
@@ -37,6 +37,7 @@ __all__ = [
     "Notification",
     "Cycle",
     "Target",
+    "TaskAssignee",
     "SharedGoal",
     "ImpactAnalysis",
     "Skill",
@@ -53,4 +54,5 @@ __all__ = [
     "GoalSuccessPrediction",
     "PointTransaction",
     "SystemSetting",
+    "TaskAssignee",
 ]

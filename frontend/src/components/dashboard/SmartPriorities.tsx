@@ -12,6 +12,7 @@ import { demoGoals } from "@/lib/demo-data"
 export function SmartPriorities() {
   const [priorities, setPriorities] = useState<Goal[]>([])
   const [loading, setLoading] = useState(true)
+  const [isOfflineMode, setIsOfflineMode] = useState(false)
 
   useEffect(() => {
     async function fetchPriorities() {
@@ -26,9 +27,11 @@ export function SmartPriorities() {
       try {
         const res = await apiFetch<Goal[]>("/goals/prioritized", { token })
         setPriorities(res.slice(0, 3)) // Show top 3
+        setIsOfflineMode(false)
       } catch (err) {
         console.warn("Failed to fetch prioritized goals, falling back to local:", err)
         setPriorities(demoGoals.slice(0, 3) as any as Goal[])
+        setIsOfflineMode(true)
       } finally {
         setLoading(false)
       }
@@ -72,6 +75,9 @@ export function SmartPriorities() {
             <Sparkles className="h-4 w-4 text-[var(--gf-indigo)]" />
           </div>
           <CardTitle className="text-sm font-semibold text-white/90">Smart Priorities</CardTitle>
+          {isOfflineMode && (
+            <Badge variant="outline" className="ml-auto text-[10px] bg-amber-500/10 text-amber-400 border-amber-500/20">Offline</Badge>
+          )}
         </div>
         <CardDescription className="text-[12px] text-white/35">
           AI ranks your goals by deadline urgency, risk level, and strategic impact.

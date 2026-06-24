@@ -6,6 +6,20 @@ type Props = {
   risk?: GoalRisk
 }
 
+const normalizeStatus = (s: string): GoalStatus => {
+  const map: Record<string, GoalStatus> = {
+    "draft": "Needs Review",
+    "pending": "Pending Approval",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "locked": "On Track",
+    "completed": "Completed",
+    "on hold": "At Risk",
+    "escalated": "Escalated",
+  }
+  return map[s.toLowerCase()] || (s as GoalStatus)
+}
+
 const statusClass: Record<GoalStatus, string> = {
   "On Track": "border-emerald-500/20 bg-emerald-500/10 text-emerald-400",
   "Needs Review": "border-amber-500/20 bg-amber-500/10 text-amber-400",
@@ -37,9 +51,10 @@ const statusDot: Record<GoalStatus, string> = {
 }
 
 export default function GoalStatusBadge({ status, risk }: Props) {
-  const label = status ?? `${risk} Risk`
-  const className = status ? statusClass[status] : riskClass[risk ?? "Low"]
-  const dot = status ? statusDot[status] : null
+  const normalizedStatus = status ? normalizeStatus(status) : undefined
+  const label = normalizedStatus ?? `${risk} Risk`
+  const className = normalizedStatus ? statusClass[normalizedStatus] : riskClass[risk ?? "Low"]
+  const dot = normalizedStatus ? statusDot[normalizedStatus] : null
 
   return (
     <Badge className={`gap-1.5 border text-[11px] font-medium ${className}`} variant="outline">

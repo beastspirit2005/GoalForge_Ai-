@@ -290,7 +290,9 @@ export default function SkillProfilePage() {
                     {selectedFile.name}
                   </p>
                   <p className="text-xs text-white/30 mt-1">
-                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                    {selectedFile.size < 1024 * 1024
+                      ? `${(selectedFile.size / 1024).toFixed(2)} KB`
+                      : `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`}
                   </p>
                   <button
                     onClick={() => setSelectedFile(null)}

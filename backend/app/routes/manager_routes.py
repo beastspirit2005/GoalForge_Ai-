@@ -126,3 +126,24 @@ async def add_comment(
     await db.flush()
     await db.refresh(checkin)
     return {"id": checkin.id, "manager_comment": checkin.manager_comment}
+
+
+@router.get("/team-members")
+async def get_team_members(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_write_role("manager", "admin", "super_admin")),
+):
+    """Get all active employees managed by the current manager."""
+    from sqlalchemy import select
+    from app.models.user import User as UserModel
+    result = await db.execute(
+        select(UserModel).where(
+            UserModel.manager_id == current_user.id,
+            UserModel.is_active == True
+        )
+    )
+    members = result.scalars().all()
+    return [
+        {"id": m.id, "name": m.name, "email": m.email, "role": m.role, "department": m.department}
+        for m in members
+    ]

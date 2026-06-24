@@ -43,6 +43,7 @@ const links: NavLink[] = [
   // Employee
   { title: "Dashboard", href: "/employee/dashboard", icon: LayoutDashboard, section: "Employee" },
   { title: "Assigned Tasks", href: "/employee/tasks", icon: ListTodo, section: "Employee" },
+  { title: "My Team", href: "/employee/my-team", icon: Users, section: "Employee" },
   { title: "Goals", href: "/employee/goals", icon: Target, section: "Employee" },
   { title: "Check-ins", href: "/employee/checkins", icon: CalendarDays, section: "Employee" },
   { title: "AI Insights", href: "/employee/ai-insights", icon: Brain, section: "Employee" },
@@ -53,7 +54,7 @@ const links: NavLink[] = [
   // Manager
   { title: "Manager", href: "/manager/dashboard", icon: Users, section: "Manager" },
   { title: "Tasks", href: "/manager/tasks", icon: ListTodo, section: "Manager" },
-  { title: "Team Progress", href: "/manager/team-progress", icon: TrendingUp, section: "Manager" },
+  { title: "My Team", href: "/manager/my-team", icon: Users, section: "Manager" },
   { title: "Approvals", href: "/manager/approvals", icon: ClipboardCheck, section: "Manager" },
   { title: "Comments", href: "/manager/comments", icon: MessageSquare, section: "Manager" },
   { title: "Predictions", href: "/manager/predictions", icon: Zap, section: "Manager" },
@@ -64,6 +65,7 @@ const links: NavLink[] = [
   { title: "Targets", href: "/admin/targets", icon: Target, section: "Admin" },
   { title: "Analytics", href: "/admin/org-analytics", icon: BarChart3, section: "Admin" },
   { title: "Users", href: "/admin/users", icon: Users, section: "Admin" },
+  { title: "Managers", href: "/admin/managers", icon: Users, section: "Admin" },
   { title: "Talent Search", href: "/admin/talent-search", icon: Search, section: "Admin" },
   { title: "Capacity", href: "/admin/capacity", icon: PieChart, section: "Admin" },
   { title: "Recognition", href: "/admin/recognition", icon: Award, section: "Admin" },
@@ -118,6 +120,12 @@ export default function Sidebar({ onClose, isMobile }: SidebarProps = {}) {
           const previousSection = visibleLinks[index - 1]?.section
           const showSection = link.section && link.section !== previousSection
 
+          let displayTitle = link.title;
+          if (link.href === "/admin/managers") {
+            if (role === "super_admin") displayTitle = "Teams";
+            if (role === "admin") displayTitle = "My Team";
+          }
+
           return (
             <div key={link.href}>
               {showSection && (
@@ -140,7 +148,7 @@ export default function Sidebar({ onClose, isMobile }: SidebarProps = {}) {
                     active ? "text-[var(--gf-indigo)]" : "text-slate-400 group-hover:text-slate-600 dark:text-white/30 dark:group-hover:text-white/60"
                   )}
                 />
-                <span>{link.title}</span>
+                <span>{displayTitle}</span>
                 {active && (
                   <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[var(--gf-indigo)] shadow-[0_0_6px_var(--gf-indigo)]" />
                 )}

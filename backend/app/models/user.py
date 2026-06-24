@@ -19,6 +19,7 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(20), nullable=False, default=UserRole.EMPLOYEE.value, index=True)
     department: Mapped[str | None] = mapped_column(String(120), nullable=True)
     manager_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    admin_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_approved: Mapped[bool] = mapped_column(Boolean, default=False)
     otp_code: Mapped[str | None] = mapped_column(String(6), nullable=True)
@@ -46,10 +47,12 @@ class User(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     token_version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     goals = relationship("Goal", back_populates="owner", foreign_keys="Goal.user_id")
     managed_employees = relationship("User", backref="manager", remote_side="User.id", foreign_keys=[manager_id])
+    admin_assigned_users = relationship("User", backref="admin", remote_side="User.id", foreign_keys=[admin_id])
     user_skills = relationship("UserSkill", back_populates="user", cascade="all, delete-orphan")
 
 

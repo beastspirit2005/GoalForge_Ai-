@@ -220,21 +220,28 @@ async def get_copilot_context(db: AsyncSession, user: User) -> str:
 
     # 1. ADMIN ROLE
     if user.role == "admin":
-        # Fetch active cycles
-        cycle_result = await db.execute(
-            select(Cycle).where(Cycle.is_active == True)
+        from app.models.target import Target, Task
+        from app.models.milestone import Milestone
+
+        # Pending user approvals
+        pending_users_res = await db.execute(
+            select(User).where(User.is_approved == False, User.is_active == True)  # noqa: E712
         )
+        pending_users = pending_users_res.scalars().all()
+
+        # Active cycles
+        cycle_result = await db.execute(select(Cycle).where(Cycle.is_active == True))  # noqa: E712
         active_cycles = cycle_result.scalars().all()
-        
-        # Fetch open escalations
+
+        # Open escalations with goal + user details
         esc_result = await db.execute(
             select(Escalation)
             .where(Escalation.status == "open")
             .options(selectinload(Escalation.goal), selectinload(Escalation.user))
         )
         open_escalations = esc_result.scalars().all()
-        
-        # Fetch top leaderboard performers
+
+        # Leaderboard top 5
         leaderboard_result = await db.execute(
             select(LeaderboardEntry)
             .options(selectinload(LeaderboardEntry.user))
@@ -242,153 +249,296 @@ async def get_copilot_context(db: AsyncSession, user: User) -> str:
             .limit(5)
         )
         top_performers = leaderboard_result.scalars().all()
-        
-        # Fetch global metrics
-        user_count_res = await db.execute(select(func.count()).select_from(User))
-        total_users = user_count_res.scalar() or 0
-        
+
+        # Global goal metrics
         goal_count_res = await db.execute(select(func.count()).select_from(Goal))
         total_goals = goal_count_res.scalar() or 0
-        
+
+        goals_by_status_res = await db.execute(
+            select(Goal.status, func.count()).group_by(Goal.status)
+        )
+        status_breakdown = {row[0]: row[1] for row in goals_by_status_res.all()}
+
+        avg_prog_res = await db.execute(select(func.avg(Goal.progress)))
+        avg_progress = avg_prog_res.scalar() or 0.0
+
+        # User counts
+        user_count_res = await db.execute(
+            select(User.role, func.count()).where(User.is_active == True).group_by(User.role)  # noqa: E712
+        )
+        role_breakdown = {row[0]: row[1] for row in user_count_res.all()}
+        total_active_users = sum(role_breakdown.values())
+
+        # Recent audit activity (last 10)
+        recent_audits_res = await db.execute(
+            select(AuditLog).order_by(AuditLog.created_at.desc()).limit(10)
+        )
+        recent_audits = recent_audits_res.scalars().all()
+
         context = [
-            f"User: {user.name} (Role: Admin)",
-            "--- GLOBAL SYSTEM OVERVIEW ---",
-            f"Total Registered Users: {total_users}",
-            f"Total Goals Created: {total_goals}",
+            f"User: {user.name} (Role: Admin, Department: {user.department or 'N/A'})",
             "",
-            "--- ACTIVE PERFORMANCE CYCLES ---"
+            "--- PLATFORM OVERVIEW ---",
+            f"Active Users: {total_active_users} (Employees: {role_breakdown.get('employee', 0)}, Managers: {role_breakdown.get('manager', 0)}, Admins: {role_breakdown.get('admin', 0)})",
+            f"Total Goals: {total_goals} | Avg Progress: {avg_progress:.1f}%",
+            f"Goals by Status: " + ", ".join(f"{s}: {c}" for s, c in status_breakdown.items()),
+            "",
+            "--- PENDING USER APPROVALS ---",
         ]
+        if pending_users:
+            context.append(f"{len(pending_users)} user(s) awaiting approval:")
+            for pu in pending_users:
+                context.append(f"  * {pu.name} ({pu.email}) — Role: {pu.role}, Registered: {str(pu.created_at)[:10]}")
+        else:
+            context.append("No users pending approval. All accounts are cleared.")
+
+        context += ["", "--- ACTIVE PERFORMANCE CYCLES ---"]
         if active_cycles:
             for cyc in active_cycles:
-                context.append(f"- Cycle: {cyc.name} ({cyc.start_date} to {cyc.end_date}) [Status: {cyc.status}]")
+                context.append(f"- {cyc.name}: {str(cyc.start_date)[:10]} → {str(cyc.end_date)[:10]} [{cyc.status}]")
         else:
-            context.append("No active cycles found.")
-            
-        context.append("")
-        context.append("--- ACTIVE AUTO-ESCALATED GOALS (OPEN ESCALATIONS) ---")
+            context.append("No active cycles.")
+
+        context += ["", "--- OPEN ESCALATIONS ---"]
         if open_escalations:
             for esc in open_escalations:
                 goal_title = esc.goal.title if esc.goal else "Unknown Goal"
-                emp_name = esc.user.name if esc.user else "Unknown Employee"
-                context.append(f"- Escalation #{esc.id}: Goal '{goal_title}' owned by {emp_name}. Reason: {esc.reason} (Severity: {esc.severity})")
+                emp_name = esc.user.name if esc.user else "Unknown"
+                context.append(f"- Escalation #{esc.id}: '{goal_title}' owned by {emp_name} | Severity: {esc.severity} | Reason: {esc.reason}")
         else:
-            context.append("No active escalations. System is running healthy!")
-            
-        context.append("")
-        context.append("--- LEADERBOARD TOP PERFORMERS ---")
+            context.append("No open escalations. System is healthy!")
+
+        context += ["", "--- TOP PERFORMERS (LEADERBOARD) ---"]
         if top_performers:
             for entry in top_performers:
-                emp_name = entry.user.name if entry.user else "Unknown User"
-                context.append(f"- Rank #{entry.rank}: {emp_name} - Score: {entry.score:.1f} (Goals Completed: {entry.goals_completed}, Consistency: {entry.consistency_rate:.0f}%)")
+                emp_name = entry.user.name if entry.user else "Unknown"
+                context.append(f"- #{entry.rank}: {emp_name} — Score: {entry.score:.1f}, Goals Completed: {entry.goals_completed}, Consistency: {entry.consistency_rate:.0f}%")
         else:
-            context.append("No leaderboard entries found.")
-            
+            context.append("No leaderboard entries yet.")
+
+        context += ["", "--- RECENT PLATFORM ACTIVITY (AUDIT LOG) ---"]
+        if recent_audits:
+            for log in recent_audits:
+                context.append(f"- [{str(log.created_at)[:16]}] User #{log.user_id} → '{log.action}' on {log.entity_type} #{log.entity_id}")
+        else:
+            context.append("No recent audit activity.")
+
         return "\n".join(context)
         
     # 2. MANAGER ROLE
     elif user.role == "manager":
-        # Fetch manager's own goals
+        from app.models.target import Target, Task
+        from app.models.milestone import Milestone
+
+        # Manager's own goals
         own_result = await db.execute(
             select(Goal)
             .where(Goal.user_id == user.id)
-            .options(selectinload(Goal.checkins))
+            .options(selectinload(Goal.milestones), selectinload(Goal.checkins))
         )
         own_goals = own_result.scalars().all()
-        
-        # Fetch managed employees
+
+        # Managed employees
         emp_result = await db.execute(
-            select(User).where(User.manager_id == user.id)
+            select(User).where(User.manager_id == user.id, User.is_active == True)  # noqa: E712
         )
         employees = emp_result.scalars().all()
         emp_ids = [emp.id for emp in employees]
-        
-        team_goals = []
-        pending_approvals = []
-        
+
+        team_goals: list = []
+        pending_approvals: list = []
+        targets: list = []
+        tasks_under_manager: list = []
+
         if emp_ids:
-            # Fetch team goals
+            # Team goals with owner + checkins + milestones
             team_goals_res = await db.execute(
                 select(Goal)
                 .where(Goal.user_id.in_(emp_ids))
-                .options(selectinload(Goal.owner), selectinload(Goal.checkins))
+                .options(
+                    selectinload(Goal.owner),
+                    selectinload(Goal.checkins),
+                    selectinload(Goal.milestones),
+                    selectinload(Goal.escalations),
+                )
             )
             team_goals = team_goals_res.scalars().all()
-            
-            # Fetch pending approvals (goals from team in 'pending' status)
+
+            # Goals pending approval
             pending_res = await db.execute(
                 select(Goal)
                 .where(Goal.user_id.in_(emp_ids), Goal.status == "pending")
                 .options(selectinload(Goal.owner))
             )
             pending_approvals = pending_res.scalars().all()
-            
+
+        # Targets managed by this user
+        targets_res = await db.execute(
+            select(Target).where(Target.manager_id == user.id)
+            .options(selectinload(Target.tasks))
+        )
+        targets = targets_res.scalars().all()
+
+        # Tasks assigned to manager's team
+        if emp_ids:
+            tasks_res = await db.execute(
+                select(Task).where(Task.assigned_to.in_(emp_ids))
+            )
+            tasks_under_manager = tasks_res.scalars().all()
+
         context = [
-            f"User: {user.name} (Role: Manager)",
-            "--- MANAGER OWN GOALS ---"
+            f"User: {user.name} (Role: Manager, Department: {user.department or 'N/A'})",
+            f"Team Size: {len(employees)} direct reports",
+            "",
         ]
+
+        # Own goals summary
+        context.append("--- YOUR OWN GOALS ---")
         if own_goals:
             for g in own_goals:
-                context.append(f"- Own Goal: {g.title} (Progress: {g.progress}%, Status: {g.status}, Risk: {g.risk})")
+                done_ms = sum(1 for m in g.milestones if m.is_completed)
+                total_ms = len(g.milestones)
+                context.append(f"- {g.title} | Status: {g.status} | Progress: {g.progress:.0f}% | Risk: {g.risk} | Milestones: {done_ms}/{total_ms}")
         else:
             context.append("No personal goals configured.")
-            
-        context.append("")
-        context.append("--- TEAM MEMBERS ---")
-        if employees:
-            context.append(f"Managed Team Size: {len(employees)} members ({', '.join(e.name for e in employees)})")
+
+        # Managed targets + tasks
+        context += ["", "--- MANAGED TARGETS & TASKS ---"]
+        if targets:
+            for tgt in targets:
+                context.append(f"- Target: '{tgt.title}' | Status: {tgt.status} | Progress: {tgt.progress:.0f}%")
+                for task in tgt.tasks:
+                    context.append(f"  * Task: '{task.title}' | Status: {task.status} | Progress: {task.progress:.0f}% | Deadline: {str(task.deadline)[:10] if task.deadline else 'N/A'}")
         else:
-            context.append("No managed employees assigned.")
-            
-        context.append("")
-        context.append("--- TEAM GOALS ---")
+            context.append("No targets assigned to you yet.")
+
+        # Team member breakdown
+        context += ["", "--- TEAM MEMBERS ---"]
+        if employees:
+            for emp in employees:
+                emp_goals = [g for g in team_goals if g.user_id == emp.id]
+                avg_prog = sum(g.progress for g in emp_goals) / len(emp_goals) if emp_goals else 0
+                high_risk = sum(1 for g in emp_goals if g.risk == "High")
+                context.append(f"- {emp.name} ({emp.department or 'N/A'}) | Goals: {len(emp_goals)} | Avg Progress: {avg_prog:.0f}% | High-Risk Goals: {high_risk}")
+        else:
+            context.append("No direct reports assigned.")
+
+        # Team goals with check-ins
+        context += ["", "--- TEAM GOALS DETAIL ---"]
         if team_goals:
-            for tg in team_goals:
+            for tg in team_goals[:15]:  # Cap at 15 for context length
                 owner_name = tg.owner.name if tg.owner else "Unknown"
-                context.append(f"- Goal: '{tg.title}' owned by {owner_name} (Progress: {tg.progress}%, Status: {tg.status}, Risk: {tg.risk})")
-                # Include last checkin
+                open_escs = [e for e in (tg.escalations or []) if e.status == "open"]
+                esc_note = f" | ⚠ {len(open_escs)} escalation(s)" if open_escs else ""
+                context.append(f"- '{tg.title}' by {owner_name} | {tg.status} | {tg.progress:.0f}%{esc_note}")
                 if tg.checkins:
                     last_c = tg.checkins[-1]
-                    context.append(f"  * Last Checkin ({last_c.created_at.strftime('%Y-%m-%d')}): status '{last_c.progress_status}', notes: {last_c.notes or 'No notes'}")
+                    context.append(f"  Last check-in ({str(last_c.created_at)[:10]}): {last_c.notes or 'No notes'}")
         else:
             context.append("No active team goals.")
-            
-        context.append("")
-        context.append("--- PENDING MANAGER APPROVALS ---")
+
+        # Pending approvals
+        context += ["", "--- PENDING APPROVALS ---"]
         if pending_approvals:
             for p in pending_approvals:
                 owner_name = p.owner.name if p.owner else "Unknown"
-                context.append(f"- Pending Goal: '{p.title}' requested by {owner_name} (Target: {p.target or 'N/A'}, Deadline: {p.deadline or 'N/A'})")
+                context.append(f"- '{p.title}' by {owner_name} | Target: {p.target or 'N/A'} | Deadline: {str(p.deadline)[:10] if p.deadline else 'N/A'} | Weightage: {p.weightage}")
         else:
-            context.append("No goals pending approval. Excellent!")
-            
+            context.append("No goals pending your approval. All clear!")
+
         return "\n".join(context)
         
     # 3. EMPLOYEE / DEFAULT ROLE
     else:
-        # Get all goals for the user, with their checkins
+        from app.models.target import Task
+        from app.models.milestone import Milestone
+
+        # Goals with milestones, check-ins, escalations
         result = await db.execute(
             select(Goal)
             .where(Goal.user_id == user.id)
-            .options(selectinload(Goal.checkins))
+            .options(
+                selectinload(Goal.milestones),
+                selectinload(Goal.checkins),
+                selectinload(Goal.escalations),
+            )
         )
         goals = result.scalars().all()
-        
-        if not goals:
-            return f"User {user.name} (Role: Employee) currently has no active goals."
-            
-        context = [f"User Name: {user.name}", f"Role: {user.role}", "--- ACTIVE GOALS ---"]
-        for g in goals:
-            ctx = f"- Goal: {g.title} (Status: {g.status}, Progress: {g.progress}%, Risk: {g.risk})"
-            if g.deadline:
-                ctx += f", Deadline: {g.deadline}"
-            
-            checkin_texts = []
-            for c in g.checkins[-3:]: # Get last 3 checkins
-                checkin_texts.append(f"  * Checkin ({c.created_at.strftime('%Y-%m-%d')}): {c.notes or 'No notes'}")
-                
-            if checkin_texts:
-                ctx += "\n" + "\n".join(checkin_texts)
-                
-            context.append(ctx)
-            
+
+        # Assigned tasks (legacy single-assignee)
+        tasks_res = await db.execute(
+            select(Task).where(
+                Task.assigned_to == user.id,
+                Task.status.in_(["pending", "assigned", "active"])
+            )
+        )
+        assigned_tasks = tasks_res.scalars().all()
+
+        # User skills
+        skills_res = await db.execute(
+            select(SkillConfidenceProfile)
+            .where(SkillConfidenceProfile.user_id == user.id)
+            .limit(10)
+        )
+        skill_profiles = skills_res.scalars().all()
+
+        # Manager name
+        manager_name = "Not assigned"
+        if user.manager_id:
+            mgr_res = await db.execute(select(User).where(User.id == user.manager_id))
+            mgr = mgr_res.scalar_one_or_none()
+            if mgr:
+                manager_name = mgr.name
+
+        active_goals = [g for g in goals if g.status not in ("completed", "archived", "rejected")]
+        completed_goals = [g for g in goals if g.status == "completed"]
+        open_escalations = [
+            e for g in goals for e in (g.escalations or []) if e.status == "open"
+        ]
+
+        context = [
+            f"User: {user.name} (Role: Employee, Dept: {user.department or 'N/A'})",
+            f"Manager: {manager_name}",
+            f"Goals: {len(active_goals)} active, {len(completed_goals)} completed",
+            f"Open Escalations: {len(open_escalations)}",
+            "",
+        ]
+
+        # Active goals with milestone + checkin details
+        context.append("--- YOUR ACTIVE GOALS ---")
+        if active_goals:
+            for g in active_goals:
+                done_ms = sum(1 for m in g.milestones if m.is_completed)
+                total_ms = len(g.milestones)
+                open_escs = [e for e in (g.escalations or []) if e.status == "open"]
+                esc_note = f" | ⚠ Escalated ({len(open_escs)})" if open_escs else ""
+                context.append(
+                    f"- '{g.title}' | {g.status} | Progress: {g.progress:.0f}% | Risk: {g.risk}"
+                    f" | Milestones: {done_ms}/{total_ms} done | Deadline: {str(g.deadline)[:10] if g.deadline else 'N/A'}{esc_note}"
+                )
+                # Last 2 check-ins
+                for c in g.checkins[-2:]:
+                    context.append(f"  Check-in ({str(c.created_at)[:10]}): {c.notes or 'No notes'}")
+        else:
+            context.append("No active goals. Set your first goal to get started!")
+
+        # Assigned tasks
+        context += ["", "--- YOUR ASSIGNED TASKS ---"]
+        if assigned_tasks:
+            for task in assigned_tasks:
+                context.append(
+                    f"- Task: '{task.title}' | Status: {task.status} | Progress: {task.progress:.0f}%"
+                    f" | Deadline: {str(task.deadline)[:10] if task.deadline else 'N/A'}"
+                )
+        else:
+            context.append("No active tasks assigned to you.")
+
+        # Skills
+        context += ["", "--- YOUR SKILL PROFILE ---"]
+        if skill_profiles:
+            for sp in skill_profiles:
+                context.append(f"- {sp.skill_name}: Confidence {sp.final_confidence_score:.0%}")
+        else:
+            context.append("No skill data yet. Upload a resume to build your skill profile.")
+
         return "\n".join(context)

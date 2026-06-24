@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { AlertTriangle, ShieldAlert, ChevronDown, ChevronUp } from "lucide-react"
+import { AlertTriangle, ShieldAlert, ChevronDown, ChevronUp, Sparkles, RefreshCw } from "lucide-react"
 import GoalStatusBadge from "@/components/goals/GoalStatusBadge"
 import {
   Table,
@@ -69,6 +69,7 @@ export default function AdvancedGoalTable({ goals, isManagerView = false }: Prop
   const [escalatingGoalId, setEscalatingGoalId] = useState<string | null>(null)
   const [reason, setReason] = useState("")
   const [allEscalations, setAllEscalations] = useState<any[]>([])
+  const [regeneratingId, setRegeneratingId] = useState<string | null>(null)
 
   useEffect(() => {
     const loadEscalations = () => {
@@ -94,6 +95,45 @@ export default function AdvancedGoalTable({ goals, isManagerView = false }: Prop
       ...prev,
       [id]: !prev[id]
     }))
+  }
+
+  const toggleMilestone = (goalId: string, mIndex: number, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const storedGoals = window.localStorage.getItem("goalforge.demo.goals")
+    if (storedGoals) {
+      const currentGoals = JSON.parse(storedGoals)
+      const updatedGoals = currentGoals.map((g: any) => {
+        if (g.id === goalId && g.milestones) {
+          const newMilestones = [...g.milestones]
+          newMilestones[mIndex] = { ...newMilestones[mIndex], done: !newMilestones[mIndex].done }
+          
+          // recalculate progress
+          const completed = newMilestones.filter((m: any) => m.done).length
+          const total = newMilestones.length
+          const progress = total > 0 ? Math.round((completed / total) * 100) : g.progress
+          
+          return { ...g, milestones: newMilestones, progress }
+        }
+        return g
+      })
+      window.localStorage.setItem("goalforge.demo.goals", JSON.stringify(updatedGoals))
+      window.dispatchEvent(new Event("local-goals-updated"))
+    }
+  }
+
+  const handleRegenerate = async (goalId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setRegeneratingId(goalId)
+    // Simulate AI generation delay
+    setTimeout(() => {
+      addLocalNotification({
+        title: "AI Plan Regenerated",
+        message: "The AI has generated a new plan and milestones for your goal.",
+        type: "success",
+        recipientRole: "employee"
+      })
+      setRegeneratingId(null)
+    }, 2000)
   }
 
   const handleEscalateClick = (goalId: string, e: React.MouseEvent) => {
@@ -289,7 +329,24 @@ export default function AdvancedGoalTable({ goals, isManagerView = false }: Prop
                             
                             {goal.recommendation && (
                               <div className="rounded-md bg-indigo-50 dark:bg-indigo-500/10 p-3 border border-indigo-100 dark:border-indigo-500/20">
-                                <h4 className="text-xs font-semibold text-indigo-700 dark:text-indigo-400 mb-1">AI Recommendation</h4>
+                                <div className="flex items-center justify-between mb-2">
+                                  <h4 className="text-xs font-semibold text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5">
+                                    <Sparkles className="h-3.5 w-3.5" /> AI Recommendation
+                                  </h4>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-6 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 px-2"
+                                    onClick={(e) => handleRegenerate(goal.id, e)}
+                                    disabled={regeneratingId === goal.id}
+                                  >
+                                    {regeneratingId === goal.id ? (
+                                      <><RefreshCw className="h-3 w-3 mr-1 animate-spin" /> Generating...</>
+                                    ) : (
+                                      <><RefreshCw className="h-3 w-3 mr-1" /> Regenerate</>
+                                    )}
+                                  </Button>
+                                </div>
                                 <p className="text-sm text-indigo-900 dark:text-indigo-200">{goal.recommendation}</p>
                               </div>
                             )}
@@ -299,11 +356,11 @@ export default function AdvancedGoalTable({ goals, isManagerView = false }: Prop
                                 <h4 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Milestones</h4>
                                 <div className="space-y-2">
                                   {goal.milestones.map((m, i) => (
-                                    <div key={i} className="flex items-center gap-2 text-sm">
-                                      <div className={`flex h-4 w-4 items-center justify-center rounded-sm border ${m.done ? 'bg-sky-500 border-sky-500 text-white' : 'border-slate-300 dark:border-slate-600'}`}>
+                                    <div key={i} className="flex items-center gap-2 text-sm cursor-pointer group" onClick={(e) => toggleMilestone(goal.id, i, e)}>
+                                      <div className={`flex h-4 w-4 items-center justify-center rounded-sm border transition-colors ${m.done ? 'bg-sky-500 border-sky-500 text-white' : 'border-slate-300 dark:border-slate-600 group-hover:border-sky-400 dark:group-hover:border-sky-500'}`}>
                                         {m.done && <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                                       </div>
-                                      <span className={m.done ? "text-slate-500 dark:text-slate-400 line-through" : "text-slate-700 dark:text-slate-200"}>{m.title}</span>
+                                      <span className={m.done ? "text-slate-500 dark:text-slate-400 line-through" : "text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white"}>{m.title}</span>
                                       <span className="text-xs text-slate-400 dark:text-slate-500 ml-auto">{m.due}</span>
                                     </div>
                                   ))}

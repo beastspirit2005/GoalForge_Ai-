@@ -230,3 +230,7 @@ export const updateTask = (taskId: number, data: any) =>
 
 export const deleteTask = (taskId: number) =>
   apiDeleteRaw(`/tasks/${taskId}`)
+
+// ── Team Members ────────────────────────────────────────────────────
+export const getTeamMembers = () =>
+  apiFetchRaw<any[]>(`/manager/team-members`)
