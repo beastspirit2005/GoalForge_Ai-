@@ -130,10 +130,20 @@ export default function AdminManagersPage() {
       // Find all managers under this admin
       const assignedManagers = users.filter(u => u.admin_id === selectedHierarchyUser.id && u.role === "manager");
       const assignedManagerIds = assignedManagers.map(m => m.id);
-      baseTeamMembers = users.filter(u => u.role === "employee" && u.manager_id && assignedManagerIds.includes(u.manager_id));
+      const indirectEmployees = users.filter(u => u.role === "employee" && u.manager_id && assignedManagerIds.includes(u.manager_id));
+      const directReports = users.filter(u => u.manager_id === selectedHierarchyUser.id || u.admin_id === selectedHierarchyUser.id);
+      
+      const uniqueIds = new Set();
+      baseTeamMembers = [...indirectEmployees, ...directReports].filter(m => {
+        if (!uniqueIds.has(m.id)) {
+          uniqueIds.add(m.id);
+          return true;
+        }
+        return false;
+      });
     } else {
       // Regular admin viewing a specific manager
-      baseTeamMembers = users.filter(u => u.manager_id === selectedHierarchyUser.id && u.role === "employee");
+      baseTeamMembers = users.filter(u => u.manager_id === selectedHierarchyUser.id || u.admin_id === selectedHierarchyUser.id);
     }
   }
 
@@ -156,7 +166,12 @@ export default function AdminManagersPage() {
   });
 
   const groupedMembers = teamMembers.reduce((acc, member) => {
-    const mgrId = member.manager_id || 0;
+    let mgrId = member.manager_id;
+    if (!mgrId && member.admin_id === selectedHierarchyUser?.id) {
+       mgrId = selectedHierarchyUser.id;
+    }
+    mgrId = mgrId || 0;
+    
     if (!acc[mgrId]) acc[mgrId] = [];
     acc[mgrId].push(member);
     return acc;
@@ -218,9 +233,12 @@ export default function AdminManagersPage() {
                       let count = 0;
                       if (isSuperAdmin) {
                         const mgrIds = users.filter(u => u.admin_id === item.id && u.role === "manager").map(m => m.id);
-                        count = users.filter(u => u.role === "employee" && u.manager_id && mgrIds.includes(u.manager_id)).length;
+                        const allIds = new Set();
+                        users.filter(u => u.role === "employee" && u.manager_id && mgrIds.includes(u.manager_id)).forEach(u => allIds.add(u.id));
+                        users.filter(u => u.manager_id === item.id || u.admin_id === item.id).forEach(u => allIds.add(u.id));
+                        count = allIds.size;
                       } else {
-                        count = users.filter(u => u.manager_id === item.id && u.role === "employee").length;
+                        count = users.filter(u => u.manager_id === item.id || u.admin_id === item.id).length;
                       }
 
                       return (

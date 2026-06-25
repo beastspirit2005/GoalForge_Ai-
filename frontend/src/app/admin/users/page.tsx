@@ -468,7 +468,9 @@ export default function UsersPage() {
               <TableBody>
                 {users.map((user) => (
                   <TableRow key={user.email} className="border-b border-slate-100 dark:border-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/[0.02]">
-                    <TableCell className="font-medium text-slate-900 dark:text-white">{user.name}</TableCell>
+                    <TableCell className="font-medium text-slate-900 dark:text-white">
+                      {user.name} <span className="text-xs text-slate-400 font-normal ml-2">#{user.id}</span>
+                    </TableCell>
                     <TableCell>
                       <Badge className={`text-xs border-0 ${roleColors[user.role] || roleColors.employee}`}>
                         {user.role}
