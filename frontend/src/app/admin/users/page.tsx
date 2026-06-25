@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import DashboardLayout from "@/components/layout/DashboardLayout"
 import { apiFetch } from "@/lib/api"
-import { getStoredToken, getCurrentUser } from "@/services/auth.service"
+import { getStoredToken, getCurrentUser, requestOtp } from "@/services/auth.service"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -219,9 +219,23 @@ export default function UsersPage() {
     if (confirm(`Are you sure you want to completely delete the account for ${name}?`)) {
       try {
         const token = getStoredToken()
+        
+        if (!currentUser?.email) {
+          alert("Could not determine your email for OTP verification.")
+          return
+        }
+        
+        // Request OTP
+        await requestOtp(currentUser.email)
+        const otp = prompt(`A critical action OTP has been sent to ${currentUser.email}. Please enter it to confirm deletion:`)
+        if (!otp) {
+          return
+        }
+
         await apiFetch<any>(`/admin/users/${id}`, {
           method: "DELETE",
           token,
+          headers: { "X-Critical-OTP": otp }
         })
         setUsers(users.filter(u => u.id !== id))
         addLocalAuditLog({

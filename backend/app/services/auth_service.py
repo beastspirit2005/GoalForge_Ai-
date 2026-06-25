@@ -93,7 +93,7 @@ async def get_all_users(db: AsyncSession, skip: int = 0, limit: int = 100, curre
 
 async def update_user(db: AsyncSession, user: User, **kwargs) -> User:
     for key, value in kwargs.items():
-        if value is not None and hasattr(user, key):
+        if hasattr(user, key):
             setattr(user, key, value)
     await db.flush()
     await db.refresh(user)

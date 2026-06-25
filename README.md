@@ -66,6 +66,7 @@ Engineered to adhere to high-grade corporate security standards:
 *   **Timing-Attack Resistance**: Critical authentication endpoints (e.g., Prometheus metrics) utilize `hmac.compare_digest()` for secure token evaluation.
 *   **Consistent Reverse Proxy Trust**: Safely resolves client IPs via `X-Forwarded-For` and `X-Real-IP` behind trusted edge networks (Vercel/Render) to accurately enforce Redis sliding-window rate limits on AI models.
 *   Secure passwordless email authentication via SMTP, protected by brute-force progressive lockouts.
+*   **Critical Action OTPs**: Highly sensitive actions like user deletion are safeguarded by out-of-band OTP confirmation enforced at both the API boundary and the frontend application layer.
 *   All routes are guarded by Dual-Enforced Role Isolation (RBAC) checking JWT signatures at multiple layers, powered by a strict `RequireRole` React Higher-Order Component on the frontend.
 *   Explicit protections against IDOR vulnerabilities and stringent data-ownership checks across milestones, check-ins, and performance narratives.
 *   Secure identity impersonation allowing administrators to seamlessly assume user identities for debugging, utilizing strict cookie path scoping and role-based redirection.
