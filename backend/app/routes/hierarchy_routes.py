@@ -72,9 +72,15 @@ async def get_my_hierarchy(
             for t in teammates
         ]
 
-    # 4. Fetch Direct Employees (if manager)
-    if current_user.role == "manager":
-        emp_res = await db.execute(select(User).where(User.manager_id == current_user.id, User.is_active == True))
+    # 4. Fetch Direct Employees (if manager or admin)
+    if current_user.role in ("manager", "admin", "super_admin"):
+        from sqlalchemy import or_
+        emp_res = await db.execute(
+            select(User).where(
+                or_(User.manager_id == current_user.id, User.admin_id == current_user.id),
+                User.is_active == True
+            )
+        )
         employees = emp_res.scalars().all()
         
         goals_data, tasks_data = await get_user_stats([e.id for e in employees])
