@@ -50,6 +50,7 @@ export default function ManagerMyTeamPage() {
   const [hierarchy, setHierarchy] = useState<HierarchyData | null>(null)
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [roleFilter, setRoleFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "idle">("all")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -82,7 +83,10 @@ export default function ManagerMyTeamPage() {
                           member.id.toString() === searchTerm;
     if (!matchesSearch) return false;
 
-    // 2. Status Filter
+    // 2. Role Filter
+    if (roleFilter !== "all" && member.role !== roleFilter) return false;
+
+    // 3. Status Filter
     const isIdle = (member.goals?.length || 0) === 0 && (member.tasks?.length || 0) === 0
 
     if (statusFilter === "active" && isIdle) return false;
