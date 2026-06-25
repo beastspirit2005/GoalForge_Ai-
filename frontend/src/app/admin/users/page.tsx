@@ -418,8 +418,8 @@ export default function UsersPage() {
                       className="flex h-10 w-full rounded-md border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--gf-indigo)]"
                     >
                       <option value="" className="dark:bg-[#0f0f13]">None</option>
-                      {users.filter(u => u.role === "admin" || u.role === "super_admin").map(a => (
-                        <option key={a.id} value={a.id} className="dark:bg-[#0f0f13]">{a.name} ({a.role})</option>
+                      {users.filter(u => editRole === "admin" ? u.role === "super_admin" : (u.role === "admin" || u.role === "super_admin")).map(a => (
+                        <option key={a.id} value={a.id} className="dark:bg-[#0f0f13]">{a.name} [#{a.id}] ({a.role})</option>
                       ))}
                     </select>
                   </div>
@@ -436,7 +436,7 @@ export default function UsersPage() {
                       {users
                         .filter(u => (u.role === "manager" || u.role === "admin" || u.role === "super_admin") && (currentUser?.role === "super_admin" || u.admin_id === currentUser?.id || u.id === currentUser?.id))
                         .map(m => (
-                          <option key={m.id} value={m.id} className="dark:bg-[#0f0f13]">{m.name} ({m.role})</option>
+                          <option key={m.id} value={m.id} className="dark:bg-[#0f0f13]">{m.name} [#{m.id}] ({m.role})</option>
                       ))}
                     </select>
                   </div>

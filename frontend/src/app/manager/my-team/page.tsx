@@ -175,14 +175,27 @@ export default function ManagerMyTeamPage() {
               </div>
               
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <div className="relative w-full sm:max-w-xs">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                  <Input
-                    className="pl-9 h-9 text-sm"
-                    placeholder="Filter by name, email or ID..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+                <div className="flex gap-2 w-full sm:max-w-xl">
+                  <div className="relative flex-grow">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                    <Input
+                      className="pl-9 h-9 text-sm"
+                      placeholder="Filter by name, email or ID..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <Select value={roleFilter} onValueChange={setRoleFilter}>
+                    <SelectTrigger className="w-[140px] h-9 text-sm">
+                      <SelectValue placeholder="Role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Roles</SelectItem>
+                      <SelectItem value="admin">Admins</SelectItem>
+                      <SelectItem value="manager">Managers</SelectItem>
+                      <SelectItem value="employee">Employees</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex bg-slate-100 dark:bg-white/[0.05] p-1 rounded-lg">
                   <button onClick={() => setStatusFilter("all")} className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${statusFilter === "all" ? "bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>All</button>
