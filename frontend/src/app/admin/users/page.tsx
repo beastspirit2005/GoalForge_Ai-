@@ -434,9 +434,9 @@ export default function UsersPage() {
                     >
                       <option value="" className="dark:bg-[#0f0f13]">None</option>
                       {users
-                        .filter(u => u.role === "manager" && (currentUser?.role === "super_admin" || u.admin_id === currentUser?.id))
+                        .filter(u => (u.role === "manager" || u.role === "admin" || u.role === "super_admin") && (currentUser?.role === "super_admin" || u.admin_id === currentUser?.id || u.id === currentUser?.id))
                         .map(m => (
-                          <option key={m.id} value={m.id} className="dark:bg-[#0f0f13]">{m.name} ({m.department})</option>
+                          <option key={m.id} value={m.id} className="dark:bg-[#0f0f13]">{m.name} ({m.role})</option>
                       ))}
                     </select>
                   </div>
